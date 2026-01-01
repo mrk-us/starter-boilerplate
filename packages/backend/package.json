@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@convex-dev/r2": "^0.8.1",
     "@convex-dev/resend": "^0.2.3",
     "@convex-dev/workos-authkit": "^0.1.4",
     "@workos-inc/node": "^7.36.0",

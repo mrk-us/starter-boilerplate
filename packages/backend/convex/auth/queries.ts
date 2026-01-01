@@ -1,4 +1,5 @@
 import { query } from "../_generated/server";
+import { r2 } from "../r2";
 import { authKit } from "./index";
 
 // Get the current user from your users table
@@ -15,6 +16,19 @@ export const getCurrentUser = query({
 			.withIndex("authId", (q) => q.eq("authId", authUser.id))
 			.unique();
 
-		return user;
+		if (!user) {
+			return null;
+		}
+
+		// Generate a presigned URL for the profile picture if it exists
+		let profilePictureUrl: string | null = null;
+		if (user.profilePictureKey) {
+			profilePictureUrl = await r2.getUrl(user.profilePictureKey);
+		}
+
+		return {
+			...user,
+			profilePictureUrl,
+		};
 	},
 });

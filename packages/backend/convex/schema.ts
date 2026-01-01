@@ -6,6 +6,9 @@ export default defineSchema({
 		authId: v.string(),
 		email: v.string(),
 		name: v.string(),
+		// Legacy field - kept for backwards compatibility with existing data
 		profilePictureUrl: v.optional(v.string()),
+		// R2 object key for the profile picture (URL is generated on-the-fly)
+		profilePictureKey: v.optional(v.string()),
 	}).index("authId", ["authId"]),
 });

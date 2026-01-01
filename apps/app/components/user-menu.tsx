@@ -1,11 +1,18 @@
 "use client";
 
+import {
+	Avatar,
+	AvatarFallback,
+	AvatarImage,
+} from "@repo/ui/components/avatar";
 import { Button } from "@repo/ui/components/button";
 import { useAuth } from "@workos-inc/authkit-nextjs/components";
 import Link from "next/link";
+import { useCurrentUser } from "@/hooks/auth/use-current-user";
 
 export function UserMenu() {
-	const { user, signOut } = useAuth();
+	const { signOut } = useAuth();
+	const { user } = useCurrentUser();
 
 	if (!user) return null;
 
@@ -17,6 +24,15 @@ export function UserMenu() {
 			</div>
 
 			<div className="flex items-center gap-2">
+				<Avatar size="sm">
+					{user.profilePictureKey || user.profilePictureUrl ? (
+						<AvatarImage
+							src={user.profilePictureUrl || user.profilePictureKey || ""}
+							alt={user.name ?? "Avatar"}
+						/>
+					) : null}
+					<AvatarFallback></AvatarFallback>
+				</Avatar>
 				<span className="text-sm">{user.email}</span>
 				<Button onClick={() => signOut()}>Sign out</Button>
 			</div>

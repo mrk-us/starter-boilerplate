@@ -66,7 +66,7 @@ function PopoverContent({
 				<PopoverPrimitive.Popup
 					data-slot="popover-content"
 					className={cn(
-						"rounded-3xl corner-superellipse/1.2 supports-backdrop-filter:backdrop-blur-lg supports-backdrop-filter:backdrop-saturate-250 bg-popover/90 shadow-glass-secondary-elevated  text-popover-foreground data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 ring-foreground/10 flex flex-col gap-4 p-2.5 text-xs ring-0 duration-100 z-50 w-72 origin-(--transform-origin) outline-hidden",
+						"rounded-3xl corner-superellipse/1.2 supports-backdrop-filter:backdrop-blur-lg supports-backdrop-filter:backdrop-saturate-250 bg-popover/90 shadow-glass-secondary-elevated text-popover-foreground data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 ring-foreground/10 flex flex-col gap-3 px-4 py-3.5 text-xs ring-0 duration-100 z-50 w-72 origin-(--transform-origin) outline-hidden",
 						className,
 					)}
 					{...props}
@@ -109,6 +109,25 @@ function PopoverDescription({
 	);
 }
 
+function PopoverFooter({
+	className,
+	children,
+	...props
+}: React.ComponentProps<"div"> & {}) {
+	return (
+		<div
+			data-slot="popover-footer"
+			className={cn(
+				"gap-2 flex sm:flex-row sm:justify-stretch *:flex-1",
+				className,
+			)}
+			{...props}
+		>
+			{children}
+		</div>
+	);
+}
+
 function PopoverClose({ ...props }: PopoverPrimitive.Close.Props) {
 	return <PopoverPrimitive.Close data-slot="popover-close" {...props} />;
 }
@@ -118,6 +137,7 @@ export {
 	PopoverClose,
 	PopoverContent,
 	PopoverDescription,
+	PopoverFooter,
 	PopoverHeader,
 	PopoverTitle,
 	PopoverTrigger,
