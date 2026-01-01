@@ -19,6 +19,8 @@ import type * as emails_mutations from "../emails/mutations.js";
 import type * as emails_queries from "../emails/queries.js";
 import type * as emails_utils from "../emails/utils.js";
 import type * as http from "../http.js";
+import type * as users_mutations from "../users/mutations.js";
+import type * as users_validation from "../users/validation.js";
 import type * as utils from "../utils.js";
 
 import type {
@@ -39,6 +41,8 @@ declare const fullApi: ApiFromModules<{
   "emails/queries": typeof emails_queries;
   "emails/utils": typeof emails_utils;
   http: typeof http;
+  "users/mutations": typeof users_mutations;
+  "users/validation": typeof users_validation;
   utils: typeof utils;
 }>;
 

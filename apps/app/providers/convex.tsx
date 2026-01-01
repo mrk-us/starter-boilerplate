@@ -1,5 +1,8 @@
 "use client";
 
+import { ConvexQueryClient } from "@convex-dev/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
 import {
 	AuthKitProvider,
 	useAccessToken,
@@ -16,10 +19,23 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
 		}
 		return new ConvexReactClient(url);
 	});
+
+	const convexQueryClient = new ConvexQueryClient(convex);
+	const queryClient = new QueryClient({
+		defaultOptions: {
+			queries: {
+				queryKeyHashFn: convexQueryClient.hashFn(),
+				queryFn: convexQueryClient.queryFn(),
+			},
+		},
+	});
+	convexQueryClient.connect(queryClient);
 	return (
 		<AuthKitProvider>
 			<ConvexProviderWithAuth client={convex} useAuth={useAuthFromAuthKit}>
-				{children}
+				<QueryClientProvider client={queryClient}>
+					{children}
+				</QueryClientProvider>
 			</ConvexProviderWithAuth>
 		</AuthKitProvider>
 	);

@@ -8,6 +8,7 @@ export const { authKitEvent } = authKit.events({
 			authId: event.data.id,
 			email: event.data.email,
 			name: `${event.data.firstName ?? ""}${event.data.lastName ? ` ${event.data.lastName}` : ""}`,
+			profilePictureUrl: event.data.profilePictureUrl ?? undefined,
 		});
 	},
 
@@ -24,6 +25,7 @@ export const { authKitEvent } = authKit.events({
 		await ctx.db.patch(user._id, {
 			email: event.data.email,
 			name: `${event.data.firstName ?? ""}${event.data.lastName ? ` ${event.data.lastName}` : ""}`,
+			profilePictureUrl: event.data.profilePictureUrl ?? undefined,
 		});
 	},
 

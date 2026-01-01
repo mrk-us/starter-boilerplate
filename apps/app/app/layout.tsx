@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "@repo/ui/globals.css";
+import { AuthWrapper } from "@/components/auth-wrapper";
+import { UserMenu } from "@/components/user-menu";
 import { ConvexClientProvider } from "@/providers/convex";
 import { ThemeProvider } from "@/providers/theme";
 
@@ -30,7 +32,12 @@ export default function RootLayout({
 				className={`${fontSans.variable} ${fontMono.variable} font-sans antialiased`}
 			>
 				<ConvexClientProvider>
-					<ThemeProvider>{children}</ThemeProvider>
+					<ThemeProvider>
+						<AuthWrapper>
+							<UserMenu />
+							{children}
+						</AuthWrapper>
+					</ThemeProvider>
 				</ConvexClientProvider>
 			</body>
 		</html>
