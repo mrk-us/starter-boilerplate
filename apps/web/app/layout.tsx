@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import "./globals.css";
+import "@repo/ui/globals.css";
+import { Providers } from "@/app/providers/providers";
 
-const geistSans = localFont({
-	src: "./fonts/GeistVF.woff",
-	variable: "--font-geist-sans",
+const fontSans = localFont({
+	src: "./fonts/InterVariable.woff2",
+	variable: "--font-sans",
 });
-const geistMono = localFont({
+
+const fontMono = localFont({
 	src: "./fonts/GeistMonoVF.woff",
-	variable: "--font-geist-mono",
+	variable: "--font-mono",
 });
 
 export const metadata: Metadata = {
@@ -22,9 +24,11 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en">
-			<body className={`${geistSans.variable} ${geistMono.variable}`}>
-				{children}
+		<html lang="en" suppressHydrationWarning>
+			<body
+				className={`${fontSans.variable} ${fontMono.variable} font-sans antialiased`}
+			>
+				<Providers>{children}</Providers>
 			</body>
 		</html>
 	);

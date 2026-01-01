@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.8/schema.json",
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "root": true,
   "linter": {
     "enabled": true,
@@ -11,5 +11,6 @@
     "lineWidth": 120,
     "indentStyle": "tab",
     "indentWidth": 2
-  }
+  },
+  "extends": ["ultracite/core", "ultracite/next", "ultracite/react"]
 }

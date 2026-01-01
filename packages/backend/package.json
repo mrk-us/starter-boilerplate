@@ -1,0 +1,23 @@
+{
+  "name": "@repo/backend",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "dev": "convex dev",
+    "setup": "convex dev --until-success",
+    "typecheck": "tsc --noEmit -p convex"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@convex-dev/resend": "^0.2.3",
+    "@convex-dev/workos-authkit": "^0.1.4",
+    "@workos-inc/node": "^7.36.0",
+    "convex": "^1.29.3",
+    "disposable-email-domains-js": "^1.20.0",
+    "resend": "^6.6.0"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}
