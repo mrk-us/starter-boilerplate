@@ -1,5 +1,6 @@
 import { createFormHook, createFormHookContexts } from "@tanstack/react-form";
 import { FormCheckbox } from "./form-checkbox";
+import { FormErrors } from "./form-errors";
 import { FormInput } from "./form-input";
 import { FormSelect } from "./form-select";
 import { FormSubmit } from "./form-submit";
@@ -17,6 +18,7 @@ const { useAppForm } = createFormHook({
 	},
 	formComponents: {
 		Submit: FormSubmit,
+		Errors: FormErrors,
 	},
 	fieldContext,
 	formContext,

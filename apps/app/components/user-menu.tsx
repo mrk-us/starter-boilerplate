@@ -8,7 +8,7 @@ import {
 import { Button } from "@repo/ui/components/button";
 import { useAuth } from "@workos-inc/authkit-nextjs/components";
 import Link from "next/link";
-import { useCurrentUser } from "@/hooks/auth/use-current-user";
+import { useCurrentUser } from "@/hooks/auth";
 
 export function UserMenu() {
 	const { signOut } = useAuth();
