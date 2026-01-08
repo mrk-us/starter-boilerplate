@@ -117,10 +117,7 @@ function PopoverFooter({
 	return (
 		<div
 			data-slot="popover-footer"
-			className={cn(
-				"gap-2 flex sm:flex-row sm:justify-stretch *:flex-1",
-				className,
-			)}
+			className={cn("gap-2 flex sm:flex-row *:flex-1", className)}
 			{...props}
 		>
 			{children}

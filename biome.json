@@ -8,7 +8,7 @@
     }
   },
   "formatter": {
-    "lineWidth": 120,
+    "lineWidth": 180,
     "indentStyle": "tab",
     "indentWidth": 2
   },

@@ -1,25 +1,31 @@
 {
-  "name": "@repo/backend",
-  "version": "1.0.0",
-  "description": "",
-  "scripts": {
-    "dev": "convex dev",
-    "setup": "convex dev --until-success",
-    "typecheck": "tsc --noEmit -p convex"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "@convex-dev/r2": "^0.8.1",
-    "@convex-dev/resend": "^0.2.3",
-    "@convex-dev/workos-authkit": "^0.1.4",
-    "@workos-inc/node": "^7.36.0",
-    "convex": "^1.29.3",
-    "disposable-email-domains-js": "^1.20.0",
-    "resend": "^6.6.0",
-    "zod": "^4.3.4"
-  },
-  "devDependencies": {
-    "typescript": "5.9.3"
-  }
+	"name": "@repo/backend",
+	"version": "1.0.0",
+	"description": "",
+	"scripts": {
+		"dev": "convex dev",
+		"setup": "convex dev --until-success",
+		"typecheck": "tsc --noEmit -p convex"
+	},
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@convex-dev/polar": "^0.7.3",
+		"@convex-dev/r2": "^0.8.1",
+		"@convex-dev/rate-limiter": "^0.3.2",
+		"@convex-dev/resend": "^0.2.3",
+		"@convex-dev/workos-authkit": "^0.1.4",
+		"@react-email/render": "^2.0.1",
+		"@repo/email": "*",
+		"@workos-inc/node": "^7.36.0",
+		"convex": "^1.29.3",
+		"disposable-email-domains-js": "^1.20.0",
+		"react": "19.2.3",
+		"react-dom": "19.2.3",
+		"resend": "^6.6.0",
+		"zod": "^4.3.4"
+	},
+	"devDependencies": {
+		"typescript": "5.9.3"
+	}
 }

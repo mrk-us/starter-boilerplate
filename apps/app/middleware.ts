@@ -4,7 +4,14 @@ export default authkitMiddleware({
 	eagerAuth: true,
 	middlewareAuth: {
 		enabled: true,
-		unauthenticatedPaths: ["/", "/sign-in", "/sign-up"],
+		unauthenticatedPaths: [
+			"/",
+			"/sign-in",
+			"/sign-up",
+			"/forgot-password",
+			"/reset-password",
+			"/verify-email",
+		],
 	},
 });
 

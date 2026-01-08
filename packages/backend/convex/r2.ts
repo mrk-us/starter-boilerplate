@@ -4,8 +4,9 @@ import { authKit } from "./auth/index";
 
 export const r2 = new R2(components.r2);
 
-// Export client API for uploading files
-// These functions are called from the frontend via useUploadFile hook
+////////////////////////////////////////////////////////////
+// Client API for uploading files to R2
+////////////////////////////////////////////////////////////
 export const { generateUploadUrl, syncMetadata } = r2.clientApi({
 	// Validate that the user can upload
 	checkUpload: async (ctx) => {
@@ -16,9 +17,6 @@ export const { generateUploadUrl, syncMetadata } = r2.clientApi({
 	},
 	// Called after upload is complete and metadata is synced
 	onUpload: async (ctx, _bucket, key) => {
-		// The key is returned to the client after upload
-		// The actual profile picture update is handled by a separate mutation
 		console.log("File uploaded with key:", key);
 	},
 });
-

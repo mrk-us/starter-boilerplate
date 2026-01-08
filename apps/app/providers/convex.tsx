@@ -2,16 +2,28 @@
 
 import { ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
 import {
 	AuthKitProvider,
 	useAccessToken,
 	useAuth,
 } from "@workos-inc/authkit-nextjs/components";
 import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react";
-import { type ReactNode, useCallback, useState } from "react";
+import {
+	type ComponentProps,
+	type ReactNode,
+	useCallback,
+	useState,
+} from "react";
 
-export function ConvexClientProvider({ children }: { children: ReactNode }) {
+type InitialAuth = ComponentProps<typeof AuthKitProvider>["initialAuth"];
+
+export function ConvexClientProvider({
+	children,
+	initialAuth,
+}: {
+	children: ReactNode;
+	initialAuth?: InitialAuth;
+}) {
 	const [convex] = useState(() => {
 		const url = process.env.NEXT_PUBLIC_CONVEX_URL;
 		if (!url) {
@@ -31,7 +43,7 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
 	});
 	convexQueryClient.connect(queryClient);
 	return (
-		<AuthKitProvider>
+		<AuthKitProvider initialAuth={initialAuth}>
 			<ConvexProviderWithAuth client={convex} useAuth={useAuthFromAuthKit}>
 				<QueryClientProvider client={queryClient}>
 					{children}
@@ -63,8 +75,7 @@ function useAuthFromAuthKit() {
 				}
 
 				return (await getAccessToken()) ?? null;
-			} catch (error) {
-				console.error("Failed to get access token:", error);
+			} catch (_error) {
 				return null;
 			}
 		},

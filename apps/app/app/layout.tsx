@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "@repo/ui/globals.css";
-import { AuthWrapper } from "@/components/auth-wrapper";
-import { UserMenu } from "@/components/user-menu";
+import { AuthWrapper } from "@/features/shared/components/auth-wrapper";
+import { ConditionalUserMenu } from "@/features/shared/components/conditional-user-menu";
 import { ConvexClientProvider } from "@/providers/convex";
 import { ThemeProvider } from "@/providers/theme";
 
@@ -34,7 +34,7 @@ export default function RootLayout({
 				<ConvexClientProvider>
 					<ThemeProvider>
 						<AuthWrapper>
-							<UserMenu />
+							<ConditionalUserMenu />
 							{children}
 						</AuthWrapper>
 					</ThemeProvider>

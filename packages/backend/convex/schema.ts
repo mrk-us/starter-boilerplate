@@ -10,5 +10,8 @@ export default defineSchema({
 		profilePictureUrl: v.optional(v.string()),
 		// R2 object key for the profile picture (URL is generated on-the-fly)
 		profilePictureKey: v.optional(v.string()),
-	}).index("authId", ["authId"]),
+		setupCompleted: v.optional(v.boolean()),
+	})
+		.index("authId", ["authId"])
+		.index("email", ["email"]),
 });

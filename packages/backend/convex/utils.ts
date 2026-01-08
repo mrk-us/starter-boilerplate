@@ -1,5 +1,8 @@
 const DEPLOYMENT_REGEX = /https:\/\/(.+).convex.cloud/;
 
+////////////////////////////////////////////////////////////
+// Missing environment variable URL
+////////////////////////////////////////////////////////////
 export function missingEnvVariableUrl(envVarName: string, whereToGet: string) {
 	const deployment = deploymentName();
 	if (!deployment) {
@@ -12,10 +15,13 @@ export function missingEnvVariableUrl(envVarName: string, whereToGet: string) {
 	);
 }
 
+////////////////////////////////////////////////////////////
+// Deployment name
+////////////////////////////////////////////////////////////
 export function deploymentName() {
 	const url = process.env.CONVEX_CLOUD_URL;
 	if (!url) {
-		return undefined;
+		return;
 	}
 	return DEPLOYMENT_REGEX.exec(url)?.[1];
 }

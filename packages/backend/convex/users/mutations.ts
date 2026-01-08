@@ -1,24 +1,32 @@
 import { v } from "convex/values";
-import { mutation } from "../_generated/server";
+import { internalMutation, mutation } from "../_generated/server";
 import { authKit } from "../auth/index";
 import { r2 } from "../r2";
-import { nameSchema } from "./validation";
+import { userSchema } from "./validation";
 
+////////////////////////////////////////////////////////////
 // Update the current user's name
+////////////////////////////////////////////////////////////
 export const updateName = mutation({
 	args: {
 		name: v.string(),
 	},
 	handler: async (ctx, args) => {
 		const authUser = await authKit.getAuthUser(ctx);
+
 		if (!authUser) {
 			throw new Error("Not authenticated");
 		}
 
 		// Validate and sanitize input
-		const validationResult = nameSchema.safeParse({ name: args.name });
-		if (!validationResult.success) {
-			throw new Error(validationResult.error.issues[0]?.message ?? "Invalid name format");
+		const validationResult = userSchema.pick({ name: true }).safeParse({
+			name: args.name.trim(),
+		});
+
+		if (!validationResult.success || validationResult === undefined) {
+			throw new Error(
+				validationResult.error.issues[0]?.message ?? "Invalid name format",
+			);
 		}
 
 		const user = await ctx.db
@@ -30,7 +38,6 @@ export const updateName = mutation({
 			throw new Error("User not found");
 		}
 
-		// Use validated and trimmed name
 		await ctx.db.patch(user._id, {
 			name: validationResult.data.name,
 		});
@@ -39,7 +46,52 @@ export const updateName = mutation({
 	},
 });
 
-// Update the current user's profile picture (stores the R2 key)
+////////////////////////////////////////////////////////////
+// Complete user setup (set name and mark setupCompleted)
+////////////////////////////////////////////////////////////
+export const completeSetup = mutation({
+	args: {
+		name: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const authUser = await authKit.getAuthUser(ctx);
+
+		if (!authUser) {
+			throw new Error("Not authenticated");
+		}
+
+		// Validate and sanitize input
+		const validationResult = userSchema.pick({ name: true }).safeParse({
+			name: args.name.trim(),
+		});
+
+		if (!validationResult.success || validationResult === undefined) {
+			throw new Error(
+				validationResult.error.issues[0]?.message ?? "Invalid name format",
+			);
+		}
+
+		const user = await ctx.db
+			.query("users")
+			.withIndex("authId", (q) => q.eq("authId", authUser.id))
+			.unique();
+
+		if (!user) {
+			throw new Error("User not found");
+		}
+
+		await ctx.db.patch(user._id, {
+			name: validationResult.data.name,
+			setupCompleted: true,
+		});
+
+		return { success: true };
+	},
+});
+
+////////////////////////////////////////////////////////////
+// Update the current user's profile picture
+////////////////////////////////////////////////////////////
 export const updateProfilePicture = mutation({
 	args: {
 		key: v.string(),
@@ -77,7 +129,9 @@ export const updateProfilePicture = mutation({
 	},
 });
 
+////////////////////////////////////////////////////////////
 // Remove the current user's profile picture
+////////////////////////////////////////////////////////////
 export const removeProfilePicture = mutation({
 	args: {},
 	handler: async (ctx) => {
@@ -109,5 +163,28 @@ export const removeProfilePicture = mutation({
 		});
 
 		return { success: true };
+	},
+});
+
+////////////////////////////////////////////////////////////
+// Delete the user from db
+////////////////////////////////////////////////////////////
+export const deleteUserByAuthId = internalMutation({
+	args: {
+		authId: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const user = await ctx.db
+			.query("users")
+			.withIndex("authId", (q) => q.eq("authId", args.authId))
+			.unique();
+
+		if (!user) {
+			return { success: true, deleted: false };
+		}
+
+		await ctx.db.delete(user._id);
+
+		return { success: true, deleted: true };
 	},
 });

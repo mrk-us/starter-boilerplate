@@ -154,21 +154,19 @@ function FieldSeparator({
 		<div
 			data-slot="field-separator"
 			data-content={!!children}
-			className={cn(
-				"-my-2 h-5 text-xs/relaxed group-data-[variant=outline]/field-group:-mb-2 relative",
-				className,
-			)}
+			className={cn("flex flex-row items-center justify-stretch", className)}
 			{...props}
 		>
-			<Separator className="absolute inset-0 top-1/2" />
+			<Separator className="flex-1 w-full" orientation="horizontal" />
 			{children && (
 				<span
-					className="text-muted-foreground px-2 bg-background relative mx-auto block w-fit"
+					className="text-muted-foreground px-2 w-fit"
 					data-slot="field-separator-content"
 				>
 					{children}
 				</span>
 			)}
+			<Separator className="flex-1 w-full" orientation="horizontal" />
 		</div>
 	);
 }
