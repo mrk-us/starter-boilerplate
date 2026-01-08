@@ -1,7 +1,7 @@
 ---
 description: Guidelines on the structure of this project and where things are located
 globs: "**/*.{ts,tsx,js,jsx,json,md,mdx}"
-alwaysApply: false
+alwaysApply: true
 ---
 
 # Project structure
