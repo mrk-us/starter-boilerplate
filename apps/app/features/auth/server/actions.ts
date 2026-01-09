@@ -4,7 +4,7 @@ import { api } from "@repo/backend/convex/_generated/api";
 import { saveSession } from "@workos-inc/authkit-nextjs";
 import { ConvexHttpClient } from "convex/browser";
 import { headers } from "next/headers";
-import { extractErrorMessage } from "@/lib/utils";
+import { extractErrorMessage } from "@/lib/utils/extract-error-message";
 
 const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
 

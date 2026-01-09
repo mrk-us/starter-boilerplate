@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AccountForm } from "@/features/shared/components/account-form";
+import { AccountForm } from "@/features/shared/components";
 
 export const metadata: Metadata = {
 	title: "Account",

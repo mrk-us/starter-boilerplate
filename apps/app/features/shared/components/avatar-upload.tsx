@@ -22,7 +22,7 @@ import {
 } from "@repo/ui/components/tooltip";
 import { IconLoader2, IconTrashX, IconUser } from "@tabler/icons-react";
 import { useCallback, useRef, useState } from "react";
-import { useUploadAvatar } from "@/features/shared/hooks/user/use-upload-avatar";
+import { useUploadAvatar } from "@/features/user/hooks";
 
 type AvatarUploadProps = {
 	currentAvatarUrl?: string | null;

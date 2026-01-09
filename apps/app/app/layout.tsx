@@ -1,18 +1,21 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "@repo/ui/globals.css";
-import { AuthWrapper } from "@/features/shared/components/auth-wrapper";
-import { ConditionalUserMenu } from "@/features/shared/components/conditional-user-menu";
-import { ConvexClientProvider } from "@/providers/convex";
-import { ThemeProvider } from "@/providers/theme";
+import "@/styles/globals.css";
+import { ConditionalUserMenu } from "@/features/shared/components";
+import {
+	AuthProvider,
+	ConvexClientProvider,
+	ThemeProvider,
+} from "@/features/shared/providers";
 
 const fontSans = localFont({
-	src: "./fonts/InterVariable.woff2",
+	src: "../fonts/InterVariable.woff2",
 	variable: "--font-sans",
 });
 
 const fontMono = localFont({
-	src: "./fonts/GeistMonoVF.woff",
+	src: "../fonts/GeistMonoVF.woff",
 	variable: "--font-mono",
 });
 
@@ -33,10 +36,10 @@ export default function RootLayout({
 			>
 				<ConvexClientProvider>
 					<ThemeProvider>
-						<AuthWrapper>
+						<AuthProvider>
 							<ConditionalUserMenu />
 							{children}
-						</AuthWrapper>
+						</AuthProvider>
 					</ThemeProvider>
 				</ConvexClientProvider>
 			</body>

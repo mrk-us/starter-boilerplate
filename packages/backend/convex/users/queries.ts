@@ -1,7 +1,44 @@
 import { v } from "convex/values";
 import { internalQuery, query } from "../_generated/server";
 import { authKit } from "../auth/index";
+import {
+	type ProductKey,
+	SubscriptionInterval,
+	SubscriptionTier,
+} from "../billing/constants";
+import { polar } from "../billing/index";
+import type { UserSubscriptionStatus } from "../billing/types";
 import { r2 } from "../r2";
+
+////////////////////////////////////////////////////////////
+// Get current user for billing (internal - avoids circular dependency)
+// This query is used by the Polar component to get user info
+// without fetching subscription data (which would create a circular reference)
+////////////////////////////////////////////////////////////
+export const getCurrentUserForBilling = internalQuery({
+	args: {},
+	handler: async (ctx, _args) => {
+		const authUser = await authKit.getAuthUser(ctx);
+
+		if (!authUser) {
+			return null;
+		}
+
+		const user = await ctx.db
+			.query("users")
+			.withIndex("authId", (q) => q.eq("authId", authUser.id))
+			.unique();
+
+		if (!user) {
+			return null;
+		}
+
+		return {
+			_id: user._id,
+			email: user.email,
+		};
+	},
+});
 
 ////////////////////////////////////////////////////////////
 // Get user by email
@@ -66,7 +103,7 @@ export const getUserByAuthId = query({
 });
 
 ////////////////////////////////////////////////////////////
-// Get the current db user
+// Get the current db user with subscription status
 ////////////////////////////////////////////////////////////
 export const getCurrentUser = query({
 	args: {},
@@ -96,9 +133,50 @@ export const getCurrentUser = query({
 			profilePictureUrl = user.profilePictureUrl;
 		}
 
+		// Get subscription status from Polar
+		// Free tier = no active subscription
+		const subscription = await polar.getCurrentSubscription(ctx, {
+			userId: user._id,
+		});
+
+		let subscriptionStatus: UserSubscriptionStatus;
+
+		if (!subscription) {
+			// No subscription = free tier
+			subscriptionStatus = {
+				tier: SubscriptionTier.FREE,
+				isPro: false,
+				isFree: true,
+				productKey: null,
+				interval: null,
+				currentPeriodEnd: null,
+				cancelAtPeriodEnd: false,
+				status: null,
+			};
+		} else {
+			// Has active subscription = pro tier
+			// productKey is the key from the products map (e.g., "proMonthly", "proYearly")
+			const interval =
+				subscription.productKey === "proYearly"
+					? SubscriptionInterval.YEAR
+					: SubscriptionInterval.MONTH;
+
+			subscriptionStatus = {
+				tier: SubscriptionTier.PRO,
+				isPro: true,
+				isFree: false,
+				productKey: (subscription.productKey as ProductKey) ?? null,
+				interval,
+				currentPeriodEnd: subscription.currentPeriodEnd ?? null,
+				cancelAtPeriodEnd: subscription.cancelAtPeriodEnd ?? false,
+				status: subscription.status ?? null,
+			};
+		}
+
 		return {
 			...user,
 			profilePictureUrl,
+			subscription: subscriptionStatus,
 		};
 	},
 });

@@ -1,13 +1,14 @@
 "use client";
 
-import { FieldGroup } from "@repo/ui/components/field";
-import { Form, FormSubmit } from "@repo/ui/components/form";
-import { useAppForm } from "@repo/ui/components/form/hooks";
+import { FieldGroup, Form, FormSubmit, useAppForm } from "@repo/ui/components";
 import { useSearchParams } from "next/navigation";
+import { AuthCard } from "@/features/auth/components";
+import {
+	useResendVerificationEmail,
+	useVerifyEmail,
+} from "@/features/auth/hooks";
+import { verifyEmailSchema } from "@/features/auth/utils";
 import { getErrorMessage } from "@/features/shared/utils";
-import { useResendVerificationEmail, useVerifyEmail } from "../hooks";
-import { verifyEmailSchema } from "../utils";
-import { AuthCard } from "./auth-card";
 
 export function VerifyEmailForm() {
 	const searchParams = useSearchParams();

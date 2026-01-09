@@ -1,5 +1,5 @@
 import React from "react";
-import { isClient } from "../../utils/isClient";
+import { isClient } from "../utils/is-client";
 
 export function useEventListener<T extends Event = Event>(
 	eventName: string,

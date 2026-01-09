@@ -4,7 +4,7 @@ import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { getErrorMessage } from "@/features/shared/utils/errors";
+import { getErrorMessage } from "@/features/shared/utils";
 
 type VerifyEmailData = {
 	authId: string;

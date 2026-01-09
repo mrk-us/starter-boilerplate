@@ -1,4 +1,4 @@
-import { CompleteSetup } from "@/features/setup";
+import { CompleteSetup } from "@/features/setup/components";
 
 export default function SetupPage() {
 	return (

@@ -8,7 +8,7 @@ import {
 import { Button } from "@repo/ui/components/button";
 import { useAuth } from "@workos-inc/authkit-nextjs/components";
 import Link from "next/link";
-import { useCurrentUser } from "@/features/shared/hooks/user/use-current-user";
+import { useCurrentUser } from "@/features/user/hooks";
 
 export function UserMenu() {
 	const { signOut } = useAuth();
@@ -21,6 +21,7 @@ export function UserMenu() {
 			<div className="flex items-center gap-2 text-sm">
 				<Link href="/">Dashboard</Link>
 				<Link href="/account">Account</Link>
+				<Link href="/billing">Billing</Link>
 			</div>
 
 			<div className="flex items-center gap-2">

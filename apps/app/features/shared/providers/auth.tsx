@@ -3,7 +3,7 @@
 import { useConvexAuth } from "convex/react";
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect } from "react";
-import { useCurrentUser } from "@/features/shared/hooks/user";
+import { useCurrentUser } from "@/features/user/hooks";
 
 const SETUP_PATH = "/setup";
 const AUTH_PATHS = [
@@ -15,11 +15,11 @@ const AUTH_PATHS = [
 ];
 
 ////////////////////////////////////////////////////////////
-// AuthWrapper
+// AuthProvider
 // - Provides Convex auth boundary
 // - Redirects users who haven't completed setup to /setup
 ////////////////////////////////////////////////////////////
-export function AuthWrapper({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const { isAuthenticated } = useConvexAuth();

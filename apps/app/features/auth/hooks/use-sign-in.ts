@@ -1,8 +1,8 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { getErrorMessage } from "@/features/shared/utils/errors";
-import { signIn as signInAction } from "@/lib/auth/actions";
+import { signIn as signInAction } from "@/features/auth/server";
+import { getErrorMessage } from "@/features/shared/utils";
 
 type SignInData = {
 	email: string;

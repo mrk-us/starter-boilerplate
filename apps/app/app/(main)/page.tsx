@@ -1,6 +1,5 @@
 import { Suspense } from "react";
-import { ComponentExample } from "@/features/shared/components/component-example";
-import { UserData } from "@/features/shared/components/user-data";
+import { ComponentExample, UserData } from "@/features/shared/components";
 
 export default function Home() {
 	return (

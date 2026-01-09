@@ -1,15 +1,12 @@
 "use client";
 
-import { FieldGroup } from "@repo/ui/components/field";
-import { Form, FormSubmit } from "@repo/ui/components/form";
-import { useAppForm } from "@repo/ui/components/form/hooks";
+import { FieldGroup, Form, FormSubmit, useAppForm } from "@repo/ui/components";
 import Link from "next/link";
 import type { z } from "zod";
-import { getErrorMessage } from "@/features/shared/utils/errors";
-import { useSignUp } from "../hooks";
-import { signUpSchema } from "../utils/validation";
-import { AuthCard } from "./auth-card";
-import { OAuthButtons } from "./oauth-buttons";
+import { AuthCard, OAuthButtons } from "@/features/auth/components";
+import { useSignUp } from "@/features/auth/hooks";
+import { signUpSchema } from "@/features/auth/utils";
+import { getErrorMessage } from "@/features/shared/utils";
 
 type FormData = z.infer<typeof signUpSchema>;
 

@@ -7,7 +7,7 @@ import {
 	CardFooter,
 	CardHeader,
 	CardTitle,
-} from "@repo/ui/components/card";
+} from "@repo/ui/components";
 import type { ReactNode } from "react";
 
 type AuthCardProps = {

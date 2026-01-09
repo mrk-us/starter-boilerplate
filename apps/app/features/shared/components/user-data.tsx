@@ -1,6 +1,6 @@
 "use client";
 
-import { useCurrentUser } from "@/features/shared/hooks/user/use-current-user";
+import { useCurrentUser } from "@/features/user/hooks";
 
 export function UserData() {
 	const { user: currentUser } = useCurrentUser();

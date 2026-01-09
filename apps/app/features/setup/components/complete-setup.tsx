@@ -1,13 +1,12 @@
 "use client";
 
 import { userSchema } from "@repo/backend/convex/users/validation";
-import { Form, FormSubmit } from "@repo/ui/components/form";
-import { useAppForm } from "@repo/ui/components/form/hooks";
+import { Form, FormSubmit, useAppForm } from "@repo/ui/components";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
-import { useCurrentUser } from "@/features/shared/hooks";
+import { useCompleteSetup } from "@/features/setup/hooks";
 import { getErrorMessage } from "@/features/shared/utils";
-import { useCompleteSetup } from "../hooks";
+import { useCurrentUser } from "@/features/user/hooks";
 
 const nameFormSchema = z.object({
 	name: userSchema.shape.name,

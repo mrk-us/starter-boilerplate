@@ -1,6 +1,6 @@
-import { authkitMiddleware } from "@workos-inc/authkit-nextjs";
+import { authkitMiddleware as authkitProxy } from "@workos-inc/authkit-nextjs";
 
-export default authkitMiddleware({
+export default authkitProxy({
 	eagerAuth: true,
 	middlewareAuth: {
 		enabled: true,

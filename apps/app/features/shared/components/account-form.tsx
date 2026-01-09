@@ -1,16 +1,21 @@
 "use client";
 
 import { userSchema } from "@repo/backend/convex/users/validation";
-import { Button } from "@repo/ui/components/button";
-import { FieldGroup } from "@repo/ui/components/field";
-import { Form, FormSubmit } from "@repo/ui/components/form";
-import { useAppForm } from "@repo/ui/components/form/hooks";
+import {
+	Button,
+	FieldGroup,
+	Form,
+	FormSubmit,
+	useAppForm,
+} from "@repo/ui/components";
 import { z } from "zod";
-import { AvatarUpload } from "@/features/shared/components/avatar-upload";
-import { useCurrentUser } from "@/features/shared/hooks/user/use-current-user";
-import { useDeleteUser } from "@/features/shared/hooks/user/use-delete-user";
-import { useUpdateName } from "@/features/shared/hooks/user/use-update-name";
+import { AvatarUpload } from "@/features/shared/components";
 import { getErrorMessage } from "@/features/shared/utils";
+import {
+	useCurrentUser,
+	useDeleteUser,
+	useUpdateName,
+} from "@/features/user/hooks";
 
 // Validation schema
 const accountFormSchema = z.object({

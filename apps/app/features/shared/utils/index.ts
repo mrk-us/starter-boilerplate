@@ -1,2 +1,2 @@
-export { getErrorMessage, getRetryAfter } from "./errors";
-export { isClient } from "./isClient";
+export { getErrorMessage } from "./errors";
+export { isClient } from "./is-client";

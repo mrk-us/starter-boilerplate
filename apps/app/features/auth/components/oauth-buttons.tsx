@@ -2,8 +2,7 @@
 
 import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
-import { Button } from "@repo/ui/components/button";
-import { FieldSeparator } from "@repo/ui/components/field";
+import { Button, FieldSeparator } from "@repo/ui/components";
 import { useTransition } from "react";
 
 const REDIRECT_URI =
