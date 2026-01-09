@@ -4,9 +4,9 @@ import { authKit } from "../auth/index";
 import { r2 } from "../r2";
 import { userSchema } from "./validation";
 
-////////////////////////////////////////////////////////////
-// Update the current user's name
-////////////////////////////////////////////////////////////
+/**
+ * Update the current user's name
+ */
 export const updateName = mutation({
 	args: {
 		name: v.string(),
@@ -46,9 +46,9 @@ export const updateName = mutation({
 	},
 });
 
-////////////////////////////////////////////////////////////
-// Complete user setup (set name and mark setupCompleted)
-////////////////////////////////////////////////////////////
+/**
+ * Complete user setup
+ */
 export const completeSetup = mutation({
 	args: {
 		name: v.string(),
@@ -89,9 +89,9 @@ export const completeSetup = mutation({
 	},
 });
 
-////////////////////////////////////////////////////////////
-// Update the current user's profile picture
-////////////////////////////////////////////////////////////
+/**
+ * Update the current user's profile picture
+ */
 export const updateProfilePicture = mutation({
 	args: {
 		key: v.string(),
@@ -129,9 +129,9 @@ export const updateProfilePicture = mutation({
 	},
 });
 
-////////////////////////////////////////////////////////////
-// Remove the current user's profile picture
-////////////////////////////////////////////////////////////
+/**
+ * Remove the current user's profile picture
+ */
 export const removeProfilePicture = mutation({
 	args: {},
 	handler: async (ctx) => {
@@ -166,9 +166,9 @@ export const removeProfilePicture = mutation({
 	},
 });
 
-////////////////////////////////////////////////////////////
-// Delete the user from db
-////////////////////////////////////////////////////////////
+/**
+ * Delete the user from db
+ */
 export const deleteUserByAuthId = internalMutation({
 	args: {
 		authId: v.string(),

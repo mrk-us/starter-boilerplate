@@ -14,9 +14,9 @@ if (!convexUrl) {
 
 const client = new ConvexHttpClient(convexUrl);
 
-////////////////////////////////////////////////////////////
-// Sign in and save session
-////////////////////////////////////////////////////////////
+/*
+ * Sign in and save session
+ */
 export async function signIn(data: { email: string; password: string }) {
 	const headersList = await headers();
 	const host = headersList.get("host") || "localhost:3001";

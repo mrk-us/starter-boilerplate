@@ -7,9 +7,9 @@ const authFunctions: AuthFunctions = {
 	authKitEvent: internal.auth.events.authKitEvent,
 };
 
-////////////////////////////////////////////////////////////
-// Initialize AuthKit component
-////////////////////////////////////////////////////////////
+/**
+ * Initialize AuthKit component
+ */
 export const authKit = new AuthKit<DataModel>(components.workOSAuthKit, {
 	authFunctions,
 	additionalEventTypes: [

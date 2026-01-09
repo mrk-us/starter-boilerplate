@@ -4,9 +4,9 @@ import { authKit } from "./auth/index";
 
 export const r2 = new R2(components.r2);
 
-////////////////////////////////////////////////////////////
-// Client API for uploading files to R2
-////////////////////////////////////////////////////////////
+/**
+ * Client API for uploading files to R2
+ */
 export const { generateUploadUrl, syncMetadata } = r2.clientApi({
 	// Validate that the user can upload
 	checkUpload: async (ctx) => {
@@ -16,7 +16,7 @@ export const { generateUploadUrl, syncMetadata } = r2.clientApi({
 		}
 	},
 	// Called after upload is complete and metadata is synced
-	onUpload: async (ctx, _bucket, key) => {
+	onUpload: async (_ctx, _bucket, key) => {
 		console.log("File uploaded with key:", key);
 	},
 });

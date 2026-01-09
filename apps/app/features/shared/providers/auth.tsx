@@ -14,11 +14,11 @@ const AUTH_PATHS = [
 	"/verify-email",
 ];
 
-////////////////////////////////////////////////////////////
-// AuthProvider
-// - Provides Convex auth boundary
-// - Redirects users who haven't completed setup to /setup
-////////////////////////////////////////////////////////////
+/*
+ * AuthProvider
+ * - Provides Convex auth boundary
+ * - Redirects users who haven't completed setup to /setup
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
 	const router = useRouter();
 	const pathname = usePathname();

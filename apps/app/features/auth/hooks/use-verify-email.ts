@@ -15,7 +15,13 @@ type VerifyEmailResult = {
 	success: boolean;
 };
 
-export function useVerifyEmail() {
+type UseVerifyEmailReturn = {
+	verifyEmail: (data: VerifyEmailData) => Promise<VerifyEmailResult>;
+	isPending: boolean;
+	error: Error | undefined;
+};
+
+export function useVerifyEmail(): UseVerifyEmailReturn {
 	const router = useRouter();
 
 	const verifyUserEmail = useConvexAction(api.auth.actions.verifyEmail);

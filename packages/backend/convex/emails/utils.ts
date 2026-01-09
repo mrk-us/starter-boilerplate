@@ -1,8 +1,8 @@
 import { Resend as ResendSdk, type Tag } from "resend";
 
-////////////////////////////////////////////////////////////
-// Initialize Resend SDK
-////////////////////////////////////////////////////////////
+/**
+ * Initialize Resend SDK
+ */
 export const resendSdk = new ResendSdk(
 	process.env.RESEND_API_KEY ??
 		(() => {
@@ -10,9 +10,9 @@ export const resendSdk = new ResendSdk(
 		})(),
 );
 
-////////////////////////////////////////////////////////////
-// Helper function to send emails using Resend SDK
-////////////////////////////////////////////////////////////
+/**
+ * Helper function to send emails using Resend SDK
+ */
 export const sendResendEmail = async (
 	from: string,
 	to: string | string[],

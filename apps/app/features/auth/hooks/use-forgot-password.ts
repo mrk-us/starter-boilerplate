@@ -13,7 +13,14 @@ type ForgotPasswordResult = {
 	success: boolean;
 };
 
-export function useForgotPassword() {
+type UseForgotPasswordReturn = {
+	forgotPassword: (data: ForgotPasswordData) => Promise<ForgotPasswordResult>;
+	isPending: boolean;
+	isSuccess: boolean;
+	error: Error | undefined;
+};
+
+export function useForgotPassword(): UseForgotPasswordReturn {
 	const requestPasswordReset = useConvexAction(
 		api.auth.actions.requestPasswordReset,
 	);

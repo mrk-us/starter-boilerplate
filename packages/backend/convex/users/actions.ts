@@ -1,13 +1,14 @@
 import { ConvexError } from "convex/values";
-import { internal } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 import { action } from "../_generated/server";
 import { authKit } from "../auth";
 import { AuthErrorCode } from "../auth/constants";
 import { rateLimiter } from "../rateLimiter";
 
-////////////////////////////////////////////////////////////
-// Delete user account from WorkOS and db
-////////////////////////////////////////////////////////////
+/**
+ * Delete user account from WorkOS and db
+ * - Polar customer is kept for invoice access, but subscription is canceled
+ */
 export const deleteUser = action({
 	args: {},
 	handler: async (ctx) => {
@@ -32,6 +33,15 @@ export const deleteUser = action({
 					code: AuthErrorCode.RATE_LIMITED,
 					message: `Too many attempts. Please try again in ${Math.ceil(retryAfter / 3_600_000)} hours.`,
 				});
+			}
+
+			// Cancel any active Polar subscription (at period end, so they get what they paid for)
+			try {
+				await ctx.runAction(api.billing.actions.cancelCurrentSubscription, {
+					revokeImmediately: true,
+				});
+			} catch {
+				// User may not have a subscription, that's fine
 			}
 
 			// Delete user from WorkOS

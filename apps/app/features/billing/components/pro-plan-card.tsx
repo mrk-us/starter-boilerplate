@@ -1,7 +1,5 @@
 "use client";
 
-import { CheckoutLink } from "@convex-dev/polar/react";
-import { api } from "@repo/backend/convex/_generated/api";
 import {
 	Badge,
 	Button,
@@ -12,6 +10,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@repo/ui/components";
+import { CheckoutButton } from "./checkout-button";
 
 type ProPlanCardProps = {
 	monthlyPrice: number;
@@ -82,16 +81,9 @@ export function ProPlanCard({
 						Current Plan
 					</Button>
 				) : (
-					<CheckoutLink
-						polarApi={api.billing.actions}
-						productIds={productIds}
-						className="w-full"
-						embed={false}
-					>
-						<Button variant="primary" className="w-full">
-							Upgrade to Pro
-						</Button>
-					</CheckoutLink>
+					<CheckoutButton productIds={productIds} className="w-full">
+						Upgrade to Pro
+					</CheckoutButton>
 				)}
 			</CardFooter>
 		</Card>

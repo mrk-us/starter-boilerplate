@@ -7,7 +7,15 @@ import { signOut } from "@workos-inc/authkit-nextjs";
 import { useRouter } from "next/navigation";
 import { getErrorMessage } from "@/features/shared/utils";
 
-export function useDeleteUser() {
+type UseDeleteUserReturn = {
+	deleteUser: () => Promise<void>;
+	isPending: boolean;
+	isError: boolean;
+	error: string | null;
+	isSuccess: boolean;
+};
+
+export function useDeleteUser(): UseDeleteUserReturn {
 	const router = useRouter();
 
 	const deleteUser = useConvexAction(api.users.actions.deleteUser);

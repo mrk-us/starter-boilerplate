@@ -35,8 +35,7 @@ export function AvatarUpload({
 }: AvatarUploadProps) {
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const [error, setError] = useState<string | null>(null);
-	const { upload, remove, isUploading, isRemoving, isPending } =
-		useUploadAvatar();
+	const { upload, remove, isUploading, isPending } = useUploadAvatar();
 
 	// Get initials from name for fallback
 	const initials = userName

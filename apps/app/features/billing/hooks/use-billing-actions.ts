@@ -1,62 +1,96 @@
 "use client";
 
+import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
-import { useAction, useQuery } from "convex/react";
-import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { getErrorMessage } from "@/features/shared/utils";
+
+type UseCancelSubscriptionReturn = {
+	cancel: () => Promise<void>;
+	isPending: boolean;
+	error: string | null;
+};
 
 /**
- * Hook for billing actions (upgrade, downgrade, cancel)
+ * Cancel user's subscription
  */
-export function useBillingActions() {
-	const [isPending, setIsPending] = useState(false);
-	const [error, setError] = useState<string | null>(null);
-
-	const changeSubscription = useAction(
-		api.billing.actions.changeCurrentSubscription,
-	);
-	const cancelSubscription = useAction(
+export function useCancelSubscription(): UseCancelSubscriptionReturn {
+	const cancelSubscription = useConvexAction(
 		api.billing.actions.cancelCurrentSubscription,
 	);
 
-	// Get configured products to get product IDs
-	const products = useQuery(api.billing.actions.getConfiguredProducts);
-
-	const upgrade = async (productId: string) => {
-		setIsPending(true);
-		setError(null);
-		try {
-			await changeSubscription({ productId });
-		} catch (err) {
-			const message =
-				err instanceof Error ? err.message : "Failed to upgrade subscription";
-			setError(message);
-			throw err;
-		} finally {
-			setIsPending(false);
-		}
-	};
-
-	const cancel = async (revokeImmediately = false) => {
-		setIsPending(true);
-		setError(null);
-		try {
-			await cancelSubscription({ revokeImmediately });
-		} catch (err) {
-			const message =
-				err instanceof Error ? err.message : "Failed to cancel subscription";
-			setError(message);
-			throw err;
-		} finally {
-			setIsPending(false);
-		}
-	};
+	const { mutateAsync, isPending, error } = useMutation({
+		mutationFn: async () => {
+			await cancelSubscription({ revokeImmediately: true });
+		},
+		onError: (err) => {
+			console.error("Cancel subscription failed:", getErrorMessage(err));
+		},
+	});
 
 	return {
-		upgrade,
-		cancel,
+		cancel: mutateAsync,
 		isPending,
-		error,
-		products,
-		clearError: () => setError(null),
+		error: error ? getErrorMessage(error) : null,
+	};
+}
+
+type UseChangeSubscriptionReturn = {
+	change: (productId: string) => Promise<void>;
+	isPending: boolean;
+	error: string | null;
+};
+
+/**
+ * Change user's subscription
+ */
+export function useChangeSubscription(): UseChangeSubscriptionReturn {
+	const changeSubscription = useConvexAction(
+		api.billing.actions.changeCurrentSubscription,
+	);
+
+	const { mutateAsync, isPending, error } = useMutation({
+		mutationFn: async (productId: string) => {
+			await changeSubscription({ productId });
+		},
+		onError: (err) => {
+			console.error("Change subscription failed:", getErrorMessage(err));
+		},
+	});
+
+	return {
+		change: mutateAsync,
+		isPending,
+		error: error ? getErrorMessage(error) : null,
+	};
+}
+
+type UseBillingActionsReturn = {
+	cancel: () => Promise<void>;
+	upgrade: (productId: string) => Promise<void>;
+	isPending: boolean;
+	error: string | null;
+};
+
+/**
+ * Combined hook for billing actions
+ */
+export function useBillingActions(): UseBillingActionsReturn {
+	const {
+		cancel,
+		isPending: isCancelPending,
+		error: cancelError,
+	} = useCancelSubscription();
+	const {
+		change: upgrade,
+		isPending: isChangePending,
+		error: changeError,
+	} = useChangeSubscription();
+
+	return {
+		cancel,
+		upgrade,
+		isPending: isCancelPending || isChangePending,
+		error: cancelError ?? changeError,
 	};
 }

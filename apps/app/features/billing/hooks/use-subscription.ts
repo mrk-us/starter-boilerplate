@@ -1,21 +1,37 @@
 "use client";
 
+import type { UserSubscriptionStatus } from "@repo/backend/convex/billing/types";
 import { useCurrentUser } from "@/features/user/hooks";
 
+type UseSubscriptionReturn = {
+	isLoading: boolean;
+	isAuthenticated: boolean;
+	subscription: UserSubscriptionStatus | null;
+	isPro: boolean;
+	isFree: boolean;
+	tier: UserSubscriptionStatus["tier"];
+	productKey: UserSubscriptionStatus["productKey"];
+	interval: UserSubscriptionStatus["interval"];
+	currentPeriodEnd: UserSubscriptionStatus["currentPeriodEnd"];
+	cancelAtPeriodEnd: boolean;
+	status: UserSubscriptionStatus["status"];
+};
+
 /**
- * Hook to access the current user's subscription status
+ * Get current user's subscription status
  */
-export function useSubscription() {
+export function useSubscription(): UseSubscriptionReturn {
 	const { user, isLoading, isAuthenticated } = useCurrentUser();
 
 	const subscription = user?.subscription ?? null;
+	const isPro = subscription?.isPro ?? false;
 
 	return {
 		isLoading,
 		isAuthenticated,
 		subscription,
-		isPro: subscription?.isPro ?? false,
-		isFree: subscription?.isFree ?? true,
+		isPro,
+		isFree: !isPro,
 		tier: subscription?.tier ?? "free",
 		productKey: subscription?.productKey ?? null,
 		interval: subscription?.interval ?? null,

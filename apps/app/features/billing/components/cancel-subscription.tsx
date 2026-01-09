@@ -13,11 +13,14 @@ import {
 	Button,
 } from "@repo/ui/components";
 import { useState } from "react";
-import { useBillingActions, useSubscription } from "@/features/billing/hooks";
+import {
+	useCancelSubscription,
+	useSubscription,
+} from "@/features/billing/hooks";
 
 export function CancelSubscription() {
 	const { isPro, cancelAtPeriodEnd } = useSubscription();
-	const { cancel, isPending, error } = useBillingActions();
+	const { cancel, isPending, error } = useCancelSubscription();
 	const [open, setOpen] = useState(false);
 
 	// Don't show if user is not Pro or already cancelling

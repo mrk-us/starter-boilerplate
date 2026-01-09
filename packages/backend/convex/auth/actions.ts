@@ -8,18 +8,18 @@ import { authKit } from "./index";
 import type { AuthenticateResult } from "./types";
 import { getWorkOSErrorMessage } from "./utils";
 
-////////////////////////////////////////////////////////////
-// AuthKit action handler
-// (required by WorkOS AuthKit component)
-////////////////////////////////////////////////////////////
+/**
+ * AuthKit action handler
+ * (required by WorkOS AuthKit component)
+ */
 export const { authKitAction } = authKit.actions({
 	userRegistration: async (_ctx, _action, response) => response.allow(),
 	authentication: async (_ctx, _action, response) => response.allow(),
 });
 
-////////////////////////////////////////////////////////////
-// Create user account
-////////////////////////////////////////////////////////////
+/**
+ * Create user account
+ */
 export const createUserAccount = action({
 	args: {
 		email: v.string(),
@@ -84,9 +84,9 @@ export const createUserAccount = action({
 	},
 });
 
-////////////////////////////////////////////////////////////
-// Verify email
-////////////////////////////////////////////////////////////
+/**
+ * Verify email
+ */
 export const verifyEmail = action({
 	args: {
 		authId: v.string(),
@@ -117,9 +117,9 @@ export const verifyEmail = action({
 	},
 });
 
-////////////////////////////////////////////////////////////
-// Shared verification email logic
-////////////////////////////////////////////////////////////
+/**
+ * Shared verification email logic
+ */
 async function sendVerificationEmail(ctx: ActionCtx, authId: string) {
 	const authUser = await authKit.getAuthUser(ctx);
 
@@ -163,9 +163,9 @@ async function sendVerificationEmail(ctx: ActionCtx, authId: string) {
 	});
 }
 
-////////////////////////////////////////////////////////////
-// Resend verification email
-////////////////////////////////////////////////////////////
+/**
+ * Resend verification email
+ */
 export const resendVerificationEmail = action({
 	args: {
 		authId: v.string(),
@@ -189,9 +189,9 @@ export const resendVerificationEmail = action({
 	},
 });
 
-////////////////////////////////////////////////////////////
-// Resend verification email on email address change
-////////////////////////////////////////////////////////////
+/**
+ * Resend verification email on email address change
+ */
 export const resendVerificationEmailOnEmailChange = internalAction({
 	args: {
 		authId: v.string(),
@@ -215,9 +215,9 @@ export const resendVerificationEmailOnEmailChange = internalAction({
 	},
 });
 
-////////////////////////////////////////////////////////////
-// Authenticate with password
-////////////////////////////////////////////////////////////
+/**
+ * Authenticate with password
+ */
 export const authenticateWithPassword = action({
 	args: {
 		email: v.string(),
@@ -291,9 +291,9 @@ export const authenticateWithPassword = action({
 	},
 });
 
-////////////////////////////////////////////////////////////
-// Request password reset
-////////////////////////////////////////////////////////////
+/**
+ * Request password reset
+ */
 export const requestPasswordReset = action({
 	args: {
 		email: v.string(),
@@ -327,9 +327,9 @@ export const requestPasswordReset = action({
 	},
 });
 
-////////////////////////////////////////////////////////////
-// Reset password with token action
-////////////////////////////////////////////////////////////
+/**
+ * Reset password with token action
+ */
 export const resetPasswordWithToken = action({
 	args: {
 		token: v.string(),
@@ -360,9 +360,9 @@ export const resetPasswordWithToken = action({
 	},
 });
 
-////////////////////////////////////////////////////////////
-// Get OAuth authorization URL
-////////////////////////////////////////////////////////////
+/**
+ * Get OAuth authorization URL
+ */
 export const getOAuthAuthorizationUrl = action({
 	args: {
 		provider: v.union(v.literal("GoogleOAuth"), v.literal("GitHubOAuth")),

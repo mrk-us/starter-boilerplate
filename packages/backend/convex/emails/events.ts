@@ -2,9 +2,9 @@ import { vOnEmailEventArgs } from "@convex-dev/resend";
 import { internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
 
-////////////////////////////////////////////////////////////
-// Handle Resend webhook events
-////////////////////////////////////////////////////////////
+/**
+ * Handle Resend webhook events
+ */
 export const handleEmailEvent = internalMutation({
 	args: vOnEmailEventArgs,
 	handler: async (ctx, args) => {

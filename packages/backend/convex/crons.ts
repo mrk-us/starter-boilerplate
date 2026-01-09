@@ -12,9 +12,9 @@ crons.interval(
 	internal.crons.cleanupResend,
 );
 
-////////////////////////////////////////////////////////////
-// Cleanup old Resend emails
-////////////////////////////////////////////////////////////
+/**
+ * Cleanup old Resend emails
+ */
 export const cleanupResend = internalMutation({
 	args: {},
 	handler: async (ctx) => {

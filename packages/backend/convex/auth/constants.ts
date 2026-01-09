@@ -1,6 +1,6 @@
-////////////////////////////////////////////////////////////
-// Account creation error codes
-////////////////////////////////////////////////////////////
+/**
+ * Account creation error codes
+ */
 export const AuthErrorCode = {
 	RATE_LIMITED: "RATE_LIMITED",
 	UNAUTHORIZED: "UNAUTHORIZED",

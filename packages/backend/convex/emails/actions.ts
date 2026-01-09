@@ -11,9 +11,9 @@ import { AuthErrorCode } from "../auth/constants";
 import { rateLimiter } from "../rateLimiter";
 import { resend } from "./index";
 
-////////////////////////////////////////////////////////////
-// Send a password reset email
-////////////////////////////////////////////////////////////
+/**
+ * Send a password reset email
+ */
 export const sendPasswordResetEmail = internalAction({
 	args: {
 		passwordResetId: v.string(),
@@ -70,9 +70,9 @@ export const sendPasswordResetEmail = internalAction({
 	},
 });
 
-////////////////////////////////////////////////////////////
-// Send an email verification email
-////////////////////////////////////////////////////////////
+/**
+ * Send an email verification email
+ */
 export const sendEmailVerificationEmail = internalAction({
 	args: {
 		emailVerificationId: v.string(),
@@ -145,9 +145,9 @@ export const sendEmailVerificationEmail = internalAction({
 	},
 });
 
-////////////////////////////////////////////////////////////
-// Send a welcome email
-////////////////////////////////////////////////////////////
+/**
+ * Send a welcome email
+ */
 export const sendWelcomeEmail = internalAction({
 	args: {
 		email: v.string(),

@@ -1,8 +1,5 @@
 /**
- * Subscription tier constants
- *
- * Users are on the "free" tier by default (no Polar subscription).
- * Pro tier users have an active Polar subscription.
+ * Subscription tier
  */
 export const SubscriptionTier = {
 	FREE: "free",
@@ -13,7 +10,7 @@ export type SubscriptionTier =
 	(typeof SubscriptionTier)[keyof typeof SubscriptionTier];
 
 /**
- * Subscription interval constants
+ * Subscription interval
  */
 export const SubscriptionInterval = {
 	MONTH: "month",
@@ -24,8 +21,7 @@ export type SubscriptionInterval =
 	(typeof SubscriptionInterval)[keyof typeof SubscriptionInterval];
 
 /**
- * Product keys for referencing products in code.
- * These are the keys used in the Polar products map.
+ * Product keys
  */
 export const PRODUCT_KEYS = {
 	proMonthly: "proMonthly",
@@ -35,9 +31,9 @@ export const PRODUCT_KEYS = {
 export type ProductKey = keyof typeof PRODUCT_KEYS;
 
 /**
- * Pricing information (in cents for consistency with Polar)
+ * Pricing information (in USD cents)
  */
 export const Pricing = {
-	PRO_MONTHLY: 1200, // $12.00/month
-	PRO_YEARLY: 12000, // $120.00/year (equivalent to $10/month)
+	PRO_MONTHLY: 1200, // $12.00
+	PRO_YEARLY: 12000, // $120.00
 } as const;

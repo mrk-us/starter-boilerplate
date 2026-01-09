@@ -4,9 +4,9 @@ interface WorkOSError {
 	errors?: Array<{ code: string; message: string }>;
 }
 
-////////////////////////////////////////////////////////////
-// Get the error message from a WorkOS error
-////////////////////////////////////////////////////////////
+/**
+ * Get the error message from a WorkOS error
+ */
 export function getWorkOSErrorMessage(error: unknown): string | null {
 	const err = error as WorkOSError;
 

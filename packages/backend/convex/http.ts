@@ -6,17 +6,17 @@ import { resend } from "./emails/index";
 
 const http = httpRouter();
 
-////////////////////////////////////////////////////////////
-// Register AuthKit routes
-////////////////////////////////////////////////////////////
+/**
+ * Register AuthKit routes
+ */
 authKit.registerRoutes(http);
 
-////////////////////////////////////////////////////////////
-// Register Polar webhook routes
-// Webhook endpoint: https://<your-convex-site>.convex.site/polar/events
-////////////////////////////////////////////////////////////
+/**
+ * Register Polar webhook routes
+ * Webhook endpoint: https://<your-convex-site>.convex.site/polar/events
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-polar.registerRoutes(http as any, {
+polar.registerRoutes(http, {
 	// Custom callbacks for webhook events (optional)
 	onSubscriptionCreated: async (_ctx, event) => {
 		console.log("Subscription created:", event.data.id);
@@ -40,9 +40,9 @@ polar.registerRoutes(http as any, {
 	},
 });
 
-////////////////////////////////////////////////////////////
-// Register Resend webhook
-////////////////////////////////////////////////////////////
+/**
+ * Register Resend webhook
+ */
 http.route({
 	path: "/resend-webhook",
 	method: "POST",

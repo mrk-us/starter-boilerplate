@@ -1,6 +1,6 @@
 "use client";
 
-import { userSchema } from "@repo/backend/convex/users/validation";
+import { updateUserNameSchema } from "@repo/backend/convex/users/validation";
 import {
 	Button,
 	FieldGroup,
@@ -19,7 +19,7 @@ import {
 
 // Validation schema
 const accountFormSchema = z.object({
-	name: userSchema.shape.name,
+	name: updateUserNameSchema.shape.name,
 });
 
 type FormData = z.infer<typeof accountFormSchema>;

@@ -3,9 +3,9 @@ import { components } from "./_generated/api";
 
 // TODO: Lower rates for prod
 export const rateLimiter = new RateLimiter(components.rateLimiter, {
-	////////////////////////////////////////////////////////////
-	// Sign up rate limit: 5 attempts per hour per email
-	////////////////////////////////////////////////////////////
+	/*
+	 * Sign up rate limit: 5 attempts per hour per email
+	 */
 	signUp: {
 		kind: "token bucket",
 		rate: 50,
@@ -13,9 +13,9 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
 		capacity: 50,
 	},
 
-	////////////////////////////////////////////////////////////
-	// Email verification rate limit: 1 attempt per minute per id
-	////////////////////////////////////////////////////////////
+	/*
+	 * Email verification rate limit: 1 attempt per minute per id
+	 */
 	resendEmailVerification: {
 		kind: "token bucket",
 		rate: 1,
@@ -23,9 +23,9 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
 		capacity: 1,
 	},
 
-	////////////////////////////////////////////////////////////
-	// Email verification rate limit: 5 attempts per hour per id
-	////////////////////////////////////////////////////////////
+	/*
+	 * Email verification rate limit: 5 attempts per hour per id
+	 */
 	resendEmailVerificationMaxAttempts: {
 		kind: "token bucket",
 		rate: 5,
@@ -33,9 +33,9 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
 		capacity: 5,
 	},
 
-	////////////////////////////////////////////////////////////
-	// Sign up by IP: 10 attempts per hour
-	////////////////////////////////////////////////////////////
+	/*
+	 * Sign up by IP: 10 attempts per hour
+	 */
 	// TODO: Add IP rate limiting
 	// signUpByIp: {
 	// 	kind: "token bucket",
@@ -44,9 +44,9 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
 	// 	capacity: 5,
 	// },
 
-	////////////////////////////////////////////////////////////
-	// Sign in rate limit: 5 attempts per 30 minutes per email
-	////////////////////////////////////////////////////////////
+	/*
+	 * Sign in rate limit: 5 attempts per 30 minutes per email
+	 */
 	signIn: {
 		kind: "token bucket",
 		rate: 5,
@@ -54,9 +54,9 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
 		capacity: 5,
 	},
 
-	////////////////////////////////////////////////////////////
-	// Password reset: 3 attempts per hour per email
-	////////////////////////////////////////////////////////////
+	/*
+	 * Password reset: 3 attempts per hour per email
+	 */
 	passwordReset: {
 		kind: "token bucket",
 		rate: 3,
@@ -64,9 +64,9 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
 		capacity: 3,
 	},
 
-	////////////////////////////////////////////////////////////
-	// Account deletion: 5 attempt per day per user
-	////////////////////////////////////////////////////////////
+	/*
+	 * Account deletion: 5 attempt per day per user
+	 */
 	deleteUser: {
 		kind: "token bucket",
 		rate: 5,

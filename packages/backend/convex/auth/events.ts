@@ -4,9 +4,9 @@ import { authKit } from "./index";
 
 // WorkOS webhook event handlers
 export const { authKitEvent } = authKit.events({
-	////////////////////////////////////////////////////////////
-	// User created event
-	////////////////////////////////////////////////////////////
+	/*
+	 * User created event
+	 */
 	"user.created": async (ctx, event) => {
 		try {
 			// Create user in db
@@ -27,9 +27,9 @@ export const { authKitEvent } = authKit.events({
 		}
 	},
 
-	////////////////////////////////////////////////////////////
-	// User updated event
-	////////////////////////////////////////////////////////////
+	/*
+	 * User updated event
+	 */
 	"user.updated": async (ctx, event) => {
 		const user = await ctx.db
 			.query("users")
@@ -75,9 +75,9 @@ export const { authKitEvent } = authKit.events({
 		await ctx.db.patch(user._id, updateData);
 	},
 
-	////////////////////////////////////////////////////////////
-	// User deleted event
-	////////////////////////////////////////////////////////////
+	/*
+	 * User deleted event
+	 */
 	"user.deleted": async (ctx, event) => {
 		if (!event) {
 			throw new Error("No event data found for user.deleted");
@@ -95,9 +95,9 @@ export const { authKitEvent } = authKit.events({
 		await ctx.db.delete(user._id);
 	},
 
-	////////////////////////////////////////////////////////////
-	// Session event
-	////////////////////////////////////////////////////////////
+	/*
+	 * Session event
+	 */
 	"session.created": async (ctx, event) => {
 		if (!event) {
 			console.warn("No event data found for session.created");
@@ -143,10 +143,10 @@ export const { authKitEvent } = authKit.events({
 		}
 	},
 
-	////////////////////////////////////////////////////////////
-	// Invitation event
-	////////////////////////////////////////////////////////////
-	"invitation.created": async (ctx, event) => {
+	/*
+	 * Invitation event
+	 */
+	"invitation.created": async (_ctx, event) => {
 		if (!event) {
 			console.warn("No event data found for invitation.created");
 		}
@@ -160,9 +160,9 @@ export const { authKitEvent } = authKit.events({
 		// );
 	},
 
-	////////////////////////////////////////////////////////////
-	// Password reset event
-	////////////////////////////////////////////////////////////
+	/*
+	 * Password reset event
+	 */
 	"password_reset.created": async (ctx, event) => {
 		if (!event) {
 			console.warn("No event data found for password_reset.created");
@@ -178,9 +178,9 @@ export const { authKitEvent } = authKit.events({
 		);
 	},
 
-	////////////////////////////////////////////////////////////
-	// Email verification event
-	////////////////////////////////////////////////////////////
+	/*
+	 * Email verification event
+	 */
 	"email_verification.created": async (ctx, event) => {
 		if (!event) {
 			console.warn("No event data found for email_verification.created");

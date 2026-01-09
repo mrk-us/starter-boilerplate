@@ -15,7 +15,13 @@ type ResetPasswordResult = {
 	success: boolean;
 };
 
-export function useResetPassword() {
+type UseResetPasswordReturn = {
+	resetPassword: (data: ResetPasswordData) => Promise<ResetPasswordResult>;
+	isPending: boolean;
+	error: Error | undefined;
+};
+
+export function useResetPassword(): UseResetPasswordReturn {
 	const router = useRouter();
 
 	const resetPasswordWithToken = useConvexAction(

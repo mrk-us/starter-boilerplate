@@ -14,14 +14,6 @@ import { PRODUCT_KEYS } from "./constants";
  * - POLAR_PRODUCT_PRO_YEARLY: Polar product ID for yearly pro subscription
  */
 export const polar = new Polar<DataModel>(components.polar, {
-	/**
-	 * Get user info for Polar to link subscriptions to users.
-	 * This function is called by the Polar component to get the current user's
-	 * ID and email for subscription management.
-	 *
-	 * IMPORTANT: Uses an internal query that doesn't fetch subscription data
-	 * to avoid circular dependency.
-	 */
 	getUserInfo: async (ctx): Promise<{ userId: Id<"users">; email: string }> => {
 		const user = await ctx.runQuery(
 			internal.users.queries.getCurrentUserForBilling,
@@ -37,11 +29,7 @@ export const polar = new Polar<DataModel>(components.polar, {
 		};
 	},
 
-	/**
-	 * Map product keys to Polar product IDs.
-	 * Using environment variables allows different products for
-	 * sandbox vs production environments.
-	 */
+	// Map product keys to Polar product IDs
 	products: {
 		[PRODUCT_KEYS.proMonthly]:
 			process.env.POLAR_PRODUCT_PRO_MONTHLY ?? "missing_pro_monthly_id",
@@ -49,6 +37,3 @@ export const polar = new Polar<DataModel>(components.polar, {
 			process.env.POLAR_PRODUCT_PRO_YEARLY ?? "missing_pro_yearly_id",
 	},
 });
-
-// Re-export PRODUCT_KEYS for convenience
-export { PRODUCT_KEYS };

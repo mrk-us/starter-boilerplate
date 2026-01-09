@@ -1,5 +1,6 @@
 "use client";
 
+import { verifyEmailSchema } from "@repo/backend/convex/auth/validation";
 import { FieldGroup, Form, FormSubmit, useAppForm } from "@repo/ui/components";
 import { useSearchParams } from "next/navigation";
 import { AuthCard } from "@/features/auth/components";
@@ -7,7 +8,6 @@ import {
 	useResendVerificationEmail,
 	useVerifyEmail,
 } from "@/features/auth/hooks";
-import { verifyEmailSchema } from "@/features/auth/utils";
 import { getErrorMessage } from "@/features/shared/utils";
 
 export function VerifyEmailForm() {

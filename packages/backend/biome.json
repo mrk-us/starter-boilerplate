@@ -2,6 +2,9 @@
 	"$schema": "https://biomejs.dev/schemas/2.3.10/schema.json",
 	"root": false,
 	"extends": ["@repo/biome-config/base", "@repo/biome-config/next-js"],
+	"files": {
+		"includes": ["!convex/_generated"]
+	},
 	"overrides": [
 		{
 			"includes": ["convex/**/*"],

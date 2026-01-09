@@ -6,7 +6,15 @@ import { api } from "@repo/backend/convex/_generated/api";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 
-export function useUploadAvatar() {
+type UseUploadAvatarReturn = {
+	upload: (file: File) => Promise<{ success: boolean; key: string }>;
+	remove: () => Promise<{ success: boolean }>;
+	isUploading: boolean;
+	isRemoving: boolean;
+	isPending: boolean;
+};
+
+export function useUploadAvatar(): UseUploadAvatarReturn {
 	const [isUploading, setIsUploading] = useState(false);
 
 	// Hook from @convex-dev/r2 for uploading files to R2

@@ -9,7 +9,13 @@ type SignInData = {
 	password: string;
 };
 
-export function useSignIn() {
+type UseSignInReturn = {
+	signIn: (data: SignInData) => Promise<void>;
+	isPending: boolean;
+	error: Error | undefined;
+};
+
+export function useSignIn(): UseSignInReturn {
 	const { mutateAsync, isPending, error } = useMutation({
 		mutationFn: async (data: SignInData) => {
 			// Authenticate and save session via server action

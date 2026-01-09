@@ -13,7 +13,15 @@ type ResendVerificationEmailResult = {
 	success: boolean;
 };
 
-export function useResendVerificationEmail() {
+type UseResendVerificationEmailReturn = {
+	resendVerificationEmail: (
+		data: ResendVerificationEmailData,
+	) => Promise<ResendVerificationEmailResult>;
+	isPending: boolean;
+	error: Error | undefined;
+};
+
+export function useResendVerificationEmail(): UseResendVerificationEmailReturn {
 	const resendUserVerificationEmail = useConvexAction(
 		api.auth.actions.resendVerificationEmail,
 	);

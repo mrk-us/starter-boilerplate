@@ -1,6 +1,6 @@
-////////////////////////////////////////////////////////////
-// Extract error message from Convex HTTP client errors
-////////////////////////////////////////////////////////////
+/**
+ * Extract error message from Convex HTTP client errors
+ */
 export function extractErrorMessage(error: unknown): string {
 	const message = error instanceof Error ? error.message : String(error);
 	try {

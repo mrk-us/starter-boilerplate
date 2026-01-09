@@ -16,7 +16,13 @@ type SignUpResult = {
 	emailVerified: boolean;
 };
 
-export function useSignUp() {
+type UseSignUpReturn = {
+	signUp: (data: SignUpData) => Promise<SignUpResult>;
+	isPending: boolean;
+	error: Error | undefined;
+};
+
+export function useSignUp(): UseSignUpReturn {
 	const router = useRouter();
 
 	const createUserAccount = useConvexAction(api.auth.actions.createUserAccount);
