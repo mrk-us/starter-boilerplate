@@ -1,8 +1,11 @@
-bun test
-
 #!/bin/sh
 # Exit on any error
 set -e
+
+# Add bun to PATH if not already present
+if [ -d "$HOME/.bun/bin" ]; then
+  export PATH="$HOME/.bun/bin:$PATH"
+fi
 
 # Check if there are any staged files
 if [ -z "$(git diff --cached --name-only)" ]; then
