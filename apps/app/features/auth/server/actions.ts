@@ -1,10 +1,10 @@
 "use server";
 
 import { api } from "@repo/backend/convex/_generated/api";
+import { tryCatch } from "@repo/shared";
 import { saveSession } from "@workos-inc/authkit-nextjs";
 import { ConvexHttpClient } from "convex/browser";
 import { headers } from "next/headers";
-import { tryCatch } from "@/features/shared/utils";
 
 const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
 
@@ -23,23 +23,23 @@ export async function signIn(data: { email: string; password: string }) {
 	const protocol = host.includes("localhost") ? "http" : "https";
 	const url = `${protocol}://${host}/sign-in`;
 
-	const { data: authResult, error } = await tryCatch(
+	const { data: authResultData, error: authResultError } = await tryCatch(
 		client.action(api.auth.actions.authenticateWithPassword, {
 			email: data.email,
 			password: data.password,
 		}),
 	);
 
-	if (error) {
-		throw new Error(error.message);
+	if (authResultError) {
+		throw new Error(authResultError.message);
 	}
 
 	// Save session (tokens stay server-side)
 	await saveSession(
 		{
-			accessToken: authResult.accessToken,
-			refreshToken: authResult.refreshToken,
-			user: authResult.user,
+			accessToken: authResultData.accessToken,
+			refreshToken: authResultData.refreshToken,
+			user: authResultData.user,
 			impersonator: undefined,
 		},
 		url,
