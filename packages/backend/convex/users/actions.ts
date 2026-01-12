@@ -26,6 +26,7 @@ export const deleteUser = action({
 			});
 		}
 
+		// Rate limit
 		const { ok, retryAfter } = await rateLimiter.limit(ctx, "deleteUser", {
 			key: authUser.id,
 		});
@@ -49,7 +50,6 @@ export const deleteUser = action({
 				"Failed to cancel subscription during account deletion:",
 				cancelSubscriptionError.message,
 			);
-			// Continue with deletion - subscription may not exist
 		}
 
 		// Delete from WorkOS

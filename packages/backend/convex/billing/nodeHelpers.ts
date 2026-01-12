@@ -22,6 +22,7 @@ export const syncExistingPolarCustomer = internalAction({
 			server: process.env.POLAR_SERVER === "sandbox" ? "sandbox" : "production",
 		});
 
+		// Look up customer by email in Polar
 		const { data: customersData, error: listCustomersError } = await tryCatch(
 			polarClient.customers.list({ email }),
 		);
@@ -35,12 +36,14 @@ export const syncExistingPolarCustomer = internalAction({
 			return null;
 		}
 
+		// No existing customer found
 		if (customersData.result.items.length === 0) {
 			return null;
 		}
 
 		const polarCustomer = customersData.result.items[0];
 
+		// Sync to local db
 		const { error: insertCustomerError } = await tryCatch(
 			ctx.runMutation(components.polar.lib.insertCustomer, {
 				id: polarCustomer.id,

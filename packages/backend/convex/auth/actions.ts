@@ -31,6 +31,7 @@ export const createUserAccount = action({
 	handler: async (ctx, args) => {
 		const email = args.email.toLowerCase().trim();
 
+		// Rate limit
 		const { ok, retryAfter } = await rateLimiter.limit(ctx, "signUp", {
 			key: email,
 		});
@@ -42,6 +43,7 @@ export const createUserAccount = action({
 			});
 		}
 
+		// Check for disposable email
 		if (isDisposableEmail(email)) {
 			throw new ConvexError({
 				code: AuthErrorCode.DISPOSABLE_EMAIL,
@@ -49,6 +51,7 @@ export const createUserAccount = action({
 			});
 		}
 
+		// Create user in WorkOS
 		const { data: createUserData, error: createUserError } = await tryCatch(
 			authKit.workos.userManagement.createUser({
 				email,
@@ -118,6 +121,7 @@ async function sendVerificationEmail(ctx: ActionCtx, authId: string) {
 		});
 	}
 
+	// Rate limit per minute
 	const perMinute = await rateLimiter.limit(ctx, "resendEmailVerification", {
 		key: authId,
 	});
@@ -129,6 +133,7 @@ async function sendVerificationEmail(ctx: ActionCtx, authId: string) {
 		});
 	}
 
+	// Rate limit per hour
 	const perHour = await rateLimiter.limit(
 		ctx,
 		"resendEmailVerificationMaxAttempts",
@@ -142,6 +147,7 @@ async function sendVerificationEmail(ctx: ActionCtx, authId: string) {
 		});
 	}
 
+	// Send verification email
 	const { error: sendVerificationEmailError } = await tryCatch(
 		authKit.workos.userManagement.sendVerificationEmail({
 			userId: authId,
@@ -193,6 +199,7 @@ export const authenticateWithPassword = action({
 	handler: async (ctx, args): Promise<AuthenticateResult> => {
 		const email = args.email.toLowerCase().trim();
 
+		// Rate limit
 		const { ok, retryAfter } = await rateLimiter.limit(ctx, "signIn", {
 			key: email,
 		});
@@ -214,6 +221,7 @@ export const authenticateWithPassword = action({
 			});
 		}
 
+		// Authenticate with WorkOS
 		const { data: authResponseData, error: authResponseError } = await tryCatch(
 			authKit.workos.userManagement.authenticateWithPassword({
 				clientId,
@@ -261,6 +269,7 @@ export const requestPasswordReset = action({
 	handler: async (ctx, args) => {
 		const email = args.email.toLowerCase().trim();
 
+		// Rate limit
 		const { ok, retryAfter } = await rateLimiter.limit(ctx, "passwordReset", {
 			key: email,
 		});

@@ -32,6 +32,7 @@ export const generateCheckoutLink = action({
 	},
 	returns: v.object({ url: v.string() }),
 	handler: async (ctx, args) => {
+		// Get current user
 		const userInfo = await ctx.runQuery(
 			internal.users.queries.getCurrentUserForBilling,
 		);
@@ -60,6 +61,7 @@ export const generateCheckoutLink = action({
 			);
 		}
 
+		// Create checkout session
 		const checkout = await polar.createCheckoutSession(ctx, {
 			productIds: args.productIds,
 			userId: userInfo._id,

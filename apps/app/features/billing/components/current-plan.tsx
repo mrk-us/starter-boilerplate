@@ -20,14 +20,8 @@ function formatDate(dateString: string | null): string {
 }
 
 export function CurrentPlan() {
-	const {
-		isLoading,
-		isPro,
-		interval,
-		currentPeriodEnd,
-		cancelAtPeriodEnd,
-		status,
-	} = useSubscription();
+	const { isLoading, isPro, currentPeriodEnd, cancelAtPeriodEnd, status } =
+		useSubscription();
 
 	if (isLoading) {
 		return (
@@ -39,10 +33,6 @@ export function CurrentPlan() {
 			</Card>
 		);
 	}
-
-	const planName = isPro
-		? `Pro ${interval === "year" ? "(Yearly)" : "(Monthly)"}`
-		: "Free";
 
 	const statusBadge = isPro ? (
 		cancelAtPeriodEnd ? (

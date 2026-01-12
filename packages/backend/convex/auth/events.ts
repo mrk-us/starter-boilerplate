@@ -57,6 +57,7 @@ export const { authKitEvent } = authKit.events({
 			);
 		}
 
+		// Handle profilePictureUrl - update if present in event
 		const profilePictureUrl =
 			"profilePictureUrl" in event.data
 				? (event.data.profilePictureUrl ?? "")
@@ -93,7 +94,7 @@ export const { authKitEvent } = authKit.events({
 			.withIndex("authId", (q) => q.eq("authId", event.data.id))
 			.unique();
 
-		// User may already be deleted or never synced - this is acceptable
+		// User may already be deleted or never synced
 		if (!user) {
 			console.warn("User not found for deletion:", event.data.id);
 			return;
@@ -110,6 +111,7 @@ export const { authKitEvent } = authKit.events({
 			return;
 		}
 
+		// Fetch WorkOS user data
 		const { data: workosUserData, error: workosUserError } = await tryCatch(
 			ctx.runQuery(components.workOSAuthKit.lib.getAuthUser, {
 				id: event.data.userId,
@@ -134,7 +136,7 @@ export const { authKitEvent } = authKit.events({
 			.withIndex("authId", (q) => q.eq("authId", workosUserData.id))
 			.unique();
 
-		// Update profile picture if user exists, has no custom picture, and it changed
+		// Update profile picture if user has no custom picture and it changed
 		if (
 			user &&
 			!user.profilePictureKey &&

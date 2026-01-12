@@ -28,6 +28,7 @@ export const updateName = mutation({
 			});
 		}
 
+		// Validate input
 		const validationResult = userSchema.pick({ name: true }).safeParse({
 			name: args.name.trim(),
 		});
@@ -39,6 +40,7 @@ export const updateName = mutation({
 			});
 		}
 
+		// Find user in db
 		const user = await ctx.db
 			.query("users")
 			.withIndex("authId", (q) => q.eq("authId", authUser.id))
@@ -76,6 +78,7 @@ export const completeSetup = mutation({
 			});
 		}
 
+		// Validate input
 		const validationResult = userSchema.pick({ name: true }).safeParse({
 			name: args.name.trim(),
 		});
@@ -87,6 +90,7 @@ export const completeSetup = mutation({
 			});
 		}
 
+		// Find user in db
 		const user = await ctx.db
 			.query("users")
 			.withIndex("authId", (q) => q.eq("authId", authUser.id))
@@ -125,6 +129,7 @@ export const updateProfilePicture = mutation({
 			});
 		}
 
+		// Find user in db
 		const user = await ctx.db
 			.query("users")
 			.withIndex("authId", (q) => q.eq("authId", authUser.id))
@@ -165,6 +170,7 @@ export const removeProfilePicture = mutation({
 			});
 		}
 
+		// Find user in db
 		const user = await ctx.db
 			.query("users")
 			.withIndex("authId", (q) => q.eq("authId", authUser.id))
@@ -203,6 +209,7 @@ export const deleteUserByAuthId = internalMutation({
 			.withIndex("authId", (q) => q.eq("authId", args.authId))
 			.unique();
 
+		// User may already be deleted
 		if (!user) {
 			return { success: true, deleted: false };
 		}

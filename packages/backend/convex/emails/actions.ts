@@ -19,6 +19,7 @@ export const sendPasswordResetEmail = internalAction({
 		passwordResetId: v.string(),
 	},
 	handler: async (ctx, args) => {
+		// Rate limit
 		const { ok } = await rateLimiter.limit(ctx, "passwordReset", {
 			key: args.passwordResetId,
 		});
@@ -31,11 +32,13 @@ export const sendPasswordResetEmail = internalAction({
 			return;
 		}
 
+		// Validate input
 		if (!args.passwordResetId) {
 			console.warn("Invalid passwordResetId:", args.passwordResetId);
 			return;
 		}
 
+		// Fetch password reset from WorkOS
 		const { data: passwordResetData, error: passwordResetError } =
 			await tryCatch(
 				authKit.workos.userManagement.getPasswordReset(args.passwordResetId),
@@ -54,8 +57,10 @@ export const sendPasswordResetEmail = internalAction({
 			return;
 		}
 
+		// Build reset URL
 		const resetUrl = `${process.env.APP_URL}/reset-password?token=${passwordResetData.passwordResetToken}`;
 
+		// Send email
 		const { error: sendEmailError } = await tryCatch(
 			resend.sendEmail(ctx, {
 				from: `${process.env.APP_NAME} <${process.env.RESEND_FROM_EMAIL}>`,
@@ -83,6 +88,7 @@ export const sendEmailVerificationEmail = internalAction({
 		emailVerificationId: v.string(),
 	},
 	handler: async (ctx, args) => {
+		// Rate limit
 		const { ok } = await rateLimiter.limit(ctx, "resendEmailVerification", {
 			key: args.emailVerificationId,
 		});
@@ -95,11 +101,13 @@ export const sendEmailVerificationEmail = internalAction({
 			return;
 		}
 
+		// Validate input
 		if (!args.emailVerificationId) {
 			console.warn("Invalid emailVerificationId:", args.emailVerificationId);
 			return;
 		}
 
+		// Fetch email verification from WorkOS
 		const { data: emailVerificationData, error: emailVerificationError } =
 			await tryCatch(
 				authKit.workos.userManagement.getEmailVerification(
@@ -120,6 +128,7 @@ export const sendEmailVerificationEmail = internalAction({
 			return;
 		}
 
+		// Send email
 		const { error: sendEmailError } = await tryCatch(
 			resend.sendEmail(ctx, {
 				from: `${process.env.APP_NAME} <${process.env.RESEND_FROM_EMAIL}>`,
@@ -153,6 +162,7 @@ export const sendWelcomeEmail = internalAction({
 		name: v.string(),
 	},
 	handler: async (ctx, args) => {
+		// Validate input
 		if (!args.email || !args.name) {
 			console.warn("Invalid welcome email params:", {
 				email: args.email,
@@ -161,6 +171,7 @@ export const sendWelcomeEmail = internalAction({
 			return;
 		}
 
+		// Send email
 		const { error: sendEmailError } = await tryCatch(
 			resend.sendEmail(ctx, {
 				from: `${process.env.APP_NAME} <${process.env.RESEND_FROM_EMAIL}>`,
