@@ -2,8 +2,8 @@
 
 import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
+import { getErrorMessage } from "@repo/shared/utils";
 import { useMutation } from "@tanstack/react-query";
-import { getErrorMessage } from "@/features/shared/utils";
 
 type UseCancelSubscriptionReturn = {
 	cancel: () => Promise<void>;

@@ -1,11 +1,11 @@
 "use client";
 
 import { userSchema } from "@repo/backend/convex/users/validation";
+import { getErrorMessage } from "@repo/shared/utils";
 import { Form, FormSubmit, useAppForm } from "@repo/ui/components";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useCompleteSetup } from "@/features/setup/hooks";
-import { getErrorMessage } from "@/features/shared/utils";
 import { useCurrentUser } from "@/features/user/hooks";
 
 const nameFormSchema = z.object({

@@ -1,6 +1,7 @@
 "use client";
 
 import { verifyEmailSchema } from "@repo/backend/convex/auth/validation";
+import { getErrorMessage } from "@repo/shared/utils";
 import { FieldGroup, Form, FormSubmit, useAppForm } from "@repo/ui/components";
 import { useSearchParams } from "next/navigation";
 import { AuthCard } from "@/features/auth/components";
@@ -8,7 +9,6 @@ import {
 	useResendVerificationEmail,
 	useVerifyEmail,
 } from "@/features/auth/hooks";
-import { getErrorMessage } from "@/features/shared/utils";
 
 export function VerifyEmailForm() {
 	const searchParams = useSearchParams();

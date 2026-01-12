@@ -2,10 +2,10 @@
 
 import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
+import { getErrorMessage } from "@repo/shared/utils";
 import { useMutation } from "@tanstack/react-query";
 import { signOut } from "@workos-inc/authkit-nextjs";
 import { useRouter } from "next/navigation";
-import { getErrorMessage } from "@/features/shared/utils";
 
 type UseDeleteAccountReturn = {
 	deleteAccount: () => Promise<void>;

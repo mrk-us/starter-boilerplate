@@ -2,9 +2,9 @@
 
 import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
+import { getErrorMessage } from "@repo/shared/utils";
 import { Button, type ButtonProps } from "@repo/ui/components";
 import { useMutation } from "@tanstack/react-query";
-import { getErrorMessage } from "@/features/shared/utils";
 
 type CustomerPortalButtonProps = {
 	children: React.ReactNode;

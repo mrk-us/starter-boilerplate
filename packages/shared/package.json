@@ -8,10 +8,6 @@
 			"types": "./src/index.ts",
 			"default": "./src/index.ts"
 		},
-		"./errors": {
-			"types": "./src/errors/index.ts",
-			"default": "./src/errors/index.ts"
-		},
 		"./utils": {
 			"types": "./src/utils/index.ts",
 			"default": "./src/utils/index.ts"

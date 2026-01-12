@@ -1,5 +1,5 @@
-import type { AppError } from "../errors";
-import { parseAppError } from "../errors";
+import { parseAppError } from "./parse-errors";
+import type { AppError } from "./types";
 
 type Success<T> = { data: T; error: undefined };
 type Failure = { data: undefined; error: AppError };

@@ -1,6 +1,7 @@
 "use client";
 
 import { updateUserNameSchema } from "@repo/backend/convex/users/validation";
+import { getErrorMessage } from "@repo/shared/utils";
 import {
 	Button,
 	FieldGroup,
@@ -10,7 +11,6 @@ import {
 } from "@repo/ui/components";
 import { z } from "zod";
 import { AvatarUpload } from "@/features/shared/components";
-import { getErrorMessage } from "@/features/shared/utils";
 import {
 	useCurrentUser,
 	useDeleteAccount,

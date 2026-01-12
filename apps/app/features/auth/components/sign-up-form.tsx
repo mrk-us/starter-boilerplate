@@ -1,12 +1,12 @@
 "use client";
 
 import { signUpSchema } from "@repo/backend/convex/auth/validation";
+import { getErrorMessage } from "@repo/shared/utils";
 import { FieldGroup, Form, FormSubmit, useAppForm } from "@repo/ui/components";
 import Link from "next/link";
 import type { z } from "zod";
 import { AuthCard, OAuthButtons } from "@/features/auth/components";
 import { useSignUp } from "@/features/auth/hooks";
-import { getErrorMessage } from "@/features/shared/utils";
 
 type FormData = z.infer<typeof signUpSchema>;
 
