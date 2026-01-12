@@ -1,0 +1,403 @@
+---
+description: React Effects Best Practices
+globs: "**/*.{ts,tsx,js,jsx}"
+alwaysApply: false
+---
+
+# React Effects Best Practices
+
+## Core Principle
+
+**Effects are an escape hatch from the React paradigm.** They let you "step outside" of React and synchronize your components with external systems (non-React widgets, network, browser DOM). If there is no external system involved, you shouldn't need an Effect.
+
+Removing unnecessary Effects makes code easier to follow, faster to run, and less error-prone.
+
+## When You DON'T Need Effects
+
+### ❌ Don't Use Effects For:
+
+1. **Transforming data for rendering** - Calculate during render instead
+2. **Handling user events** - Use event handlers directly
+3. **Updating state based on props/state** - Calculate during render or use `useMemo`
+4. **Resetting state on prop changes** - Use `key` prop or calculate during render
+5. **Sharing logic between event handlers** - Extract to a function
+6. **Sending POST requests from user actions** - Use event handlers
+7. **Chains of computations** - Calculate during render or in event handlers
+8. **Notifying parent components** - Update state in event handlers
+9. **Passing data to parent** - Let parent fetch and pass down
+
+## When You DO Need Effects
+
+### ✅ Use Effects For:
+
+1. **Synchronizing with external systems** (widgets, browser APIs)
+2. **Fetching data** (though modern frameworks like react-query have better built-in mechanisms)
+3. **Subscribing to external stores** (prefer `useSyncExternalStore` when possible)
+4. **Code that should run because component was displayed** (analytics, initialization)
+
+## Common Patterns & Solutions
+
+### 1. Updating State Based on Props or State
+
+**❌ Bad:**
+```typescript
+function Form() {
+  const [firstName, setFirstName] = useState('Taylor');
+  const [lastName, setLastName] = useState('Swift');
+  const [fullName, setFullName] = useState('');
+  
+  useEffect(() => {
+    setFullName(firstName + ' ' + lastName);
+  }, [firstName, lastName]);
+}
+```
+
+**✅ Good:**
+```typescript
+function Form() {
+  const [firstName, setFirstName] = useState('Taylor');
+  const [lastName, setLastName] = useState('Swift');
+  const fullName = firstName + ' ' + lastName; // Calculate during render
+}
+```
+
+**Rule:** When something can be calculated from existing props or state, don't put it in state. Calculate it during rendering.
+
+### 2. Caching Expensive Calculations
+
+**❌ Bad:**
+```typescript
+const [visibleTodos, setVisibleTodos] = useState([]);
+useEffect(() => {
+  setVisibleTodos(getFilteredTodos(todos, filter));
+}, [todos, filter]);
+```
+
+**✅ Good:**
+```typescript
+// Simple case - calculate during render
+const visibleTodos = getFilteredTodos(todos, filter);
+
+// If expensive, use useMemo
+const visibleTodos = useMemo(
+  () => getFilteredTodos(todos, filter),
+  [todos, filter]
+);
+```
+
+**Rule:** Use `useMemo` for expensive calculations, not Effects. React Compiler can auto-memoize in many cases.
+
+### 3. Resetting State When Prop Changes
+
+**❌ Bad:**
+```typescript
+useEffect(() => {
+  setComment('');
+}, [userId]);
+```
+
+**✅ Good:**
+```typescript
+// Option 1: Use key prop
+<Profile userId={userId} key={userId} />
+
+// Option 2: Calculate during render
+const selection = items.find(item => item.id === selectedId) ?? null;
+```
+
+**Rule:** Use `key` prop to reset all state, or calculate derived state during render.
+
+### 4. Adjusting State When Prop Changes
+
+**❌ Bad:**
+```typescript
+useEffect(() => {
+  setSelection(null);
+}, [items]);
+```
+
+**✅ Good:**
+```typescript
+// Better: Calculate during render
+const selection = items.find(item => item.id === selectedId) ?? null;
+
+// Or: Adjust during render (if necessary)
+const [prevItems, setPrevItems] = useState(items);
+if (items !== prevItems) {
+  setPrevItems(items);
+  setSelection(null);
+}
+```
+
+**Rule:** Prefer calculating derived state during render. Only adjust state during render if absolutely necessary.
+
+### 5. Sharing Logic Between Event Handlers
+
+**❌ Bad:**
+```typescript
+useEffect(() => {
+  if (product.isInCart) {
+    showNotification(`Added ${product.name} to the shopping cart!`);
+  }
+}, [product]);
+
+function handleBuyClick() {
+  addToCart(product);
+}
+```
+
+**✅ Good:**
+```typescript
+function buyProduct() {
+  addToCart(product);
+  showNotification(`Added ${product.name} to the shopping cart!`);
+}
+
+function handleBuyClick() {
+  buyProduct();
+}
+
+function handleCheckoutClick() {
+  buyProduct();
+  navigateTo('/checkout');
+}
+```
+
+**Rule:** Extract shared logic to a function called from event handlers. Effects run after render, event handlers run at the right time.
+
+### 6. Sending POST Requests
+
+**❌ Bad:**
+```typescript
+const [jsonToSubmit, setJsonToSubmit] = useState(null);
+useEffect(() => {
+  if (jsonToSubmit !== null) {
+    post('/api/register', jsonToSubmit);
+  }
+}, [jsonToSubmit]);
+```
+
+**✅ Good:**
+```typescript
+function handleSubmit(e) {
+  e.preventDefault();
+  post('/api/register', { firstName, lastName });
+}
+```
+
+**Rule:** User-triggered requests belong in event handlers. Only use Effects for requests that should run when component is displayed (e.g., analytics).
+
+### 7. Chains of Computations
+
+**❌ Bad:**
+```typescript
+useEffect(() => {
+  if (card !== null && card.gold) {
+    setGoldCardCount(c => c + 1);
+  }
+}, [card]);
+
+useEffect(() => {
+  if (goldCardCount > 3) {
+    setRound(r => r + 1);
+    setGoldCardCount(0);
+  }
+}, [goldCardCount]);
+```
+
+**✅ Good:**
+```typescript
+// Calculate what you can during render
+const isGameOver = round > 5;
+
+function handlePlaceCard(nextCard) {
+  setCard(nextCard);
+  if (nextCard.gold) {
+    if (goldCardCount < 3) {
+      setGoldCardCount(goldCardCount + 1);
+    } else {
+      setGoldCardCount(0);
+      setRound(round + 1);
+      if (round === 5) {
+        alert('Good game!');
+      }
+    }
+  }
+}
+```
+
+**Rule:** Calculate derived state during render, handle state updates in event handlers. Avoid Effect chains that trigger each other.
+
+### 8. Notifying Parent Components
+
+**❌ Bad:**
+```typescript
+useEffect(() => {
+  onChange(isOn);
+}, [isOn, onChange]);
+```
+
+**✅ Good:**
+```typescript
+function updateToggle(nextIsOn) {
+  setIsOn(nextIsOn);
+  onChange(nextIsOn); // Update parent in same event handler
+}
+```
+
+**Rule:** Update both child and parent state in the same event handler. React batches updates together.
+
+### 9. Passing Data to Parent
+
+**❌ Bad:**
+```typescript
+function Child({ onFetched }) {
+  const data = useSomeAPI();
+  useEffect(() => {
+    if (data) {
+      onFetched(data);
+    }
+  }, [onFetched, data]);
+}
+```
+
+**✅ Good:**
+```typescript
+function Parent() {
+  const data = useSomeAPI();
+  return <Child data={data} />;
+}
+```
+
+**Rule:** Data flows down. Let parent fetch and pass down to child.
+
+### 10. Subscribing to External Stores
+
+**❌ Bad:**
+```typescript
+useEffect(() => {
+  function updateState() {
+    setIsOnline(navigator.onLine);
+  }
+  updateState();
+  window.addEventListener('online', updateState);
+  window.addEventListener('offline', updateState);
+  return () => {
+    window.removeEventListener('online', updateState);
+    window.removeEventListener('offline', updateState);
+  };
+}, []);
+```
+
+**✅ Good:**
+```typescript
+function useOnlineStatus() {
+  return useSyncExternalStore(
+    (callback) => {
+      window.addEventListener('online', callback);
+      window.addEventListener('offline', callback);
+      return () => {
+        window.removeEventListener('online', callback);
+        window.removeEventListener('offline', callback);
+      };
+    },
+    () => navigator.onLine,
+    () => true
+  );
+}
+```
+
+**Rule:** Prefer `useSyncExternalStore` for subscribing to external stores. It's less error-prone than manual Effects.
+
+### 11. Fetching Data
+
+**⚠️ Use Effects for data fetching, but:**
+
+1. **Always handle race conditions:**
+```typescript
+useEffect(() => {
+  let ignore = false;
+  fetchResults(query, page).then(json => {
+    if (!ignore) {
+      setResults(json);
+    }
+  });
+  return () => {
+    ignore = true;
+  };
+}, [query, page]);
+```
+
+2. **Consider modern alternatives:**
+   - Framework built-in data fetching (Next.js, Remix, etc.)
+   - Custom hooks that abstract fetching logic
+   - Libraries like React Query, SWR, etc.
+
+**Rule:** Effects are OK for data fetching, but modern frameworks provide better built-in mechanisms. Always implement cleanup to avoid race conditions.
+
+## Decision Tree
+
+```
+Need to run code?
+│
+├─ Is it caused by user interaction?
+│  ├─ Yes → Use event handler
+│  └─ No → Continue
+│
+├─ Can it be calculated from props/state?
+│  ├─ Yes → Calculate during render (use useMemo if expensive)
+│  └─ No → Continue
+│
+├─ Is it synchronizing with external system?
+│  ├─ Yes → Use Effect (or useSyncExternalStore)
+│  └─ No → Continue
+│
+├─ Should it run when component is displayed?
+│  ├─ Yes → Use Effect
+│  └─ No → Use event handler
+│
+└─ Is it updating parent state?
+   ├─ Yes → Update in event handler
+   └─ No → Reconsider - data should flow down
+```
+
+## Key Questions to Ask
+
+Before writing an Effect, ask:
+
+1. **Why does this code need to run?**
+   - User interaction? → Event handler
+   - Component displayed? → Effect
+   - Props/state changed? → Calculate during render
+
+2. **What kind of logic is it?**
+   - User-triggered? → Event handler
+   - Display-triggered? → Effect
+   - Derived from props/state? → Calculate during render
+
+3. **Is there an external system involved?**
+   - Yes → Effect might be appropriate
+   - No → Probably don't need Effect
+
+## Best Practices Summary
+
+1. **Calculate during render** - Don't store derived state, calculate it
+2. **Use `useMemo` for expensive calculations** - Not Effects
+3. **Use `key` prop to reset state** - More efficient than Effects
+4. **Event handlers for user actions** - Not Effects
+5. **Effects for external systems** - Synchronization only
+6. **Avoid Effect chains** - Calculate during render, update in handlers
+7. **Data flows down** - Parent fetches, passes to child
+8. **Update state in event handlers** - Not Effects for user interactions
+9. **Use `useSyncExternalStore`** - For external store subscriptions
+10. **Handle race conditions** - Always cleanup async Effects
+
+## Anti-Patterns to Avoid
+
+❌ **Storing derived state** - Calculate during render instead
+❌ **Effects for user events** - Use event handlers
+❌ **Effect chains** - Calculate during render, update in handlers
+❌ **Updating parent in Effects** - Update in event handlers
+❌ **Fetching without cleanup** - Always handle race conditions
+❌ **Resetting state in Effects** - Use `key` prop or calculate during render
+❌ **Sharing logic via Effects** - Extract to functions called from handlers
