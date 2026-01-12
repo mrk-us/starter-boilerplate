@@ -9,11 +9,9 @@
  */
 
 import type * as auth_actions from "../auth/actions.js";
-import type * as auth_constants from "../auth/constants.js";
 import type * as auth_events from "../auth/events.js";
 import type * as auth_index from "../auth/index.js";
 import type * as auth_types from "../auth/types.js";
-import type * as auth_utils from "../auth/utils.js";
 import type * as auth_validation from "../auth/validation.js";
 import type * as billing_actions from "../billing/actions.js";
 import type * as billing_constants from "../billing/constants.js";
@@ -28,6 +26,7 @@ import type * as emails_actions from "../emails/actions.js";
 import type * as emails_events from "../emails/events.js";
 import type * as emails_index from "../emails/index.js";
 import type * as emails_utils from "../emails/utils.js";
+import type * as errors_constants from "../errors/constants.js";
 import type * as errors_index from "../errors/index.js";
 import type * as http from "../http.js";
 import type * as r2 from "../r2.js";
@@ -47,11 +46,9 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "auth/actions": typeof auth_actions;
-  "auth/constants": typeof auth_constants;
   "auth/events": typeof auth_events;
   "auth/index": typeof auth_index;
   "auth/types": typeof auth_types;
-  "auth/utils": typeof auth_utils;
   "auth/validation": typeof auth_validation;
   "billing/actions": typeof billing_actions;
   "billing/constants": typeof billing_constants;
@@ -66,6 +63,7 @@ declare const fullApi: ApiFromModules<{
   "emails/events": typeof emails_events;
   "emails/index": typeof emails_index;
   "emails/utils": typeof emails_utils;
+  "errors/constants": typeof errors_constants;
   "errors/index": typeof errors_index;
   http: typeof http;
   r2: typeof r2;

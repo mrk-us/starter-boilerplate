@@ -1,34 +1,38 @@
+import { tryCatch } from "@repo/shared";
 import { ConvexError } from "convex/values";
 import { components, internal } from "../_generated/api";
+import { ErrorCode, UserErrorCode } from "../errors/constants";
 import { authKit } from "./index";
 
-// WorkOS webhook event handlers
+/**
+ * WorkOS webhook event handlers
+ */
 export const { authKitEvent } = authKit.events({
-	/*
-	 * User created event
+	/**
+	 * User created - sync to local db
 	 */
 	"user.created": async (ctx, event) => {
-		try {
-			// Create user in db
-			await ctx.db.insert("users", {
+		const { error: insertUserError } = await tryCatch(
+			ctx.db.insert("users", {
 				authId: event.data.id,
 				email: event.data.email,
 				name: event.data.firstName ?? "",
 				profilePictureUrl: event.data.profilePictureUrl ?? "",
 				setupCompleted: false,
-			});
-		} catch (error: unknown) {
-			console.error("Failed to create user in db:", error);
+			}),
+		);
 
+		if (insertUserError) {
+			console.error("Failed to create user in db:", insertUserError.message);
 			throw new ConvexError({
-				code: "USER_CREATE_FAILED",
-				message: "Failed to create user in db",
+				code: UserErrorCode.USER_CREATE_FAILED,
+				message: "Failed to create user",
 			});
 		}
 	},
 
-	/*
-	 * User updated event
+	/**
+	 * User updated - sync changes to local db
 	 */
 	"user.updated": async (ctx, event) => {
 		const user = await ctx.db
@@ -37,30 +41,27 @@ export const { authKitEvent } = authKit.events({
 			.unique();
 
 		if (!user) {
+			console.error("User not found for update:", event.data.id);
 			throw new ConvexError({
-				code: "USER_NOT_FOUND",
-				message: `User not found for update: ${event.data.id}`,
+				code: UserErrorCode.USER_NOT_FOUND,
+				message: "User not found",
 			});
 		}
 
-		// Verify email if changed
+		// Trigger re-verification if email changed
 		if (event.data.email !== user.email) {
 			await ctx.scheduler.runAfter(
 				0,
 				internal.auth.actions.resendVerificationEmailOnEmailChange,
-				{
-					authId: event.data.id,
-				},
+				{ authId: event.data.id },
 			);
 		}
 
-		// Handle profilePictureUrl - update if present in event (even if null)
 		const profilePictureUrl =
 			"profilePictureUrl" in event.data
 				? (event.data.profilePictureUrl ?? "")
 				: "";
 
-		// Build update object - only include profilePictureUrl if it was in the event
 		const updateData: {
 			email: string;
 			profilePictureUrl?: string | "";
@@ -75,115 +76,107 @@ export const { authKitEvent } = authKit.events({
 		await ctx.db.patch(user._id, updateData);
 	},
 
-	/*
-	 * User deleted event
+	/**
+	 * User deleted - remove from local db
 	 */
 	"user.deleted": async (ctx, event) => {
 		if (!event) {
-			throw new Error("No event data found for user.deleted");
+			console.error("No event data for user.deleted webhook");
+			throw new ConvexError({
+				code: ErrorCode.UNKNOWN,
+				message: "Invalid webhook event",
+			});
 		}
+
 		const user = await ctx.db
 			.query("users")
 			.withIndex("authId", (q) => q.eq("authId", event.data.id))
 			.unique();
+
+		// User may already be deleted or never synced - this is acceptable
 		if (!user) {
-			console.warn(
-				`User not found for deletion (already deleted or never synced) - authId: ${event.data.id}`,
-			);
+			console.warn("User not found for deletion:", event.data.id);
 			return;
 		}
+
 		await ctx.db.delete(user._id);
 	},
 
-	/*
-	 * Session event
+	/**
+	 * Session created - sync profile picture from OAuth provider
 	 */
 	"session.created": async (ctx, event) => {
-		if (!event) {
-			console.warn("No event data found for session.created");
+		if (!event?.data?.userId) {
+			return;
 		}
 
-		// Sync user profile picture from WorkOS when session is created
-		if (event.data.userId) {
-			try {
-				// Get the user from WorkOS to fetch latest profile picture
-				const workosUser = await ctx.runQuery(
-					components.workOSAuthKit.lib.getAuthUser,
-					{ id: event.data.userId },
-				);
+		const { data: workosUserData, error: workosUserError } = await tryCatch(
+			ctx.runQuery(components.workOSAuthKit.lib.getAuthUser, {
+				id: event.data.userId,
+			}),
+		);
 
-				if (!workosUser) {
-					console.log("onCreateSession", event);
-					return;
-				}
+		// Non-critical - don't fail session creation
+		if (workosUserError) {
+			console.warn(
+				"Failed to fetch WorkOS user for profile sync:",
+				workosUserError.message,
+			);
+			return;
+		}
 
-				const user = await ctx.db
-					.query("users")
-					.withIndex("authId", (q) => q.eq("authId", workosUser.id))
-					.unique();
+		if (!workosUserData) {
+			return;
+		}
 
-				// Only update if user exists, has no custom uploaded picture, and profile picture changed
-				if (
-					user &&
-					!user.profilePictureKey &&
-					workosUser.profilePictureUrl !== undefined &&
-					user.profilePictureUrl !== workosUser.profilePictureUrl
-				) {
-					await ctx.db.patch(user._id, {
-						profilePictureUrl: workosUser.profilePictureUrl ?? undefined,
-					});
-				}
-			} catch (error) {
-				// Log but don't fail - session creation should still succeed
-				console.error(
-					"Failed to sync profile picture on session creation:",
-					error,
-				);
-			}
+		const user = await ctx.db
+			.query("users")
+			.withIndex("authId", (q) => q.eq("authId", workosUserData.id))
+			.unique();
+
+		// Update profile picture if user exists, has no custom picture, and it changed
+		if (
+			user &&
+			!user.profilePictureKey &&
+			workosUserData.profilePictureUrl !== undefined &&
+			user.profilePictureUrl !== workosUserData.profilePictureUrl
+		) {
+			await ctx.db.patch(user._id, {
+				profilePictureUrl: workosUserData.profilePictureUrl ?? undefined,
+			});
 		}
 	},
 
-	/*
-	 * Invitation event
+	/**
+	 * Invitation created (placeholder for future implementation)
 	 */
-	"invitation.created": async (_ctx, event) => {
-		if (!event) {
-			console.warn("No event data found for invitation.created");
-		}
-
-		// await ctx.scheduler.runAfter(
-		// 	0,
-		// 	internal.emails.actions.sendInvitationEmail,
-		// 	{
-		// 		invitationId: event.data.id,
-		// 	},
-		// );
+	"invitation.created": async (_ctx, _event) => {
+		// TODO: Implement invitation email
 	},
 
-	/*
-	 * Password reset event
+	/**
+	 * Password reset requested - send reset email
 	 */
 	"password_reset.created": async (ctx, event) => {
 		if (!event) {
-			console.warn("No event data found for password_reset.created");
+			console.warn("No event data for password_reset.created webhook");
 			return;
 		}
 
 		await ctx.scheduler.runAfter(
 			0,
 			internal.emails.actions.sendPasswordResetEmail,
-			{
-				passwordResetId: event.data.id,
-			},
+			{ passwordResetId: event.data.id },
 		);
 	},
 
-	/*
-	 * Email verification event
+	/**
+	 * Email verification requested - send verification email
 	 */
 	"email_verification.created": async (ctx, event) => {
 		if (!event) {
-			console.warn("No event data found for email_verification.created");
+			console.warn("No event data for email_verification.created webhook");
+			return;
 		}
 
 		await ctx.scheduler.runAfter(

@@ -1,10 +1,16 @@
-import { v } from "convex/values";
+import { tryCatch } from "@repo/shared";
+import { ConvexError, v } from "convex/values";
 import { components, internal } from "../_generated/api";
 import { action, internalAction } from "../_generated/server";
+import {
+	BillingErrorCode,
+	ErrorMessage,
+	UserErrorCode,
+} from "../errors/constants";
 import { polar } from "./index";
 
 /**
- * Export Polar API functions (except generateCheckoutLink which we override)
+ * Export Polar API functions
  */
 export const {
 	changeCurrentSubscription,
@@ -15,9 +21,7 @@ export const {
 } = polar.api();
 
 /**
- * Generate checkout link with graceful handling of returning users.
- * Handles the case where a user deleted their account and signed up again
- * with the same email - syncs the existing Polar customer to local db.
+ * Generate checkout link with returning user handling
  */
 export const generateCheckoutLink = action({
 	args: {
@@ -28,22 +32,24 @@ export const generateCheckoutLink = action({
 	},
 	returns: v.object({ url: v.string() }),
 	handler: async (ctx, args) => {
-		// Get current user info
 		const userInfo = await ctx.runQuery(
 			internal.users.queries.getCurrentUserForBilling,
 		);
 
 		if (!userInfo) {
-			throw new Error("User not found - must be authenticated");
+			throw new ConvexError({
+				code: UserErrorCode.USER_NOT_FOUND,
+				message: ErrorMessage.NOT_AUTHENTICATED,
+			});
 		}
 
-		// Check if customer exists in local polar db
+		// Check if customer exists locally
 		const existingLocalCustomer = await ctx.runQuery(
 			components.polar.lib.getCustomerByUserId,
 			{ userId: userInfo._id },
 		);
 
-		// If no local customer, check Polar for existing customer and sync
+		// Sync existing Polar customer if not found locally
 		if (!existingLocalCustomer) {
 			await ctx.runAction(
 				internal.billing.nodeHelpers.syncExistingPolarCustomer,
@@ -54,7 +60,6 @@ export const generateCheckoutLink = action({
 			);
 		}
 
-		// Create checkout session - customer should exist now (or will be created)
 		const checkout = await polar.createCheckoutSession(ctx, {
 			productIds: args.productIds,
 			userId: userInfo._id,
@@ -69,27 +74,47 @@ export const generateCheckoutLink = action({
 });
 
 /**
- * Sync products from Polar (run once after setting up products)
+ * Sync products from Polar (run after setting up products)
  */
 export const syncProducts = internalAction({
 	args: {},
 	returns: v.null(),
 	handler: async (ctx) => {
-		await polar.syncProducts(ctx);
+		const { error: syncProductsError } = await tryCatch(
+			polar.syncProducts(ctx),
+		);
+
+		if (syncProductsError) {
+			console.error("Failed to sync products:", syncProductsError.message);
+			throw new ConvexError({
+				code: BillingErrorCode.PRODUCTS_SYNC_FAILED,
+				message: ErrorMessage.UNKNOWN,
+			});
+		}
+
 		return null;
 	},
 });
 
 /**
- * Manual sync products
- * Products sync automatically via webhooks, but this can be
- * used to force a sync if needed.
+ * Manual product sync (products sync automatically via webhooks)
  */
 export const syncProductsManual = internalAction({
 	args: {},
 	returns: v.null(),
 	handler: async (ctx) => {
-		await polar.syncProducts(ctx);
+		const { error: syncProductsError } = await tryCatch(
+			polar.syncProducts(ctx),
+		);
+
+		if (syncProductsError) {
+			console.error("Failed to sync products:", syncProductsError.message);
+			throw new ConvexError({
+				code: BillingErrorCode.PRODUCTS_SYNC_FAILED,
+				message: ErrorMessage.UNKNOWN,
+			});
+		}
+
 		return null;
 	},
 });

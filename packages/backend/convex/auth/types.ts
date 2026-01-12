@@ -1,4 +1,4 @@
-export type { AuthErrorCode } from "./constants";
+export type { AuthErrorCode } from "../errors/constants";
 
 export type WorkOSUser = {
 	object: "user";
