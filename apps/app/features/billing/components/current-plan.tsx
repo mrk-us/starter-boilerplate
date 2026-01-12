@@ -69,11 +69,6 @@ export function CurrentPlan() {
 			</CardHeader>
 			<CardContent>
 				<div className="space-y-3">
-					<div className="flex justify-between items-center">
-						<span className="text-white/50">Plan</span>
-						<span className="font-medium">{planName}</span>
-					</div>
-
 					{isPro && (
 						<>
 							<div className="flex justify-between items-center">

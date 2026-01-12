@@ -1,8 +1,8 @@
-interface WorkOSError {
+type WorkOSError = {
 	code?: string;
 	message?: string;
 	errors?: Array<{ code: string; message: string }>;
-}
+};
 
 /**
  * Get the error message from a WorkOS error

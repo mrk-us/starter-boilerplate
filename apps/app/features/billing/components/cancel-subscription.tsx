@@ -31,7 +31,7 @@ export function CancelSubscription() {
 	const handleCancel = async () => {
 		try {
 			// Cancel at end of period (not immediately)
-			await cancel(false);
+			await cancel();
 			setOpen(false);
 		} catch {
 			// Error is handled by the hook

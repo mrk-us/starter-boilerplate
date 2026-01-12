@@ -7,7 +7,7 @@ import type {
 /**
  * User subscription status returned by queries
  */
-export interface UserSubscriptionStatus {
+export type UserSubscriptionStatus = {
 	tier: SubscriptionTier;
 	isPro: boolean;
 	productKey: ProductKey | null;
@@ -15,15 +15,15 @@ export interface UserSubscriptionStatus {
 	currentPeriodEnd: string | null;
 	cancelAtPeriodEnd: boolean;
 	status: string | null;
-}
+};
 
 /**
  * Product information for display
  */
-export interface ProductInfo {
+export type ProductInfo = {
 	id: string;
 	name: string;
 	priceAmount: number;
 	priceCurrency: string;
 	interval: SubscriptionInterval;
-}
+};

@@ -2,6 +2,7 @@ export { BillingPage } from "./billing-page";
 export { CancelSubscription } from "./cancel-subscription";
 export { CheckoutButton } from "./checkout-button";
 export { CurrentPlan } from "./current-plan";
+export { CustomerPortalButton } from "./customer-portal-button";
 export { FreePlanCard } from "./free-plan-card";
 export { ManageSubscription } from "./manage-subscription";
 export { PlanCard } from "./plan-card";

@@ -13,7 +13,7 @@ import { AvatarUpload } from "@/features/shared/components";
 import { getErrorMessage } from "@/features/shared/utils";
 import {
 	useCurrentUser,
-	useDeleteUser,
+	useDeleteAccount,
 	useUpdateName,
 } from "@/features/user/hooks";
 
@@ -30,10 +30,10 @@ export function AccountForm() {
 	const { updateName, isPending: isUpdatingName } = useUpdateName();
 
 	const {
-		deleteUser,
+		deleteAccount,
 		isPending: isDeletingUser,
 		error: deleteUserError,
-	} = useDeleteUser();
+	} = useDeleteAccount();
 
 	const form = useAppForm({
 		defaultValues: {
@@ -74,7 +74,7 @@ export function AccountForm() {
 				</FieldGroup>
 			</Form>
 
-			<Button onClick={() => void deleteUser()} disabled={isDeletingUser}>
+			<Button onClick={() => void deleteAccount()} disabled={isDeletingUser}>
 				Delete Account
 			</Button>
 			{deleteUserError && (

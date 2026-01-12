@@ -8,7 +8,6 @@ type UseSubscriptionReturn = {
 	isAuthenticated: boolean;
 	subscription: UserSubscriptionStatus | null;
 	isPro: boolean;
-	isFree: boolean;
 	tier: UserSubscriptionStatus["tier"];
 	productKey: UserSubscriptionStatus["productKey"];
 	interval: UserSubscriptionStatus["interval"];
@@ -31,7 +30,6 @@ export function useSubscription(): UseSubscriptionReturn {
 		isAuthenticated,
 		subscription,
 		isPro,
-		isFree: !isPro,
 		tier: subscription?.tier ?? "free",
 		productKey: subscription?.productKey ?? null,
 		interval: subscription?.interval ?? null,
