@@ -2,7 +2,7 @@
 
 import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
-import { getErrorMessage } from "@repo/shared/utils";
+import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
 
 type CheckoutOptions = {
@@ -10,16 +10,10 @@ type CheckoutOptions = {
 	successUrl?: string;
 };
 
-type UseCheckoutReturn = {
-	checkout: (options: CheckoutOptions) => Promise<{ url: string }>;
-	isPending: boolean;
-	error: Error | undefined;
-};
-
 /**
  * Checkout product
  */
-export function useCheckout(): UseCheckoutReturn {
+export function useCheckout() {
 	const generateCheckoutLink = useConvexAction(
 		api.billing.actions.generateCheckoutLink,
 	);
@@ -34,7 +28,6 @@ export function useCheckout(): UseCheckoutReturn {
 			return { url };
 		},
 		onSuccess: ({ url }) => {
-			// Redirect to Polar checkout
 			window.location.href = url;
 		},
 		onError: (err) => {
@@ -42,12 +35,8 @@ export function useCheckout(): UseCheckoutReturn {
 		},
 	});
 
-	const checkout = async (options: CheckoutOptions) => {
-		return mutateAsync(options);
-	};
-
 	return {
-		checkout,
+		checkout: mutateAsync,
 		isPending,
 		error: error ? new Error(getErrorMessage(error)) : undefined,
 	};

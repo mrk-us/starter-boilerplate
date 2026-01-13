@@ -6,22 +6,13 @@ import { api } from "@repo/backend/convex/_generated/api";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 
-type UseUploadAvatarReturn = {
-	upload: (file: File) => Promise<{ success: boolean; key: string }>;
-	remove: () => Promise<{ success: boolean }>;
-	isUploading: boolean;
-	isRemoving: boolean;
-	isPending: boolean;
-};
-
-export function useUploadAvatar(): UseUploadAvatarReturn {
+export function useUploadAvatar() {
 	const [isUploading, setIsUploading] = useState(false);
 
-	// Hook from @convex-dev/r2 for uploading files to R2
-	// Pass the r2 module which exports generateUploadUrl and syncMetadata
+	// Upload files to R2
 	const uploadFile = useUploadFile(api.r2);
 
-	// Mutation to update the user's profile picture URL after upload
+	// Update user's profile picture after upload
 	const convexMutation = useConvexMutation(
 		api.users.mutations.updateProfilePicture,
 	);
@@ -31,7 +22,7 @@ export function useUploadAvatar(): UseUploadAvatarReturn {
 			mutationFn: (key: string) => convexMutation({ key }),
 		});
 
-	// Mutation to remove the profile picture
+	// Remove profile picture
 	const removeConvexMutation = useConvexMutation(
 		api.users.mutations.removeProfilePicture,
 	);
@@ -65,10 +56,10 @@ export function useUploadAvatar(): UseUploadAvatarReturn {
 					throw new Error("File size must be less than 5MB.");
 				}
 
-				// Upload the file to R2
+				// Upload to R2
 				const key = await uploadFile(file);
 
-				// Update the user's profile picture URL
+				// Update profile picture
 				await updateProfilePicture(key);
 
 				return { success: true, key };

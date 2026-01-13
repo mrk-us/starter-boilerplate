@@ -1,6 +1,6 @@
 import { ConvexError } from "convex/values";
-import type { AppError } from "./types";
-import { UNKNOWN_ERROR } from "./types";
+import { UNKNOWN_ERROR } from "../errors";
+import type { AppError } from "../errors/types";
 
 /** WorkOS error structure */
 type WorkOSErrorShape = {

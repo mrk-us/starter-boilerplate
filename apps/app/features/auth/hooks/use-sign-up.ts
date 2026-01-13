@@ -2,7 +2,7 @@
 
 import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
-import { getErrorMessage } from "@repo/shared/utils";
+import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
@@ -11,24 +11,13 @@ type SignUpData = {
 	password: string;
 };
 
-type SignUpResult = {
-	id: string;
-	emailVerified: boolean;
-};
-
-type UseSignUpReturn = {
-	signUp: (data: SignUpData) => Promise<SignUpResult>;
-	isPending: boolean;
-	error: Error | undefined;
-};
-
-export function useSignUp(): UseSignUpReturn {
+export function useSignUp() {
 	const router = useRouter();
 
 	const createUserAccount = useConvexAction(api.auth.actions.createUserAccount);
 
 	const { mutateAsync, isPending, error } = useMutation({
-		mutationFn: (data: SignUpData): Promise<SignUpResult> =>
+		mutationFn: (data: SignUpData) =>
 			createUserAccount({ email: data.email, password: data.password }),
 		onSuccess: (res) => {
 			if (res) {
@@ -40,12 +29,8 @@ export function useSignUp(): UseSignUpReturn {
 		},
 	});
 
-	const signUp = async (data: SignUpData) => {
-		return mutateAsync(data);
-	};
-
 	return {
-		signUp,
+		signUp: mutateAsync,
 		isPending,
 		error: error ? new Error(getErrorMessage(error)) : undefined,
 	};

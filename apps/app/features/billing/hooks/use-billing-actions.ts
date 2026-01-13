@@ -2,19 +2,13 @@
 
 import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
-import { getErrorMessage } from "@repo/shared/utils";
+import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
-
-type UseCancelSubscriptionReturn = {
-	cancel: () => Promise<void>;
-	isPending: boolean;
-	error: string | null;
-};
 
 /**
  * Cancel user's subscription
  */
-export function useCancelSubscription(): UseCancelSubscriptionReturn {
+export function useCancelSubscription() {
 	const cancelSubscription = useConvexAction(
 		api.billing.actions.cancelCurrentSubscription,
 	);
@@ -35,16 +29,10 @@ export function useCancelSubscription(): UseCancelSubscriptionReturn {
 	};
 }
 
-type UseChangeSubscriptionReturn = {
-	change: (productId: string) => Promise<void>;
-	isPending: boolean;
-	error: string | null;
-};
-
 /**
  * Change user's subscription
  */
-export function useChangeSubscription(): UseChangeSubscriptionReturn {
+export function useChangeSubscription() {
 	const changeSubscription = useConvexAction(
 		api.billing.actions.changeCurrentSubscription,
 	);
@@ -65,17 +53,10 @@ export function useChangeSubscription(): UseChangeSubscriptionReturn {
 	};
 }
 
-type UseBillingActionsReturn = {
-	cancel: () => Promise<void>;
-	upgrade: (productId: string) => Promise<void>;
-	isPending: boolean;
-	error: string | null;
-};
-
 /**
  * Combined hook for billing actions
  */
-export function useBillingActions(): UseBillingActionsReturn {
+export function useBillingActions() {
 	const {
 		cancel,
 		isPending: isCancelPending,

@@ -2,34 +2,20 @@
 
 import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
-import { getErrorMessage } from "@repo/shared/utils";
+import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
 
 type ResendVerificationEmailData = {
 	authId: string;
 };
 
-type ResendVerificationEmailResult = {
-	success: boolean;
-};
-
-type UseResendVerificationEmailReturn = {
-	resendVerificationEmail: (
-		data: ResendVerificationEmailData,
-	) => Promise<ResendVerificationEmailResult>;
-	isPending: boolean;
-	error: Error | undefined;
-};
-
-export function useResendVerificationEmail(): UseResendVerificationEmailReturn {
+export function useResendVerificationEmail() {
 	const resendUserVerificationEmail = useConvexAction(
 		api.auth.actions.resendVerificationEmail,
 	);
 
 	const { mutateAsync, isPending, error } = useMutation({
-		mutationFn: (
-			data: ResendVerificationEmailData,
-		): Promise<ResendVerificationEmailResult> =>
+		mutationFn: (data: ResendVerificationEmailData) =>
 			resendUserVerificationEmail({ authId: data.authId }),
 		onSuccess: (res) => {
 			if (res.success) {
@@ -41,12 +27,8 @@ export function useResendVerificationEmail(): UseResendVerificationEmailReturn {
 		},
 	});
 
-	const resendVerificationEmail = async (data: ResendVerificationEmailData) => {
-		return mutateAsync(data);
-	};
-
 	return {
-		resendVerificationEmail,
+		resendVerificationEmail: mutateAsync,
 		isPending,
 		error: error ? new Error(getErrorMessage(error)) : undefined,
 	};

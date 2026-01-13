@@ -2,43 +2,28 @@
 
 import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
-import { getErrorMessage } from "@repo/shared/utils";
+import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
 
 type ForgotPasswordData = {
 	email: string;
 };
 
-type ForgotPasswordResult = {
-	success: boolean;
-};
-
-type UseForgotPasswordReturn = {
-	forgotPassword: (data: ForgotPasswordData) => Promise<ForgotPasswordResult>;
-	isPending: boolean;
-	isSuccess: boolean;
-	error: Error | undefined;
-};
-
-export function useForgotPassword(): UseForgotPasswordReturn {
+export function useForgotPassword() {
 	const requestPasswordReset = useConvexAction(
 		api.auth.actions.requestPasswordReset,
 	);
 
 	const { mutateAsync, isPending, error, isSuccess } = useMutation({
-		mutationFn: (data: ForgotPasswordData): Promise<ForgotPasswordResult> =>
+		mutationFn: (data: ForgotPasswordData) =>
 			requestPasswordReset({ email: data.email }),
 		onError: (err) => {
 			console.error(getErrorMessage(err));
 		},
 	});
 
-	const forgotPassword = async (data: ForgotPasswordData) => {
-		return mutateAsync(data);
-	};
-
 	return {
-		forgotPassword,
+		forgotPassword: mutateAsync,
 		isPending,
 		isSuccess,
 		error: error ? new Error(getErrorMessage(error)) : undefined,

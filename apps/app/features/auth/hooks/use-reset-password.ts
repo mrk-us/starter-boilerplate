@@ -2,7 +2,7 @@
 
 import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
-import { getErrorMessage } from "@repo/shared/utils";
+import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
@@ -11,17 +11,7 @@ type ResetPasswordData = {
 	password: string;
 };
 
-type ResetPasswordResult = {
-	success: boolean;
-};
-
-type UseResetPasswordReturn = {
-	resetPassword: (data: ResetPasswordData) => Promise<ResetPasswordResult>;
-	isPending: boolean;
-	error: Error | undefined;
-};
-
-export function useResetPassword(): UseResetPasswordReturn {
+export function useResetPassword() {
 	const router = useRouter();
 
 	const resetPasswordWithToken = useConvexAction(
@@ -29,7 +19,7 @@ export function useResetPassword(): UseResetPasswordReturn {
 	);
 
 	const { mutateAsync, isPending, error } = useMutation({
-		mutationFn: (data: ResetPasswordData): Promise<ResetPasswordResult> =>
+		mutationFn: (data: ResetPasswordData) =>
 			resetPasswordWithToken({
 				token: data.token,
 				newPassword: data.password,
@@ -42,12 +32,8 @@ export function useResetPassword(): UseResetPasswordReturn {
 		},
 	});
 
-	const resetPassword = async (data: ResetPasswordData) => {
-		return mutateAsync(data);
-	};
-
 	return {
-		resetPassword,
+		resetPassword: mutateAsync,
 		isPending,
 		error: error ? new Error(getErrorMessage(error)) : undefined,
 	};

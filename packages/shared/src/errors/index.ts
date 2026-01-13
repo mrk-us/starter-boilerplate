@@ -1,10 +1,6 @@
-/**
- * Standard error shape for all app errors
- */
-export type AppError = {
-	code: string;
-	message: string;
-};
+import type { AppError } from "./types";
+
+export type { AppError } from "./types";
 
 /**
  * Default error for unknown/unhandled cases

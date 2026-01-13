@@ -2,20 +2,12 @@
 
 import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
-import { getErrorMessage } from "@repo/shared/utils";
+import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
 import { signOut } from "@workos-inc/authkit-nextjs";
 import { useRouter } from "next/navigation";
 
-type UseDeleteAccountReturn = {
-	deleteAccount: () => Promise<void>;
-	isPending: boolean;
-	isError: boolean;
-	error: string | null;
-	isSuccess: boolean;
-};
-
-export function useDeleteAccount(): UseDeleteAccountReturn {
+export function useDeleteAccount() {
 	const router = useRouter();
 
 	const deleteUser = useConvexAction(api.users.actions.deleteUser);
