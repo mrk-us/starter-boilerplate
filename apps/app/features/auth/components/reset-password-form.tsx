@@ -1,117 +1,135 @@
 "use client";
 
-import * as Clerk from "@clerk/elements/common";
-import * as SignIn from "@clerk/elements/sign-in";
-import { Button, Input, Label } from "@repo/ui/components";
+import { createPasswordSchema } from "@repo/backend/convex/auth/validation";
+import { getErrorMessage } from "@repo/shared/utils";
+import { FieldGroup, Form, FormSubmit, useAppForm } from "@repo/ui/components";
 import Link from "next/link";
-import { AuthCard } from "./auth-card";
+import { useState } from "react";
+import { z } from "zod";
+import { AuthCard } from "@/features/auth/components";
+import { useResetPassword, useVerifyResetCode } from "@/features/auth/hooks";
+
+const codeSchema = z.object({
+	code: z.string().length(6, "Code must be 6 digits"),
+});
+
+const passwordSchema = z.object({
+	password: createPasswordSchema.shape.password,
+});
+
+type CodeFormData = z.infer<typeof codeSchema>;
+type PasswordFormData = z.infer<typeof passwordSchema>;
 
 export function ResetPasswordForm() {
-	return (
-		<SignIn.Root>
-			{/* Step: Enter reset code (if user has pending reset) */}
-			<SignIn.Step name="forgot-password">
-				<AuthCard
-					title="Enter reset code"
-					description="Enter the 6-digit code sent to your email"
-					footer={
-						<p className="text-sm text-muted-foreground text-center w-full">
-							Didn't receive a code?{" "}
-							<Link
-								href="/forgot-password"
-								className="text-foreground underline underline-offset-4 hover:text-primary"
-							>
-								Try again
-							</Link>
-						</p>
-					}
-				>
-					<div className="flex flex-col gap-4">
-						<SignIn.SupportedStrategy name="reset_password_email_code">
-							<Clerk.Field name="code" className="flex flex-col gap-2">
-								<Clerk.Label asChild>
-									<Label className="sr-only">Reset code</Label>
-								</Clerk.Label>
-								<Clerk.Input asChild>
-									<Input
-										placeholder="Enter reset code"
-										autoComplete="one-time-code"
-										autoFocus
-									/>
-								</Clerk.Input>
-								<Clerk.FieldError className="text-xs text-destructive" />
-							</Clerk.Field>
+	const [step, setStep] = useState<"code" | "password">("code");
+	const { verifyCode } = useVerifyResetCode();
+	const { resetPassword } = useResetPassword();
 
-							<SignIn.Action submit asChild>
-								<Button variant="primary" className="w-full">
-									Verify code
-								</Button>
-							</SignIn.Action>
-						</SignIn.SupportedStrategy>
-					</div>
-				</AuthCard>
-			</SignIn.Step>
+	const codeForm = useAppForm({
+		defaultValues: {
+			code: "",
+		} satisfies CodeFormData as CodeFormData,
+		validators: {
+			onSubmit: codeSchema,
+			onSubmitAsync: async ({ value }) => {
+				try {
+					await verifyCode(value);
+					setStep("password");
+				} catch (error) {
+					throw getErrorMessage(error);
+				}
+			},
+		},
+	});
 
-			{/* Step: Set new password */}
-			<SignIn.Step name="reset-password">
-				<AuthCard
-					title="Set new password"
-					description="Enter your new password below"
-				>
-					<div className="flex flex-col gap-4">
-						<Clerk.Field name="password" className="flex flex-col gap-2">
-							<Clerk.Label asChild>
-								<Label className="sr-only">New password</Label>
-							</Clerk.Label>
-							<Clerk.Input asChild>
-								<Input
-									type="password"
-									placeholder="New password"
-									autoComplete="new-password"
+	const passwordForm = useAppForm({
+		defaultValues: {
+			password: "",
+		} satisfies PasswordFormData as PasswordFormData,
+		validators: {
+			onSubmit: passwordSchema,
+			onSubmitAsync: async ({ value }) => {
+				try {
+					await resetPassword(value);
+				} catch (error) {
+					throw getErrorMessage(error);
+				}
+			},
+		},
+	});
+
+	if (step === "code") {
+		return (
+			<AuthCard
+				title="Enter reset code"
+				description="Enter the 6-digit code sent to your email address"
+				footer={
+					<p className="text-sm text-muted-foreground text-center w-full">
+						Didn't receive a code?{" "}
+						<Link
+							href="/forgot-password"
+							className="text-foreground underline underline-offset-4 hover:text-primary"
+						>
+							Try again
+						</Link>
+					</p>
+				}
+			>
+				<Form form={codeForm}>
+					<FieldGroup>
+						<codeForm.AppField name="code">
+							{(field) => (
+								<field.Input
+									label="Reset code"
+									placeholder="123456"
+									autoComplete="one-time-code"
 									autoFocus
 								/>
-							</Clerk.Input>
-							<Clerk.FieldError className="text-xs text-destructive" />
-						</Clerk.Field>
+							)}
+						</codeForm.AppField>
 
-						<Clerk.Field name="confirmPassword" className="flex flex-col gap-2">
-							<Clerk.Label asChild>
-								<Label className="sr-only">Confirm password</Label>
-							</Clerk.Label>
-							<Clerk.Input asChild>
-								<Input
-									type="password"
-									placeholder="Confirm password"
-									autoComplete="new-password"
-								/>
-							</Clerk.Input>
-							<Clerk.FieldError className="text-xs text-destructive" />
-						</Clerk.Field>
+						<codeForm.Errors />
 
-						<SignIn.Action submit asChild>
-							<Button variant="primary" className="w-full">
-								Reset password
-							</Button>
-						</SignIn.Action>
-					</div>
-				</AuthCard>
-			</SignIn.Step>
+						<FormSubmit
+							label="Verify code"
+							isPending={codeForm.state.isSubmitting}
+							hasChanged={(values) => values.code !== ""}
+						/>
+					</FieldGroup>
+				</Form>
+			</AuthCard>
+		);
+	}
 
-			{/* Fallback: if no pending reset, redirect to forgot-password */}
-			<SignIn.Step name="start">
-				<AuthCard
-					title="Reset password"
-					description="No pending password reset found."
-				>
-					<Button
-						variant="primary"
-						className="w-full"
-						onClick={() => (window.location.href = "/forgot-password")}
-					>
-						Request password reset
-					</Button>
-				</AuthCard>
-			</SignIn.Step>
-		</SignIn.Root>
+	return (
+		<AuthCard
+			title="Set new password"
+			description="Enter your new password below"
+		>
+			<Form form={passwordForm}>
+				<FieldGroup>
+					<passwordForm.AppField name="password">
+						{(field) => (
+							<field.Input
+								label="New Password"
+								type="password"
+								autoCapitalize="off"
+								autoComplete="new-password"
+								autoFocus
+								placeholder="••••••••"
+							/>
+						)}
+					</passwordForm.AppField>
+
+					<passwordForm.Errors />
+
+					<FormSubmit
+						label="Reset password"
+						isPending={passwordForm.state.isSubmitting}
+						hasChanged={(values) => values.password !== ""}
+					/>
+				</FieldGroup>
+			</Form>
+		</AuthCard>
 	);
 }

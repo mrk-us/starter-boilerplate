@@ -1,16 +1,11 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { PUBLIC_ROUTE_PATTERNS } from "./lib";
 
 /**
  * Public routes that don't require authentication
  */
-const isPublicRoute = createRouteMatcher([
-	"/sign-in(.*)",
-	"/sign-up(.*)",
-	"/forgot-password(.*)",
-	"/reset-password(.*)",
-	"/verify-email(.*)",
-]);
+const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS]);
 
 /**
  * Setup/onboarding route

@@ -14,7 +14,6 @@
 	"dependencies": {
 		"@better-upload/client": "^3.0.11",
 		"@better-upload/server": "^3.0.11",
-		"@clerk/elements": "^0.24.3",
 		"@clerk/nextjs": "^6.36.7",
 		"@convex-dev/react-query": "^0.1.0",
 		"@repo/backend": "*",

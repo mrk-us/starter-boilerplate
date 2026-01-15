@@ -9,7 +9,6 @@
 export const PUBLIC_ROUTE_PATTERNS = [
 	"/sign-in(.*)",
 	"/sign-up(.*)",
-	"/test(.*)",
 	"/forgot-password(.*)",
 	"/reset-password(.*)",
 	"/verify-email(.*)",
