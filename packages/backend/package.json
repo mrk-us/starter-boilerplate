@@ -12,7 +12,6 @@
 	"dependencies": {
 		"@convex-dev/polar": "^0.7.3",
 		"@repo/shared": "*",
-		"@convex-dev/r2": "^0.8.1",
 		"@convex-dev/rate-limiter": "^0.3.2",
 		"@convex-dev/resend": "^0.2.3",
 		"@convex-dev/workos-authkit": "^0.1.4",

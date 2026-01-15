@@ -139,7 +139,7 @@ export const { authKitEvent } = authKit.events({
 		// Update profile picture if user has no custom picture and it changed
 		if (
 			user &&
-			!user.profilePictureKey &&
+			!user.profilePictureStorageId &&
 			workosUserData.profilePictureUrl !== undefined &&
 			user.profilePictureUrl !== workosUserData.profilePictureUrl
 		) {

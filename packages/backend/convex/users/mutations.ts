@@ -1,5 +1,6 @@
 import { tryCatch } from "@repo/shared";
 import { ConvexError, v } from "convex/values";
+import { internal } from "../_generated/api";
 import { internalMutation, mutation } from "../_generated/server";
 import { authKit } from "../auth/index";
 import {
@@ -8,7 +9,6 @@ import {
 	ErrorMessage,
 	UserErrorCode,
 } from "../errors/constants";
-import { r2 } from "../r2";
 import { userSchema } from "./validation";
 
 /**
@@ -108,6 +108,11 @@ export const completeSetup = mutation({
 			setupCompleted: true,
 		});
 
+		await ctx.scheduler.runAfter(0, internal.emails.actions.sendWelcomeEmail, {
+			email: user.email,
+			name: user.name,
+		});
+
 		return { success: true };
 	},
 });
@@ -117,7 +122,7 @@ export const completeSetup = mutation({
  */
 export const updateProfilePicture = mutation({
 	args: {
-		key: v.string(),
+		storageId: v.id("_storage"),
 	},
 	handler: async (ctx, args) => {
 		const authUser = await authKit.getAuthUser(ctx);
@@ -142,13 +147,13 @@ export const updateProfilePicture = mutation({
 			});
 		}
 
-		// Delete old profile picture (non-critical)
-		if (user.profilePictureKey) {
-			await tryCatch(r2.deleteObject(ctx, user.profilePictureKey));
+		// Delete old profile picture from storage (non-critical)
+		if (user.profilePictureStorageId) {
+			await tryCatch(ctx.storage.delete(user.profilePictureStorageId));
 		}
 
 		await ctx.db.patch(user._id, {
-			profilePictureKey: args.key,
+			profilePictureStorageId: args.storageId,
 		});
 
 		return { success: true };
@@ -183,13 +188,13 @@ export const removeProfilePicture = mutation({
 			});
 		}
 
-		// Delete from R2 (non-critical)
-		if (user.profilePictureKey) {
-			await tryCatch(r2.deleteObject(ctx, user.profilePictureKey));
+		// Delete from Convex storage (non-critical)
+		if (user.profilePictureStorageId) {
+			await tryCatch(ctx.storage.delete(user.profilePictureStorageId));
 		}
 
 		await ctx.db.patch(user._id, {
-			profilePictureKey: undefined,
+			profilePictureStorageId: undefined,
 		});
 
 		return { success: true };
@@ -212,6 +217,11 @@ export const deleteUserByAuthId = internalMutation({
 		// User may already be deleted
 		if (!user) {
 			return { success: true, deleted: false };
+		}
+
+		// Delete profile picture from storage (non-critical)
+		if (user.profilePictureStorageId) {
+			await tryCatch(ctx.storage.delete(user.profilePictureStorageId));
 		}
 
 		await ctx.db.delete(user._id);

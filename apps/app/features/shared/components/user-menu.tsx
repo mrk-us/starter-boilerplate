@@ -21,14 +21,14 @@ export function UserMenu() {
 			<div className="flex items-center gap-2 text-sm">
 				<Link href="/">Dashboard</Link>
 				<Link href="/account">Account</Link>
-				<Link href="/billing">Billing</Link>
+				<Link href="/account/billing">Billing</Link>
 			</div>
 
 			<div className="flex items-center gap-2">
 				<Avatar size="sm">
-					{user.profilePictureKey || user.profilePictureUrl ? (
+					{user.profilePictureUrl ? (
 						<AvatarImage
-							src={user.profilePictureUrl || user.profilePictureKey || ""}
+							src={user.profilePictureUrl || ""}
 							alt={user.name ?? "Avatar"}
 						/>
 					) : null}

@@ -6,6 +6,7 @@ import { ConditionalUserMenu } from "@/features/shared/components";
 import {
 	AuthProvider,
 	ConvexClientProvider,
+	SetupGuard,
 	ThemeProvider,
 } from "@/features/shared/providers";
 
@@ -37,8 +38,10 @@ export default function RootLayout({
 				<ConvexClientProvider>
 					<ThemeProvider>
 						<AuthProvider>
-							<ConditionalUserMenu />
-							{children}
+							<SetupGuard>
+								<ConditionalUserMenu />
+								{children}
+							</SetupGuard>
 						</AuthProvider>
 					</ThemeProvider>
 				</ConvexClientProvider>

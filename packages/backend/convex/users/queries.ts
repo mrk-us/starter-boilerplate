@@ -2,7 +2,6 @@ import { v } from "convex/values";
 import { internalQuery, query } from "../_generated/server";
 import { authKit } from "../auth/index";
 import { getSubscriptionStatusForUser } from "../billing/helpers";
-import { r2 } from "../r2";
 
 /**
  * Get current user for billing (internal - avoids circular dependency)
@@ -79,12 +78,14 @@ export const getUserByAuthId = query({
 			return null;
 		}
 
-		// Generate a presigned URL for the profile picture if it exists
-		// Priority: custom uploaded picture (R2) > WorkOS profile picture
-		let profilePictureUrl: string | undefined;
+		// Generate URL for the profile picture if it exists
+		// Priority: custom uploaded picture (Convex storage) > WorkOS profile picture
+		let profilePictureUrl: string | null | undefined;
 
-		if (user.profilePictureKey) {
-			profilePictureUrl = await r2.getUrl(user.profilePictureKey);
+		if (user.profilePictureStorageId) {
+			profilePictureUrl = await ctx.storage.getUrl(
+				user.profilePictureStorageId,
+			);
 		} else if (user.profilePictureUrl) {
 			profilePictureUrl = user.profilePictureUrl;
 		}
@@ -117,12 +118,14 @@ export const getCurrentUser = query({
 			return null;
 		}
 
-		// Generate a presigned URL for the profile picture if it exists
-		// Priority: custom uploaded picture (R2) > WorkOS profile picture
-		let profilePictureUrl: string | undefined;
+		// Generate URL for the profile picture if it exists
+		// Priority: custom uploaded picture (Convex storage) > WorkOS profile picture
+		let profilePictureUrl: string | null | undefined;
 
-		if (user.profilePictureKey) {
-			profilePictureUrl = await r2.getUrl(user.profilePictureKey);
+		if (user.profilePictureStorageId) {
+			profilePictureUrl = await ctx.storage.getUrl(
+				user.profilePictureStorageId,
+			);
 		} else if (user.profilePictureUrl) {
 			profilePictureUrl = user.profilePictureUrl;
 		}

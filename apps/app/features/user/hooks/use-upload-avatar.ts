@@ -1,89 +1,85 @@
 "use client";
 
-import { useUploadFile } from "@convex-dev/r2/react";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
+import type { Id } from "@repo/backend/convex/_generated/dataModel";
 import { useMutation } from "@tanstack/react-query";
-import { useCallback, useState } from "react";
 
 export function useUploadAvatar() {
-	const [isUploading, setIsUploading] = useState(false);
-
-	// Upload files to R2
-	const uploadFile = useUploadFile(api.r2);
-
-	// Update user's profile picture after upload
-	const convexMutation = useConvexMutation(
+	const generateUploadUrl = useConvexMutation(
+		api.storage.mutations.generateUploadUrl,
+	);
+	const updateProfilePicture = useConvexMutation(
 		api.users.mutations.updateProfilePicture,
 	);
-
-	const { mutateAsync: updateProfilePicture, isPending: isUpdating } =
-		useMutation({
-			mutationFn: (key: string) => convexMutation({ key }),
-		});
-
-	// Remove profile picture
-	const removeConvexMutation = useConvexMutation(
+	const removeProfilePicture = useConvexMutation(
 		api.users.mutations.removeProfilePicture,
 	);
 
-	const { mutateAsync: removeProfilePicture, isPending: isRemoving } =
-		useMutation({
-			mutationFn: () => removeConvexMutation({}),
-		});
-
-	const upload = useCallback(
-		async (file: File) => {
-			try {
-				setIsUploading(true);
-
-				// Validate file type
-				const validTypes = [
-					"image/jpeg",
-					"image/png",
-					"image/gif",
-					"image/webp",
-				];
-				if (!validTypes.includes(file.type)) {
-					throw new Error(
-						"Invalid file type. Please upload a JPEG, PNG, GIF, or WebP image.",
-					);
-				}
-
-				// Validate file size (max 5MB)
-				const maxSize = 5 * 1024 * 1024;
-				if (file.size > maxSize) {
-					throw new Error("File size must be less than 5MB.");
-				}
-
-				// Upload to R2
-				const key = await uploadFile(file);
-
-				// Update profile picture
-				await updateProfilePicture(key);
-
-				return { success: true, key };
-			} catch (error) {
-				throw error instanceof Error
-					? error
-					: new Error("Failed to upload avatar");
-			} finally {
-				setIsUploading(false);
+	// Upload avatar: generate URL → upload file → save storage ID
+	const {
+		mutateAsync: upload,
+		isPending: isUploading,
+		error: uploadError,
+	} = useMutation({
+		mutationFn: async (file: File) => {
+			// Validate file type
+			const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+			if (!validTypes.includes(file.type)) {
+				throw new Error(
+					"Invalid file type. Please upload a JPEG, PNG, GIF, or WebP image.",
+				);
 			}
-		},
-		[uploadFile, updateProfilePicture],
-	);
 
-	const remove = useCallback(async () => {
-		await removeProfilePicture();
-		return { success: true };
-	}, [removeProfilePicture]);
+			// Validate file size (max 5MB)
+			const maxSize = 5 * 1024 * 1024;
+			if (file.size > maxSize) {
+				throw new Error("File size must be less than 5MB.");
+			}
+
+			// Get a short-lived upload URL from Convex
+			const uploadUrl = await generateUploadUrl({});
+
+			// Upload the file directly to Convex storage
+			const result = await fetch(uploadUrl, {
+				method: "POST",
+				headers: { "Content-Type": file.type },
+				body: file,
+			});
+
+			if (!result.ok) {
+				throw new Error("Failed to upload file");
+			}
+
+			const { storageId } = (await result.json()) as {
+				storageId: Id<"_storage">;
+			};
+
+			// Save the storage ID to the user's profile
+			await updateProfilePicture({ storageId });
+
+			return { success: true, storageId };
+		},
+	});
+
+	// Remove avatar
+	const {
+		mutateAsync: remove,
+		isPending: isRemoving,
+		error: removeError,
+	} = useMutation({
+		mutationFn: async () => {
+			await removeProfilePicture({});
+			return { success: true };
+		},
+	});
 
 	return {
 		upload,
 		remove,
-		isUploading: isUploading || isUpdating,
+		isUploading,
 		isRemoving,
-		isPending: isUploading || isUpdating || isRemoving,
+		isPending: isUploading || isRemoving,
+		error: uploadError || removeError,
 	};
 }

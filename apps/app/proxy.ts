@@ -13,9 +13,6 @@ const UNAUTHENTICATED_PATHS = [
 	"/callback",
 ];
 
-/**
- * Check if a path is public (doesn't require authentication)
- */
 function isUnauthenticatedPath(pathname: string): boolean {
 	return UNAUTHENTICATED_PATHS.some(
 		(path) => pathname === path || pathname.startsWith(`${path}/`),
@@ -23,13 +20,12 @@ function isUnauthenticatedPath(pathname: string): boolean {
 }
 
 /**
- * Custom AuthKit middleware that redirects to custom
- * sign-in page instead of WorkOS hosted UI
+ * Custom AuthKit proxy that redirects to sign-in page
  */
 export default async function proxy(request: NextRequest) {
 	const { pathname } = request.nextUrl;
 
-	// Get session info using AuthKit (handles session refresh automatically)
+	// Get session info using AuthKit
 	const { session, headers } = await authkit(request, {
 		eagerAuth: true,
 	});
@@ -42,12 +38,10 @@ export default async function proxy(request: NextRequest) {
 	// Redirect unauthenticated users to sign-in
 	if (!session.user) {
 		const signInUrl = new URL("/sign-in", request.url);
-		// Store the original URL to redirect back after sign-in
 		signInUrl.searchParams.set("redirect", pathname);
 		return NextResponse.redirect(signInUrl, { headers });
 	}
 
-	// User is authenticated, continue with the request
 	return NextResponse.next({ headers });
 }
 
