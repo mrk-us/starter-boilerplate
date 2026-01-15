@@ -1,91 +1,66 @@
 "use client";
 
-import { verifyEmailSchema } from "@repo/backend/convex/auth/validation";
-import { getErrorMessage } from "@repo/shared/utils";
-import { FieldGroup, Form, FormSubmit, useAppForm } from "@repo/ui/components";
-import { useSearchParams } from "next/navigation";
-import { AuthCard } from "@/features/auth/components";
-import {
-	useResendVerificationEmail,
-	useVerifyEmail,
-} from "@/features/auth/hooks";
+import * as Clerk from "@clerk/elements/common";
+import * as SignUp from "@clerk/elements/sign-up";
+import { Button, Input, Label } from "@repo/ui/components";
+import { AuthCard } from "./auth-card";
 
 export function VerifyEmailForm() {
-	const searchParams = useSearchParams();
-	const authId = searchParams.get("authId");
-
-	if (!authId) {
-		console.error("Invalid verification link (no authId)");
-	}
-
-	const { verifyEmail } = useVerifyEmail();
-
-	const form = useAppForm({
-		defaultValues: {
-			authId: authId ?? "",
-			code: "",
-		},
-		validators: {
-			onSubmit: verifyEmailSchema,
-			onSubmitAsync: async ({ value }) => {
-				try {
-					if (!authId) {
-						console.error("Unable to process verification (no authId)");
-						return;
-					}
-					await verifyEmail(value);
-				} catch (error) {
-					throw getErrorMessage(error);
-				}
-			},
-		},
-	});
-
-	const { resendVerificationEmail } = useResendVerificationEmail();
-
-	async function handleResendVerificationEmail() {
-		if (!authId) {
-			console.error("Unable to resend verification email (no authId)");
-			return;
-		}
-
-		try {
-			const res = await resendVerificationEmail({ authId });
-
-			if (res.success) {
-				// TODO: Handle resend timer
-			}
-
-			return res;
-		} catch (error) {
-			console.error(getErrorMessage(error));
-		}
-	}
-
 	return (
-		<AuthCard
-			title="Verify your email"
-			description="Enter the 6-digit code sent to your email address"
-		>
-			<Form form={form}>
-				<FieldGroup>
-					<form.AppField name="code">
-						{(field) => <field.Input label="Code" />}
-					</form.AppField>
+		<SignUp.Root>
+			{/* Show verification step - user should have pending signup */}
+			<SignUp.Step name="verifications">
+				<SignUp.Strategy name="email_code">
+					<AuthCard
+						title="Verify your email"
+						description="Enter the 6-digit code sent to your email address"
+					>
+						<div className="flex flex-col gap-4">
+							<Clerk.Field name="code" className="flex flex-col gap-2">
+								<Clerk.Label asChild>
+									<Label className="sr-only">Verification code</Label>
+								</Clerk.Label>
+								<Clerk.Input asChild>
+									<Input
+										placeholder="Enter verification code"
+										autoComplete="one-time-code"
+										autoFocus
+									/>
+								</Clerk.Input>
+								<Clerk.FieldError className="text-xs text-destructive" />
+							</Clerk.Field>
 
-					<form.Errors />
+							<SignUp.Action submit asChild>
+								<Button variant="primary" className="w-full">
+									Verify email
+								</Button>
+							</SignUp.Action>
 
-					<FormSubmit
-						label="Verify email"
-						isPending={form.state.isSubmitting}
-						hasChanged={(values) => values.code !== ""}
-					/>
-				</FieldGroup>
-			</Form>
+							<SignUp.Action resend asChild>
+								<Button type="button" className="w-full">
+									Resend verification email
+								</Button>
+							</SignUp.Action>
+						</div>
+					</AuthCard>
+				</SignUp.Strategy>
+			</SignUp.Step>
 
-			<button type="button" onClick={handleResendVerificationEmail}>
-				Resend verification email
-			</button>
-		</AuthCard>
+			{/* Fallback: if no pending signup, show start step */}
+			<SignUp.Step name="start">
+				<AuthCard
+					title="Verify your email"
+					description="No pending verification found. Please sign up first."
+				>
+					<Button
+						variant="primary"
+						className="w-full"
+						onClick={() => (window.location.href = "/sign-up")}
+					>
+						Go to sign up
+					</Button>
+				</AuthCard>
+			</SignUp.Step>
+		</SignUp.Root>
 	);
 }

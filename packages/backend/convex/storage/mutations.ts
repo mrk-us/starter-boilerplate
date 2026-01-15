@@ -1,6 +1,6 @@
 import { ConvexError } from "convex/values";
 import { mutation } from "../_generated/server";
-import { authKit } from "../auth/index";
+import { getAuthId } from "../auth/helpers";
 import { AuthErrorCode, ErrorMessage } from "../errors/constants";
 
 /**
@@ -10,9 +10,9 @@ import { AuthErrorCode, ErrorMessage } from "../errors/constants";
 export const generateUploadUrl = mutation({
 	args: {},
 	handler: async (ctx) => {
-		const authUser = await authKit.getAuthUser(ctx);
+		const authId = await getAuthId(ctx);
 
-		if (!authUser) {
+		if (!authId) {
 			throw new ConvexError({
 				code: AuthErrorCode.NOT_AUTHENTICATED,
 				message: ErrorMessage.NOT_AUTHENTICATED,

@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { internalQuery, query } from "../_generated/server";
-import { authKit } from "../auth/index";
+import { getAuthenticatedUser, getAuthId } from "../auth/helpers";
 import { getSubscriptionStatusForUser } from "../billing/helpers";
 
 /**
@@ -11,20 +11,9 @@ import { getSubscriptionStatusForUser } from "../billing/helpers";
 export const getCurrentUserForBilling = internalQuery({
 	args: {},
 	handler: async (ctx, _args) => {
-		const authUser = await authKit.getAuthUser(ctx);
+		const user = await getAuthenticatedUser(ctx);
 
-		if (!authUser) {
-			return null;
-		}
-
-		const user = await ctx.db
-			.query("users")
-			.withIndex("authId", (q) => q.eq("authId", authUser.id))
-			.unique();
-
-		if (!user) {
-			return null;
-		}
+		if (!user) return null;
 
 		return {
 			_id: user._id,
@@ -41,15 +30,16 @@ export const getUserByEmail = internalQuery({
 		email: v.union(v.string(), v.array(v.string()), v.null()),
 	},
 	handler: async (ctx, args) => {
-		if (!args.email) {
-			return null;
-		}
+		if (!args.email) return null;
+
 		const emailToSearch = Array.isArray(args.email)
 			? args.email[0]
 			: args.email;
+
 		if (!emailToSearch || typeof emailToSearch !== "string") {
 			return null;
 		}
+
 		return await ctx.db
 			.query("users")
 			.withIndex("email", (q) => q.eq("email", emailToSearch))
@@ -65,21 +55,19 @@ export const getUserByAuthId = query({
 		authId: v.string(),
 	},
 	handler: async (ctx, args) => {
-		if (!args.authId) {
-			return null;
-		}
+		if (!args.authId) return null;
 
+		// TODO: Can we use a helper here?
 		const user = await ctx.db
 			.query("users")
 			.withIndex("authId", (q) => q.eq("authId", args.authId))
 			.unique();
 
-		if (!user) {
-			return null;
-		}
+		if (!user) return null;
 
+		// TODO: Can we use a helper here?
 		// Generate URL for the profile picture if it exists
-		// Priority: custom uploaded picture (Convex storage) > WorkOS profile picture
+		// Priority: custom uploaded picture (Convex storage) > Clerk profile picture
 		let profilePictureUrl: string | null | undefined;
 
 		if (user.profilePictureStorageId) {
@@ -100,26 +88,16 @@ export const getUserByAuthId = query({
 /**
  * Get the current db user with subscription status
  */
-export const getCurrentUser = query({
+export const getUserWithSubscription = query({
 	args: {},
 	handler: async (ctx, _args) => {
-		const authUser = await authKit.getAuthUser(ctx);
+		const user = await getAuthenticatedUser(ctx);
 
-		if (!authUser) {
-			return null;
-		}
+		if (!user) return null;
 
-		const user = await ctx.db
-			.query("users")
-			.withIndex("authId", (q) => q.eq("authId", authUser.id))
-			.unique();
-
-		if (!user) {
-			return null;
-		}
-
+		// TODO: Can we use a helper here?
 		// Generate URL for the profile picture if it exists
-		// Priority: custom uploaded picture (Convex storage) > WorkOS profile picture
+		// Priority: custom uploaded picture (Convex storage) > Clerk profile picture
 		let profilePictureUrl: string | null | undefined;
 
 		if (user.profilePictureStorageId) {

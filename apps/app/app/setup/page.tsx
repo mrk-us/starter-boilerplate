@@ -1,23 +1,26 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { CompleteSetup } from "@/features/setup/components";
-import { useCurrentUser } from "@/features/user/hooks";
 
 export default function SetupPage() {
-	const { user, isLoading } = useCurrentUser();
+	const { isLoaded, sessionClaims } = useAuth();
 	const router = useRouter();
+
+	// Check if onboarding is already complete via session claims
+	const onboardingComplete = sessionClaims?.metadata?.onboardingComplete;
 
 	// Redirect if setup already completed
 	useEffect(() => {
-		if (!isLoading && user?.setupCompleted) {
+		if (isLoaded && onboardingComplete) {
 			router.replace("/");
 		}
-	}, [isLoading, user, router]);
+	}, [isLoaded, onboardingComplete, router]);
 
 	// Show nothing while loading or redirecting
-	if (isLoading || user?.setupCompleted) {
+	if (!isLoaded || onboardingComplete) {
 		return null;
 	}
 

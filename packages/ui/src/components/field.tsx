@@ -160,7 +160,7 @@ function FieldSeparator({
 			<Separator className="flex-1 w-full" orientation="horizontal" />
 			{children && (
 				<span
-					className="text-muted-foreground px-2 w-fit"
+					className="text-muted-foreground px-2 text-xs w-fit"
 					data-slot="field-separator-content"
 				>
 					{children}

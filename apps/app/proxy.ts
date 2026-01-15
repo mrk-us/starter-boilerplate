@@ -1,49 +1,65 @@
-import { authkit } from "@workos-inc/authkit-nextjs";
-import { type NextRequest, NextResponse } from "next/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
 /**
- * Unauthenticated paths
+ * Public routes that don't require authentication
  */
-const UNAUTHENTICATED_PATHS = [
-	"/sign-in",
-	"/sign-up",
-	"/forgot-password",
-	"/reset-password",
-	"/verify-email",
-	"/callback",
-];
-
-function isUnauthenticatedPath(pathname: string): boolean {
-	return UNAUTHENTICATED_PATHS.some(
-		(path) => pathname === path || pathname.startsWith(`${path}/`),
-	);
-}
+const isPublicRoute = createRouteMatcher([
+	"/sign-in(.*)",
+	"/sign-up(.*)",
+	"/forgot-password(.*)",
+	"/reset-password(.*)",
+	"/verify-email(.*)",
+]);
 
 /**
- * Custom AuthKit proxy that redirects to sign-in page
+ * Setup/onboarding route
  */
-export default async function proxy(request: NextRequest) {
-	const { pathname } = request.nextUrl;
+const isSetupRoute = createRouteMatcher(["/setup(.*)"]);
 
-	// Get session info using AuthKit
-	const { session, headers } = await authkit(request, {
-		eagerAuth: true,
-	});
+/**
+ * Clerk middleware with custom redirect logic and onboarding enforcement
+ */
+export default clerkMiddleware(async (auth, req) => {
+	const { pathname } = req.nextUrl;
 
-	// Allow paths that don't require authentication
-	if (isUnauthenticatedPath(pathname)) {
-		return NextResponse.next({ headers });
+	// Get auth state including session claims
+	const { userId, sessionClaims } = await auth();
+
+	// Redirect away from auth pages if authenticated
+	if (userId && isPublicRoute(req)) {
+		const homeUrl = new URL("/", req.url);
+		return NextResponse.redirect(homeUrl);
 	}
 
-	// Redirect unauthenticated users to sign-in
-	if (!session.user) {
-		const signInUrl = new URL("/sign-in", request.url);
+	// Allow public routes without authentication
+	if (isPublicRoute(req)) {
+		return NextResponse.next();
+	}
+
+	// Redirect to sign-in if not authenticated
+	if (!userId) {
+		const signInUrl = new URL("/sign-in", req.url);
 		signInUrl.searchParams.set("redirect", pathname);
-		return NextResponse.redirect(signInUrl, { headers });
+		return NextResponse.redirect(signInUrl);
 	}
 
-	return NextResponse.next({ headers });
-}
+	// Allow access to setup route for authenticated users
+	if (isSetupRoute(req)) {
+		return NextResponse.next();
+	}
+
+	// Check if user has completed onboarding via session claims
+	const onboardingComplete = sessionClaims?.metadata?.onboardingComplete;
+
+	// Redirect to setup if onboarding not complete
+	if (!onboardingComplete) {
+		const setupUrl = new URL("/setup", req.url);
+		return NextResponse.redirect(setupUrl);
+	}
+
+	return NextResponse.next();
+});
 
 export const config = {
 	matcher: [

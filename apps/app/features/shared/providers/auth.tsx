@@ -4,15 +4,7 @@ import { useConvexAuth } from "convex/react";
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect } from "react";
 import { useCurrentUser } from "@/features/user/hooks";
-
-const SETUP_PATH = "/setup";
-const AUTH_PATHS = [
-	"/sign-in",
-	"/sign-up",
-	"/forgot-password",
-	"/reset-password",
-	"/verify-email",
-];
+import { isPublicPath, isSetupPath } from "@/lib/routes";
 
 /*
  * AuthProvider
@@ -25,8 +17,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const { isAuthenticated } = useConvexAuth();
 	const { user, isLoading } = useCurrentUser();
 
-	const isAuthPage = AUTH_PATHS.includes(pathname);
-	const isSetupPage = pathname === SETUP_PATH;
+	const isAuthPage = isPublicPath(pathname);
+	const isSetupPage = isSetupPath(pathname);
 	const needsSetup = isAuthenticated && user && !user.setupCompleted;
 
 	// Setup redirect (authenticated users only)
@@ -34,7 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		if (!isAuthenticated || isLoading || !user) return;
 
 		if (needsSetup && !isSetupPage) {
-			router.replace(SETUP_PATH);
+			router.replace("/setup");
 		} else if (!needsSetup && isSetupPage) {
 			router.replace("/");
 		}

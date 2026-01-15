@@ -1,14 +1,31 @@
 "use client";
 
-import { useConvexMutation } from "@convex-dev/react-query";
+import { useUser } from "@clerk/nextjs";
+import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
+import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
 
 export function useCompleteSetup() {
-	const convexMutation = useConvexMutation(api.users.mutations.completeSetup);
+	const { user } = useUser();
+	const completeSetupAction = useConvexAction(api.users.actions.completeSetup);
 
 	const { mutateAsync, isPending, isError, error, isSuccess } = useMutation({
-		mutationFn: (name: string) => convexMutation({ name }),
+		mutationFn: async (name: string) => {
+			// Call the Convex action which updates both Clerk and Convex DB
+			await completeSetupAction({ name });
+
+			// Reload Clerk user to refresh session claims
+			// This ensures the middleware sees onboardingComplete = true
+			if (user) {
+				await user.reload();
+			}
+
+			return { success: true };
+		},
+		onError: (err) => {
+			console.error("Complete setup error:", getErrorMessage(err));
+		},
 	});
 
 	return {

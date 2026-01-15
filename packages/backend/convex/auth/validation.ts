@@ -1,10 +1,12 @@
 import { z } from "zod";
 
+/**
+ * Base auth schemas for validation
+ */
 export const authSchema = z.object({
 	authId: z.string("authId is required"),
 	email: z.email("Must be a valid email address"),
 	verificationCode: z.string().length(6, "Code must be 6 digits"),
-	token: z.string().min(1, "Token is required"),
 });
 
 export const createPasswordSchema = z.object({
@@ -15,26 +17,36 @@ export const usePasswordSchema = z.object({
 	password: z.string().min(1, "Password is required"),
 });
 
+/**
+ * Sign up with email and password
+ */
 export const signUpSchema = z.object({
 	email: authSchema.shape.email,
 	password: createPasswordSchema.shape.password,
 });
 
+/**
+ * Verify email with code
+ */
 export const verifyEmailSchema = z.object({
-	authId: authSchema.shape.authId,
 	code: authSchema.shape.verificationCode,
 });
 
+/**
+ * Sign in with email and password
+ */
 export const signInSchema = z.object({
 	email: authSchema.shape.email,
 	password: usePasswordSchema.shape.password,
 });
 
+/**
+ * Forgot password - request reset code
+ */
 export const forgotPasswordSchema = z.object({
 	email: authSchema.shape.email,
 });
 
 export const resetPasswordSchema = z.object({
-	token: authSchema.shape.token,
 	password: createPasswordSchema.shape.password,
 });

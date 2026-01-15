@@ -10,14 +10,13 @@ import {
 	Tailwind,
 	Text,
 } from "@react-email/components";
-import { APP_URL } from "@repo/config";
 
 export default function VerifyEmail({
 	code,
-	authId,
+	url,
 }: {
 	code: string;
-	authId: string;
+	url: string;
 }) {
 	return (
 		<Html>
@@ -54,10 +53,7 @@ export default function VerifyEmail({
 							</Heading>
 							<Text className="text-[16px] text-secondary">
 								Enter the following code to{" "}
-								<Link href={`${APP_URL}/verify-email?authId=${authId}`}>
-									verify your email address
-								</Link>
-								.
+								<Link href={url}>verify your email address</Link>.
 							</Text>
 						</Section>
 

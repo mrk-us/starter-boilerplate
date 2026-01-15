@@ -10,19 +10,19 @@
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
+		"@clerk/backend": "^1.21.0",
 		"@convex-dev/polar": "^0.7.3",
-		"@repo/shared": "*",
 		"@convex-dev/rate-limiter": "^0.3.2",
 		"@convex-dev/resend": "^0.2.3",
-		"@convex-dev/workos-authkit": "^0.1.4",
 		"@react-email/render": "^2.0.1",
 		"@repo/email": "*",
-		"@workos-inc/node": "^7.36.0",
+		"@repo/shared": "*",
 		"convex": "^1.29.3",
 		"disposable-email-domains-js": "^1.20.0",
 		"react": "19.2.3",
 		"react-dom": "19.2.3",
 		"resend": "^6.6.0",
+		"svix": "^1.44.0",
 		"zod": "^4.3.4"
 	},
 	"devDependencies": {

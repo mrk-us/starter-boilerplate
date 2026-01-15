@@ -2,6 +2,49 @@
 
 This Turborepo starter is maintained by the Turborepo core team.
 
+## Environment Variables
+
+### Frontend (apps/app/.env.local)
+
+```bash
+# Convex
+NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
+
+# Clerk Authentication
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+```
+
+### Backend (Convex Dashboard Environment Variables)
+
+```bash
+# Clerk Authentication
+CLERK_JWT_ISSUER_DOMAIN=https://your-clerk-instance.clerk.accounts.dev
+CLERK_SECRET_KEY=sk_test_...
+CLERK_WEBHOOK_SECRET=whsec_...
+
+# Resend (for welcome emails)
+RESEND_API_KEY=re_...
+RESEND_FROM_EMAIL=noreply@yourdomain.com
+APP_NAME=YourAppName
+APP_URL=https://yourapp.com
+
+# Polar (billing)
+POLAR_ACCESS_TOKEN=...
+POLAR_WEBHOOK_SECRET=...
+```
+
+### Clerk Dashboard Setup
+
+1. Create a new Clerk application at https://dashboard.clerk.com
+2. Navigate to JWT Templates and create a "Convex" template
+3. Copy the Issuer URL for `CLERK_JWT_ISSUER_DOMAIN`
+4. Setup Webhooks:
+   - Endpoint: `https://<your-convex-site>.convex.site/clerk/webhooks`
+   - Events: `user.created`, `user.updated`, `user.deleted`
+5. Enable Email + Password authentication
+6. Configure OAuth providers (Google, GitHub) as needed
+
 ## Using this example
 
 Run the following command:

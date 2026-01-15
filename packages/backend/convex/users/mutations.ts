@@ -2,59 +2,31 @@ import { tryCatch } from "@repo/shared";
 import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation, mutation } from "../_generated/server";
-import { authKit } from "../auth/index";
-import {
-	AuthErrorCode,
-	ErrorCode,
-	ErrorMessage,
-	UserErrorCode,
-} from "../errors/constants";
-import { userSchema } from "./validation";
+import { getAuthenticatedUser } from "../auth/helpers";
+import { AuthErrorCode, ErrorMessage } from "../errors/constants";
 
 /**
- * Update the current user's name
+ * Internal mutation: Update user's name by authId
+ * Called by the updateName action after updating Clerk
  */
-export const updateName = mutation({
+export const updateNameInternal = internalMutation({
 	args: {
+		authId: v.string(),
 		name: v.string(),
 	},
 	handler: async (ctx, args) => {
-		const authUser = await authKit.getAuthUser(ctx);
-
-		if (!authUser) {
-			throw new ConvexError({
-				code: AuthErrorCode.NOT_AUTHENTICATED,
-				message: ErrorMessage.NOT_AUTHENTICATED,
-			});
-		}
-
-		// Validate input
-		const validationResult = userSchema.pick({ name: true }).safeParse({
-			name: args.name.trim(),
-		});
-
-		if (!validationResult.success) {
-			throw new ConvexError({
-				code: ErrorCode.INVALID_INPUT,
-				message: validationResult.error.issues[0]?.message ?? "Invalid name",
-			});
-		}
-
-		// Find user in db
 		const user = await ctx.db
 			.query("users")
-			.withIndex("authId", (q) => q.eq("authId", authUser.id))
+			.withIndex("authId", (q) => q.eq("authId", args.authId))
 			.unique();
 
 		if (!user) {
-			throw new ConvexError({
-				code: UserErrorCode.USER_NOT_FOUND,
-				message: ErrorMessage.USER_NOT_FOUND,
-			});
+			console.error("User not found for name update:", args.authId);
+			return { success: false };
 		}
 
 		await ctx.db.patch(user._id, {
-			name: validationResult.data.name,
+			name: args.name,
 		});
 
 		return { success: true };
@@ -62,55 +34,34 @@ export const updateName = mutation({
 });
 
 /**
- * Complete user setup with name
+ * Internal mutation: Complete user setup by authId
+ * Called by the completeSetup action after updating Clerk
  */
-export const completeSetup = mutation({
+export const completeSetupInternal = internalMutation({
 	args: {
+		authId: v.string(),
 		name: v.string(),
 	},
 	handler: async (ctx, args) => {
-		const authUser = await authKit.getAuthUser(ctx);
-
-		if (!authUser) {
-			throw new ConvexError({
-				code: AuthErrorCode.NOT_AUTHENTICATED,
-				message: ErrorMessage.NOT_AUTHENTICATED,
-			});
-		}
-
-		// Validate input
-		const validationResult = userSchema.pick({ name: true }).safeParse({
-			name: args.name.trim(),
-		});
-
-		if (!validationResult.success) {
-			throw new ConvexError({
-				code: ErrorCode.INVALID_INPUT,
-				message: validationResult.error.issues[0]?.message ?? "Invalid name",
-			});
-		}
-
-		// Find user in db
 		const user = await ctx.db
 			.query("users")
-			.withIndex("authId", (q) => q.eq("authId", authUser.id))
+			.withIndex("authId", (q) => q.eq("authId", args.authId))
 			.unique();
 
 		if (!user) {
-			throw new ConvexError({
-				code: UserErrorCode.USER_NOT_FOUND,
-				message: ErrorMessage.USER_NOT_FOUND,
-			});
+			console.error("User not found for setup completion:", args.authId);
+			return { success: false };
 		}
 
 		await ctx.db.patch(user._id, {
-			name: validationResult.data.name,
+			name: args.name,
 			setupCompleted: true,
 		});
 
+		// Send welcome email
 		await ctx.scheduler.runAfter(0, internal.emails.actions.sendWelcomeEmail, {
 			email: user.email,
-			name: user.name,
+			name: args.name,
 		});
 
 		return { success: true };
@@ -125,29 +76,16 @@ export const updateProfilePicture = mutation({
 		storageId: v.id("_storage"),
 	},
 	handler: async (ctx, args) => {
-		const authUser = await authKit.getAuthUser(ctx);
+		const user = await getAuthenticatedUser(ctx);
 
-		if (!authUser) {
+		if (!user) {
 			throw new ConvexError({
 				code: AuthErrorCode.NOT_AUTHENTICATED,
 				message: ErrorMessage.NOT_AUTHENTICATED,
 			});
 		}
 
-		// Find user in db
-		const user = await ctx.db
-			.query("users")
-			.withIndex("authId", (q) => q.eq("authId", authUser.id))
-			.unique();
-
-		if (!user) {
-			throw new ConvexError({
-				code: UserErrorCode.USER_NOT_FOUND,
-				message: ErrorMessage.USER_NOT_FOUND,
-			});
-		}
-
-		// Delete old profile picture from storage (non-critical)
+		// Delete old profile picture from storage
 		if (user.profilePictureStorageId) {
 			await tryCatch(ctx.storage.delete(user.profilePictureStorageId));
 		}
@@ -166,29 +104,16 @@ export const updateProfilePicture = mutation({
 export const removeProfilePicture = mutation({
 	args: {},
 	handler: async (ctx) => {
-		const authUser = await authKit.getAuthUser(ctx);
+		const user = await getAuthenticatedUser(ctx);
 
-		if (!authUser) {
+		if (!user) {
 			throw new ConvexError({
 				code: AuthErrorCode.NOT_AUTHENTICATED,
 				message: ErrorMessage.NOT_AUTHENTICATED,
 			});
 		}
 
-		// Find user in db
-		const user = await ctx.db
-			.query("users")
-			.withIndex("authId", (q) => q.eq("authId", authUser.id))
-			.unique();
-
-		if (!user) {
-			throw new ConvexError({
-				code: UserErrorCode.USER_NOT_FOUND,
-				message: ErrorMessage.USER_NOT_FOUND,
-			});
-		}
-
-		// Delete from Convex storage (non-critical)
+		// Delete from Convex storage
 		if (user.profilePictureStorageId) {
 			await tryCatch(ctx.storage.delete(user.profilePictureStorageId));
 		}
@@ -219,7 +144,7 @@ export const deleteUserByAuthId = internalMutation({
 			return { success: true, deleted: false };
 		}
 
-		// Delete profile picture from storage (non-critical)
+		// Delete profile picture from storage
 		if (user.profilePictureStorageId) {
 			await tryCatch(ctx.storage.delete(user.profilePictureStorageId));
 		}

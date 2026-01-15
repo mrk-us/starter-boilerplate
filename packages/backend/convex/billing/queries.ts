@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { internalQuery, query } from "../_generated/server";
-import { authKit } from "../auth/index";
+import { getAuthId } from "../auth/helpers";
 import { getSubscriptionStatusForUser } from "./helpers";
 import { subscriptionStatusSchema } from "./validation";
 
@@ -11,15 +11,13 @@ export const getCurrentSubscriptionStatus = query({
 	args: {},
 	returns: v.union(subscriptionStatusSchema, v.null()),
 	handler: async (ctx) => {
-		const authUser = await authKit.getAuthUser(ctx);
+		const authId = await getAuthId(ctx);
 
-		if (!authUser) {
-			return null;
-		}
+		if (!authId) return null;
 
 		const user = await ctx.db
 			.query("users")
-			.withIndex("authId", (q) => q.eq("authId", authUser.id))
+			.withIndex("authId", (q) => q.eq("authId", authId))
 			.unique();
 
 		if (!user) {

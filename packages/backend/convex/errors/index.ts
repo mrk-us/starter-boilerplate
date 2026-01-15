@@ -5,9 +5,9 @@ export type { AppError } from "@repo/shared";
 export {
 	AuthErrorCode,
 	BillingErrorCode,
+	ClerkErrorCode,
 	EmailErrorCode,
 	ErrorCode,
 	ErrorMessage,
 	UserErrorCode,
-	WorkOSErrorCode,
 } from "./constants";

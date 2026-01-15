@@ -1,58 +1,39 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
+import { useConvexAuth } from "convex/react";
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect } from "react";
-import { useCurrentUser } from "@/features/user/hooks";
 
-// Paths exempt from setup check
-const SETUP_EXEMPT_PATHS = [
-	"/setup",
-	"/sign-in",
-	"/sign-up",
-	"/sign-out",
-	"/forgot-password",
-	"/reset-password",
-	"/verify-email",
-	"/callback",
-];
-
-function isSetupExemptPath(pathname: string): boolean {
-	return SETUP_EXEMPT_PATHS.some(
-		(path) => pathname === path || pathname.startsWith(`${path}/`),
-	);
-}
-
+/**
+ * Client-side fallback for setup redirect
+ * Primary enforcement is done by middleware via session claims
+ * This handles edge cases like client-side navigation
+ */
 export function SetupGuard({ children }: { children: ReactNode }) {
-	const { user, isLoading, isAuthenticated } = useCurrentUser();
+	const { isAuthenticated } = useConvexAuth();
+	const { isLoaded, sessionClaims } = useAuth();
 	const pathname = usePathname();
 	const router = useRouter();
 
-	// Redirect to setup if authenticated but setup not completed
 	useEffect(() => {
-		if (isLoading) return;
-		if (!isAuthenticated) return;
-		if (!user) return;
-		if (isSetupExemptPath(pathname)) return;
+		// Wait for auth to load
+		if (!isLoaded) return;
 
-		if (!user.setupCompleted) {
+		// Not signed in - nothing to do
+		if (!isAuthenticated) return;
+
+		// Already on setup page
+		if (pathname === "/setup" || pathname.startsWith("/setup/")) return;
+
+		// Check if onboarding is complete via session claims
+		const onboardingComplete = sessionClaims?.metadata?.onboardingComplete;
+
+		// Redirect to setup if not complete
+		if (!onboardingComplete) {
 			router.replace("/setup");
 		}
-	}, [isLoading, isAuthenticated, user, pathname, router]);
-
-	// Show nothing while loading or waiting for user record (OAuth race condition)
-	if (isLoading) {
-		return null;
-	}
-
-	// Not authenticated - render children (auth pages, etc.)
-	if (!isAuthenticated) {
-		return <>{children}</>;
-	}
-
-	// Redirect is happening - show nothing
-	if (user && !user.setupCompleted && !isSetupExemptPath(pathname)) {
-		return null;
-	}
+	}, [isLoaded, isAuthenticated, sessionClaims, pathname, router]);
 
 	return <>{children}</>;
 }

@@ -8,11 +8,11 @@
  * @module
  */
 
-import type * as auth_actions from "../auth/actions.js";
-import type * as auth_events from "../auth/events.js";
+import type * as auth_helpers from "../auth/helpers.js";
 import type * as auth_index from "../auth/index.js";
-import type * as auth_types from "../auth/types.js";
 import type * as auth_validation from "../auth/validation.js";
+import type * as auth_webhookVerification from "../auth/webhookVerification.js";
+import type * as auth_webhooks from "../auth/webhooks.js";
 import type * as billing_actions from "../billing/actions.js";
 import type * as billing_constants from "../billing/constants.js";
 import type * as billing_helpers from "../billing/helpers.js";
@@ -46,11 +46,11 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  "auth/actions": typeof auth_actions;
-  "auth/events": typeof auth_events;
+  "auth/helpers": typeof auth_helpers;
   "auth/index": typeof auth_index;
-  "auth/types": typeof auth_types;
   "auth/validation": typeof auth_validation;
+  "auth/webhookVerification": typeof auth_webhookVerification;
+  "auth/webhooks": typeof auth_webhooks;
   "billing/actions": typeof billing_actions;
   "billing/constants": typeof billing_constants;
   "billing/helpers": typeof billing_helpers;
@@ -105,43 +105,6 @@ export declare const internal: FilterApi<
 >;
 
 export declare const components: {
-  workOSAuthKit: {
-    lib: {
-      enqueueWebhookEvent: FunctionReference<
-        "mutation",
-        "internal",
-        {
-          apiKey: string;
-          event: string;
-          eventId: string;
-          eventTypes?: Array<string>;
-          logLevel?: "DEBUG";
-          onEventHandle?: string;
-          updatedAt?: string;
-        },
-        any
-      >;
-      getAuthUser: FunctionReference<
-        "query",
-        "internal",
-        { id: string },
-        {
-          createdAt: string;
-          email: string;
-          emailVerified: boolean;
-          externalId?: null | string;
-          firstName?: null | string;
-          id: string;
-          lastName?: null | string;
-          lastSignInAt?: null | string;
-          locale?: null | string;
-          metadata: Record<string, any>;
-          profilePictureUrl?: null | string;
-          updatedAt: string;
-        } | null
-      >;
-    };
-  };
   resend: {
     lib: {
       cancelEmail: FunctionReference<

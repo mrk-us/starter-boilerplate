@@ -25,7 +25,8 @@ export function FormErrors() {
 				if (!errorMessage) return null;
 
 				return (
-					<div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+					<div className="relative flex flex-row gap-3 rounded-lg bg-destructive/7.5 pr-3 pl-2 py-2 my-2 font-medium text-xs text-destructive">
+						<div className="w-1 shrink-0 self-stretch rounded-full bg-destructive" />
 						{errorMessage}
 					</div>
 				);

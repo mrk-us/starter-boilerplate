@@ -1,21 +1,37 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
-import { authKit } from "./auth/index";
+import { handleClerkWebhook } from "./auth/webhooks";
 import { polar } from "./billing/index";
 import { resend } from "./emails/index";
 
 const http = httpRouter();
 
 /**
- * Register AuthKit routes
+ * Register Clerk webhook endpoint
+ * Webhook endpoint: https://<your-convex-site>.convex.site/clerk/webhooks
  */
-authKit.registerRoutes(http);
+http.route({
+	path: "/clerk/webhooks",
+	method: "POST",
+	handler: handleClerkWebhook,
+});
+
+/**
+ * Register Resend webhook
+ * Webhook endpoint: https://<your-convex-site>.convex.site/resend/webhooks
+ */
+http.route({
+	path: "/resend/webhooks",
+	method: "POST",
+	handler: httpAction(
+		async (ctx, req) => await resend.handleResendEventWebhook(ctx, req),
+	),
+});
 
 /**
  * Register Polar webhook routes
  * Webhook endpoint: https://<your-convex-site>.convex.site/polar/events
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 polar.registerRoutes(http, {
 	// Custom callbacks for webhook events (optional)
 	onSubscriptionCreated: async (_ctx, event) => {
@@ -38,17 +54,6 @@ polar.registerRoutes(http, {
 	onProductUpdated: async (_ctx, event) => {
 		console.log("Product updated:", event.data.id, event.data.name);
 	},
-});
-
-/**
- * Register Resend webhook
- */
-http.route({
-	path: "/resend-webhook",
-	method: "POST",
-	handler: httpAction(
-		async (ctx, req) => await resend.handleResendEventWebhook(ctx, req),
-	),
 });
 
 export default http;

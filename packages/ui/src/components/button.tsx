@@ -1,16 +1,17 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cn } from "@repo/ui/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
+import { Spinner } from "./spinner";
 
 const buttonVariants = cva(
-	"focus-visible:border-ring focus-visible:ring-ring/30 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 rounded-md border border-transparent bg-clip-padding text-xs/relaxed font-medium focus-visible:ring-[2px] aria-invalid:ring-[2px] [&_svg:not([class*='size-'])]:size-4 inline-flex items-center justify-center whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none shrink-0 [&_svg]:shrink-0 outline-none group/button select-none",
+	"relative focus-visible:border-ring focus-visible:ring-ring/30 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 rounded-md border border-transparent bg-clip-padding text-xs/relaxed font-medium focus-visible:ring-[2px] aria-invalid:ring-[2px] [&_svg:not([class*='size-'])]:size-4 inline-flex items-center justify-center whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none shrink-0 [&_svg]:shrink-0 outline-none group/button select-none",
 	{
 		variants: {
 			variant: {
 				default:
 					"bg-[white]/[7.5%] text-primary-foreground hover:bg-[white]/10 rounded-full text-foreground shadow-glass-secondary",
 				primary:
-					"bg-gradient-to-b from-white/90 to-white/80 text-primary-foreground hover:bg-[white]/90 rounded-full text-background shadow-glass-primary",
+					"bg-gradient-to-b from-white/90 to-white/80 hover:bg-[white]/90 rounded-full text-background *:stroke-background shadow-glass-primary",
 				outline:
 					"border-border dark:bg-input/30 hover:bg-input/50 hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
 				secondary:
@@ -44,14 +45,27 @@ function Button({
 	className,
 	variant = "default",
 	size = "default",
+	pending = false,
 	...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonPrimitive.Props &
+	VariantProps<typeof buttonVariants> & { pending?: boolean }) {
 	return (
 		<ButtonPrimitive
 			data-slot="button"
 			className={cn(buttonVariants({ variant, size, className }))}
 			{...props}
-		/>
+		>
+			{pending ? (
+				<>
+					<Spinner className="absolute left-1/2 top-1/2 m-auto -translate-x-1/2 -translate-y-1/2" />
+					<span className="opacity-0" style={{ letterSpacing: "inherit" }}>
+						{props.children}
+					</span>
+				</>
+			) : (
+				props.children
+			)}
+		</ButtonPrimitive>
 	);
 }
 
