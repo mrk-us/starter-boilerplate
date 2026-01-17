@@ -2,7 +2,8 @@
 
 import { useSignIn, useSignUp } from "@clerk/nextjs";
 import type { OAuthStrategy } from "@clerk/types";
-import { Button, FieldSeparator } from "@repo/ui/components";
+import { Button } from "@repo/ui/components";
+import { IconBrandGoogle } from "@tabler/icons-react";
 import { useCallback, useTransition } from "react";
 
 export function OAuthButtons() {
@@ -20,14 +21,14 @@ export function OAuthButtons() {
 					// If user doesn't exist, Clerk will automatically create an account
 					await signIn.authenticateWithRedirect({
 						strategy,
-						redirectUrl: "/sign-in/sso-callback",
+						redirectUrl: "/sso-callback",
 						redirectUrlComplete: "/",
 					});
 				} catch {
 					// If sign-in fails, try sign-up
 					await signUp.authenticateWithRedirect({
 						strategy,
-						redirectUrl: "/sign-up/sso-callback",
+						redirectUrl: "/sso-callback",
 						redirectUrlComplete: "/",
 					});
 				}
@@ -39,27 +40,16 @@ export function OAuthButtons() {
 	const isLoading = isPending || !signInLoaded || !signUpLoaded;
 
 	return (
-		<>
-			<FieldSeparator className="py-4">or</FieldSeparator>
-			<div className="flex flex-col gap-2">
-				<Button
-					type="button"
-					className="w-full"
-					disabled={isLoading}
-					onClick={() => handleOAuth("oauth_google")}
-				>
-					Continue with Google
-				</Button>
-				{/* <Button
-					type="button"
-					variant="outline"
-					className="w-full"
-					disabled={isLoading}
-					onClick={() => handleOAuth("oauth_github")}
-				>
-					Continue with GitHub
-				</Button> */}
-			</div>
-		</>
+		<div className="flex flex-col gap-2">
+			<Button
+				type="button"
+				className="w-full gap-2"
+				disabled={isLoading}
+				onClick={() => handleOAuth("oauth_google")}
+			>
+				<IconBrandGoogle className="size-4 fill-white/35 stroke-none" />
+				Continue with Google
+			</Button>
+		</div>
 	);
 }

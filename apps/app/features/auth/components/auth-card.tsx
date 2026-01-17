@@ -29,11 +29,11 @@ export function AuthCard({
 	return (
 		<Card
 			className={cn(
-				"flex flex-col w-full max-w-md mx-auto bg-transparent p-0 rounded-none gap-6 shadow-none",
+				"flex flex-col w-full max-w-sm mx-auto bg-transparent px-4 py-12 rounded-3xl corner-superellipse/1.2 gap-4 shadow-none",
 				className,
 			)}
 		>
-			<CardHeader className="text-center">
+			<CardHeader className="text-center pb-4">
 				<CardTitle className="text-lg">{title}</CardTitle>
 				{description && <CardDescription>{description}</CardDescription>}
 			</CardHeader>

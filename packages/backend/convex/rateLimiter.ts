@@ -49,9 +49,9 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
 	 */
 	signIn: {
 		kind: "token bucket",
-		rate: 50,
+		rate: 100,
 		period: HOUR / 2,
-		capacity: 50,
+		capacity: 100,
 	},
 
 	/*

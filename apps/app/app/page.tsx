@@ -1,5 +1,10 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
-import { ComponentExample, UserData } from "@/features/shared/components";
+import { UserData } from "@/features/shared/components";
+
+export const metadata: Metadata = {
+	title: "Dashboard",
+};
 
 export default function Home() {
 	return (
@@ -9,7 +14,6 @@ export default function Home() {
 			<Suspense fallback={<div>Loading...</div>}>
 				<UserData />
 			</Suspense>
-			<ComponentExample />
 		</main>
 	);
 }

@@ -18,10 +18,13 @@ import {
 
 type FormData = z.infer<typeof verifyEmailSchema>;
 
-export function VerifyEmailForm() {
+export function SignUpVerifyForm() {
 	const { verifyEmail } = useVerifyEmail();
-	const { resendVerificationEmail, isPending: isResending } =
-		useResendVerificationEmail();
+	const {
+		resendVerificationEmail,
+		isPending: isResending,
+		isSuccess,
+	} = useResendVerificationEmail();
 
 	const form = useAppForm({
 		defaultValues: {
@@ -67,9 +70,9 @@ export function VerifyEmailForm() {
 					<form.Errors />
 
 					<FormSubmit
+						variant="primary"
 						label="Verify email"
 						isPending={form.state.isSubmitting}
-						hasChanged={(values) => values.code !== ""}
 					/>
 				</FieldGroup>
 			</Form>
@@ -77,10 +80,11 @@ export function VerifyEmailForm() {
 			<Button
 				type="button"
 				onClick={handleResendVerificationEmail}
-				disabled={isResending}
-				className="w-full mt-2"
+				disabled={isResending || isSuccess}
+				pending={isResending}
+				className="w-full"
 			>
-				{isResending ? "Sending..." : "Resend verification email"}
+				{isSuccess ? "Code sent" : "Resend code"}
 			</Button>
 		</AuthCard>
 	);

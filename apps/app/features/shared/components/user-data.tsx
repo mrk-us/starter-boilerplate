@@ -6,7 +6,7 @@ export function UserData() {
 	const { user: currentUser } = useCurrentUser();
 
 	return (
-		<pre>
+		<pre className="truncate max-w-sm">
 			<code className="text-xs font-mono whitespace-pre-wrap">
 				{JSON.stringify(currentUser, null, 2)}
 			</code>

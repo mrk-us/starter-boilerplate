@@ -65,7 +65,8 @@ export default function VerifyEmail({
 
 						<Section className="mt-6">
 							<Text className="m-0 text-[16px] text-secondary">
-								This code will expire in 10 minutes.
+								This code will expire in 10 minutes. Do not share this code with
+								anyone.
 							</Text>
 						</Section>
 

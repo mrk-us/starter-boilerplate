@@ -6,8 +6,10 @@ export default async function AuthLayout({
 	children: ReactNode;
 }) {
 	return (
-		<div className="flex min-h-screen flex-col items-center justify-center p-6 bg-surface">
-			<div className="w-full max-w-sm">{children}</div>
+		<div className="flex flex-row items-center size-screen bg-surface *:w-full *:flex-1 p-5 h-svh">
+			<div className="">{children}</div>
+
+			<div className="bg-page self-stretch hidden lg:block rounded-3xl corner-superellipse/1.2 shadow-glass-secondary-elevated"></div>
 		</div>
 	);
 }

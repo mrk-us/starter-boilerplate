@@ -1,6 +1,6 @@
 "use client";
 
-import { signUpSchema } from "@repo/backend/convex/auth/validation";
+import { authSchema } from "@repo/backend/convex/auth/validation";
 import { getErrorMessage } from "@repo/shared/utils";
 import {
 	FieldGroup,
@@ -10,27 +10,28 @@ import {
 	useAppForm,
 } from "@repo/ui/components";
 import Link from "next/link";
-import type { z } from "zod";
+import { z } from "zod";
 import { AuthCard, OAuthButtons } from "@/features/auth/components";
-import { useSignUp } from "@/features/auth/hooks";
+import { useSignInEmail } from "@/features/auth/hooks";
 
-const signUpEmailPasswordSchema = signUpSchema.omit({ code: true });
+const signInEmailSchema = z.object({
+	email: authSchema.shape.email,
+});
 
-type FormData = z.infer<typeof signUpEmailPasswordSchema>;
+type FormData = z.infer<typeof signInEmailSchema>;
 
-export function SignUpForm() {
-	const { signUp } = useSignUp();
+export function SignInEmailForm() {
+	const { validateEmail } = useSignInEmail();
 
 	const form = useAppForm({
 		defaultValues: {
 			email: "",
-			password: "",
 		} satisfies FormData as FormData,
 		validators: {
-			onSubmit: signUpEmailPasswordSchema,
+			onSubmit: signInEmailSchema,
 			onSubmitAsync: async ({ value }) => {
 				try {
-					await signUp(value);
+					await validateEmail(value);
 				} catch (error) {
 					throw getErrorMessage(error);
 				}
@@ -40,21 +41,21 @@ export function SignUpForm() {
 
 	return (
 		<AuthCard
-			title="Create an account"
+			title="Sign in"
 			footer={
 				<p className="text-xs text-muted-foreground text-center w-full">
 					Don't have an account?{" "}
 					<Link
-						href="/sign-in"
+						href="/sign-up"
 						className="text-foreground hover:underline hover:underline-offset-2"
 					>
-						Sign in
+						Sign up
 					</Link>
 				</p>
 			}
 		>
 			<Form form={form} className="space-y-6">
-				<FieldGroup className="gap-1">
+				<FieldGroup>
 					<form.AppField name="email">
 						{(field) => (
 							<field.Input
@@ -68,27 +69,14 @@ export function SignUpForm() {
 							/>
 						)}
 					</form.AppField>
-
-					<form.AppField name="password">
-						{(field) => (
-							<field.Input
-								hideLabel
-								label="Password"
-								placeholder="Enter a strong password"
-								type="password"
-								autoCapitalize="off"
-								autoComplete="new-password"
-							/>
-						)}
-					</form.AppField>
 				</FieldGroup>
 
 				<form.Errors />
 
 				<FormSubmit
-					variant="primary"
-					label="Create account"
+					label="Continue"
 					isPending={form.state.isSubmitting}
+					variant="primary"
 					className="w-full"
 				/>
 			</Form>

@@ -6,6 +6,7 @@ const envAppUrl = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "";
 const normalizedEnvAppUrl = envAppUrl.replace(/\/$/, "");
 
 export const APP_NAME = "Unremarkable";
+export const APP_DESCRIPTION = "Unremarkable is the best way to do nothing.";
 
 // Important for emails: if this is empty, links become relative ("/verify-email?..."),
 // and some clients (e.g. Apple Mail) rewrite them to internal schemes like `x-webdoc://`.

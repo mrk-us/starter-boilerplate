@@ -1,10 +1,15 @@
+import { cn } from "@repo/ui/lib/utils";
 import { useFormContext } from "./hooks";
+
+type FormErrorsProps = {
+	className?: string;
+};
 
 type FormState = {
 	errorMap: Record<string, unknown>;
 };
 
-export function FormErrors() {
+export function FormErrors({ className }: FormErrorsProps) {
 	const form = useFormContext();
 
 	const formApi = form as {
@@ -25,7 +30,12 @@ export function FormErrors() {
 				if (!errorMessage) return null;
 
 				return (
-					<div className="relative flex flex-row gap-3 rounded-lg bg-destructive/7.5 pr-3 pl-2 py-2 my-2 font-medium text-xs text-destructive">
+					<div
+						className={cn(
+							"relative flex flex-row gap-3 rounded-lg bg-destructive/7.5 pr-3 pl-2 py-2 font-medium text-xs text-destructive",
+							className,
+						)}
+					>
 						<div className="w-1 shrink-0 self-stretch rounded-full bg-destructive" />
 						{errorMessage}
 					</div>

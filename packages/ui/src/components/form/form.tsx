@@ -24,6 +24,7 @@ export function Form({ children, form, onSubmit, ...formProps }: FormProps) {
 				}
 			}}
 			{...formProps}
+			noValidate
 		>
 			<form.AppForm>{children}</form.AppForm>
 		</form>

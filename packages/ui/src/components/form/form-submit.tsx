@@ -60,7 +60,12 @@ export function FormSubmit({
 					(hasChanged !== undefined && !hasChangedValue);
 
 				return (
-					<Button type="submit" disabled={disabled} {...buttonProps}>
+					<Button
+						type="submit"
+						disabled={disabled}
+						pending={isSubmitting}
+						{...buttonProps}
+					>
 						{label}
 					</Button>
 				);
