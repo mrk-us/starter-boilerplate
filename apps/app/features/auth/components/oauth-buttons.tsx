@@ -1,6 +1,6 @@
 "use client";
 
-import { useSignIn, useSignUp } from "@clerk/nextjs";
+import { useSignUp } from "@clerk/nextjs";
 import type { OAuthStrategy } from "@clerk/types";
 import { Button } from "@repo/ui/components";
 import { IconBrandGoogle } from "@tabler/icons-react";
@@ -8,36 +8,26 @@ import { useCallback, useTransition } from "react";
 
 export function OAuthButtons() {
 	const [isPending, startTransition] = useTransition();
-	const { signIn, isLoaded: signInLoaded } = useSignIn();
-	const { signUp, isLoaded: signUpLoaded } = useSignUp();
+	const { signUp, isLoaded } = useSignUp();
 
 	const handleOAuth = useCallback(
 		(strategy: OAuthStrategy) => {
-			if (!signInLoaded || !signUpLoaded) return;
+			if (!isLoaded || !signUp) return;
 
 			startTransition(async () => {
-				try {
-					// Try to sign in with OAuth
-					// If user doesn't exist, Clerk will automatically create an account
-					await signIn.authenticateWithRedirect({
-						strategy,
-						redirectUrl: "/sso-callback",
-						redirectUrlComplete: "/",
-					});
-				} catch {
-					// If sign-in fails, try sign-up
-					await signUp.authenticateWithRedirect({
-						strategy,
-						redirectUrl: "/sso-callback",
-						redirectUrlComplete: "/",
-					});
-				}
+				// Use signUp for OAuth - it handles both new and existing users
+				// via Clerk's account linking when the email already exists
+				await signUp.authenticateWithRedirect({
+					strategy,
+					redirectUrl: "/sso-callback",
+					redirectUrlComplete: "/",
+				});
 			});
 		},
-		[signIn, signUp, signInLoaded, signUpLoaded],
+		[signUp, isLoaded],
 	);
 
-	const isLoading = isPending || !signInLoaded || !signUpLoaded;
+	const isLoading = isPending || !isLoaded;
 
 	return (
 		<div className="flex flex-col gap-2">

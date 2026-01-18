@@ -3,7 +3,7 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation, mutation } from "../_generated/server";
 import { getAuthenticatedUser } from "../auth/helpers";
-import { AuthErrorCode, ErrorMessage } from "../errors/constants";
+import { AUTH_ERROR_CODE, ERROR_MESSAGE } from "../errors/constants";
 
 /**
  * Internal mutation: Update user's name by authId
@@ -80,8 +80,8 @@ export const updateProfilePicture = mutation({
 
 		if (!user) {
 			throw new ConvexError({
-				code: AuthErrorCode.NOT_AUTHENTICATED,
-				message: ErrorMessage.NOT_AUTHENTICATED,
+				code: AUTH_ERROR_CODE.NOT_AUTHENTICATED,
+				message: ERROR_MESSAGE.NOT_AUTHENTICATED,
 			});
 		}
 
@@ -108,8 +108,8 @@ export const removeProfilePicture = mutation({
 
 		if (!user) {
 			throw new ConvexError({
-				code: AuthErrorCode.NOT_AUTHENTICATED,
-				message: ErrorMessage.NOT_AUTHENTICATED,
+				code: AUTH_ERROR_CODE.NOT_AUTHENTICATED,
+				message: ERROR_MESSAGE.NOT_AUTHENTICATED,
 			});
 		}
 

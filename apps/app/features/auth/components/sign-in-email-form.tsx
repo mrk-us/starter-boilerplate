@@ -1,7 +1,7 @@
 "use client";
 
 import { authSchema } from "@repo/backend/convex/auth/validation";
-import { getErrorMessage } from "@repo/shared/utils";
+import { getErrorMessage, tryCatch } from "@repo/shared/utils";
 import {
 	FieldGroup,
 	FieldSeparator,
@@ -30,9 +30,11 @@ export function SignInEmailForm() {
 		validators: {
 			onSubmit: signInEmailSchema,
 			onSubmitAsync: async ({ value }) => {
-				try {
+				const { error } = await tryCatch(async () => {
 					await validateEmail(value);
-				} catch (error) {
+				});
+
+				if (error) {
 					throw getErrorMessage(error);
 				}
 			},

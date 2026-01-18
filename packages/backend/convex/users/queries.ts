@@ -1,11 +1,11 @@
 import { v } from "convex/values";
 import { internalQuery, query } from "../_generated/server";
-import { getAuthenticatedUser, getAuthId } from "../auth/helpers";
+import { getAuthenticatedUser } from "../auth/helpers";
 import { getSubscriptionStatusForUser } from "../billing/helpers";
 
 /**
  * Get current user for billing (internal - avoids circular dependency)
- * This query is used by the Polar component to get user info
+ * This query is used by the Stripe billing module to get user info
  * without fetching subscription data (which would create a circular reference)
  */
 export const getCurrentUserForBilling = internalQuery({

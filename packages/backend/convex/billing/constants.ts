@@ -1,39 +1,44 @@
 /**
- * Subscription tier
+ * Subscription plan
  */
-export const SubscriptionTier = {
+export const SUBSCRIPTION_PLAN = {
 	FREE: "free",
 	PRO: "pro",
 } as const;
 
-export type SubscriptionTier =
-	(typeof SubscriptionTier)[keyof typeof SubscriptionTier];
+export type SUBSCRIPTION_PLAN =
+	(typeof SUBSCRIPTION_PLAN)[keyof typeof SUBSCRIPTION_PLAN];
 
 /**
  * Subscription interval
  */
-export const SubscriptionInterval = {
+export const SUBSCRIPTION_INTERVAL = {
 	MONTH: "month",
 	YEAR: "year",
 } as const;
 
-export type SubscriptionInterval =
-	(typeof SubscriptionInterval)[keyof typeof SubscriptionInterval];
+export type SUBSCRIPTION_INTERVAL =
+	(typeof SUBSCRIPTION_INTERVAL)[keyof typeof SUBSCRIPTION_INTERVAL];
 
 /**
- * Product keys
+ * Stripe Price Lookup Keys
+ * These correspond to the lookup_key set in Stripe Dashboard for each price
  */
-export const PRODUCT_KEYS = {
-	proMonthly: "proMonthly",
-	proYearly: "proYearly",
+export const STRIPE_PRICE_LOOKUP_KEYS = {
+	PRO_MONTHLY: "pro_monthly",
+	PRO_YEARLY: "pro_yearly",
 } as const;
 
-export type ProductKey = keyof typeof PRODUCT_KEYS;
+export type STRIPE_PRICE_LOOKUP_KEYS =
+	(typeof STRIPE_PRICE_LOOKUP_KEYS)[keyof typeof STRIPE_PRICE_LOOKUP_KEYS];
 
 /**
  * Pricing information (in USD cents)
  */
-export const Pricing = {
-	PRO_MONTHLY: 1200, // $12.00
-	PRO_YEARLY: 12000, // $120.00
+export const SUBSCRIPTION_PRICING = {
+	PRO_MONTHLY: 800, // $8.00
+	PRO_YEARLY: 8000, // $80.00
 } as const;
+
+export type SUBSCRIPTION_PRICING =
+	(typeof SUBSCRIPTION_PRICING)[keyof typeof SUBSCRIPTION_PRICING];

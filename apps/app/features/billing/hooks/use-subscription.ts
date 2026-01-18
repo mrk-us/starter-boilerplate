@@ -6,21 +6,19 @@ import { useCurrentUser } from "@/features/user/hooks";
  * Get current user's subscription status
  */
 export function useSubscription() {
-	const { user, isLoading, isAuthenticated } = useCurrentUser();
+	const { user } = useCurrentUser();
 
-	const subscription = user?.subscription ?? null;
-	const isPro = subscription?.isPro ?? false;
+	if (!user) return {} as const;
+
+	const subscription = user.subscription;
+
+	if (!subscription) return {} as const;
 
 	return {
-		isLoading,
-		isAuthenticated,
-		subscription,
-		isPro,
-		tier: subscription?.tier ?? "free",
-		productKey: subscription?.productKey ?? null,
-		interval: subscription?.interval ?? null,
-		currentPeriodEnd: subscription?.currentPeriodEnd ?? null,
-		cancelAtPeriodEnd: subscription?.cancelAtPeriodEnd ?? false,
-		status: subscription?.status ?? null,
+		plan: subscription.plan,
+		interval: subscription.interval,
+		status: subscription.status,
+		currentPeriodEnd: subscription.currentPeriodEnd,
+		cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
 	} as const;
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import { api } from "@repo/backend/convex/_generated/api";
-import { Pricing } from "@repo/backend/convex/billing/constants";
-import { useQuery } from "convex/react";
+import { SUBSCRIPTION_PLAN } from "@repo/backend/convex/billing/constants";
+import { Label, Switch } from "@repo/ui/components";
+import { useState } from "react";
 import {
 	CancelSubscription,
 	CurrentPlan,
@@ -11,12 +11,22 @@ import {
 	ProPlanCard,
 } from "@/features/billing/components";
 import { useSubscription } from "@/features/billing/hooks";
+import { useCurrentUser } from "@/features/user/hooks";
 
 export function BillingPage() {
-	const { isLoading, isPro } = useSubscription();
-	const products = useQuery(api.billing.actions.getConfiguredProducts);
+	const { isLoading } = useCurrentUser();
+	const { plan, interval } = useSubscription();
 
-	const isLoadingProducts = products === undefined;
+	const [isYearly, setIsYearly] = useState(true);
+
+	const billingInterval = () => {
+		if (plan === SUBSCRIPTION_PLAN.FREE || !interval) {
+			if (isYearly) return "year";
+			else return "month";
+		}
+
+		return interval;
+	};
 
 	return (
 		<main className="flex flex-col mx-auto max-w-lg gap-8 p-6">
@@ -34,20 +44,38 @@ export function BillingPage() {
 
 			{/* Available Plans Section */}
 			<section className="space-y-4">
-				<h2 className="text-lg font-medium">Plans</h2>
+				<div className="flex items-center justify-between">
+					<h2 className="text-lg font-medium">Plans</h2>
 
-				{(!isLoading || !isLoadingProducts) && (
+					{plan === SUBSCRIPTION_PLAN.FREE && (
+						<div className="flex items-center gap-2">
+							<Label
+								htmlFor="billing-toggle"
+								className={`text-sm ${!isYearly ? "text-foreground" : "text-muted-foreground"}`}
+							>
+								Monthly
+							</Label>
+							<Switch
+								id="billing-toggle"
+								checked={isYearly}
+								onCheckedChange={setIsYearly}
+							/>
+							<Label
+								htmlFor="billing-toggle"
+								className={`text-sm ${isYearly ? "text-foreground" : "text-muted-foreground"}`}
+							>
+								Yearly
+							</Label>
+						</div>
+					)}
+				</div>
+
+				{!isLoading && (
 					<div className="grid gap-4 md:grid-cols-2">
-						<FreePlanCard isCurrentPlan={!isPro} />
-
+						<FreePlanCard isCurrentPlan={plan === SUBSCRIPTION_PLAN.FREE} />
 						<ProPlanCard
-							monthlyPrice={Pricing.PRO_MONTHLY}
-							yearlyPrice={Pricing.PRO_YEARLY}
-							productIds={[
-								products?.proMonthly?.id ?? "",
-								products?.proYearly?.id ?? "",
-							].filter(Boolean)}
-							isCurrentPlan={isPro}
+							isCurrentPlan={plan === SUBSCRIPTION_PLAN.PRO}
+							billingInterval={billingInterval()}
 						/>
 					</div>
 				)}

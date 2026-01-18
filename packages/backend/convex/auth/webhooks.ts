@@ -1,75 +1,15 @@
-import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import { httpAction, internalMutation } from "../_generated/server";
+import { httpAction } from "../_generated/server";
+import { getFullName, getPrimaryEmail } from "./helpers";
 
-/**
- * Clerk webhook event types we handle
- */
-type ClerkUserEvent = {
-	data: {
-		id: string;
-		email_addresses: Array<{
-			id: string;
-			email_address: string;
-			verification: { status: string } | null;
-		}>;
-		primary_email_address_id: string | null;
-		first_name: string | null;
-		last_name: string | null;
-		image_url: string | null;
-		public_metadata: {
-			onboardingComplete?: boolean;
-		};
-	};
-	type: "user.created" | "user.updated" | "user.deleted";
-};
-
-/**
- * Clerk email webhook event
- */
-type ClerkEmailEvent = {
-	data: {
-		id: string;
-		slug: string;
-		to_email_address: string;
-		data: {
-			otp_code?: string;
-			[key: string]: unknown;
-		};
-	};
-	type: "email.created";
-};
-
-type ClerkWebhookEvent = ClerkUserEvent | ClerkEmailEvent;
-
-/**
- * Get primary email from Clerk user data
- */
-function getPrimaryEmail(data: ClerkUserEvent["data"]): string | null {
-	const primaryEmail = data.email_addresses.find(
-		(e) => e.id === data.primary_email_address_id,
-	);
-	return (
-		primaryEmail?.email_address ??
-		data.email_addresses[0]?.email_address ??
-		null
-	);
-}
-
-/**
- * Get full name from Clerk user data
- * Uses firstName as the single name field (can contain full name)
- */
-function getFullName(data: ClerkUserEvent["data"]): string {
-	// We store the full name in firstName
-	// If lastName exists, concatenate them
-	const parts = [data.first_name, data.last_name].filter(Boolean);
-	return parts.join(" ").trim();
-}
+import type {
+	ClerkEmailEvent,
+	ClerkUserEvent,
+	ClerkWebhookEvent,
+} from "./types";
 
 /**
  * HTTP handler for Clerk webhooks
- * Note: We verify the webhook in a Node.js action since svix requires Node.js
  */
 export const handleClerkWebhook = httpAction(async (ctx, request) => {
 	// Get the headers
@@ -86,7 +26,7 @@ export const handleClerkWebhook = httpAction(async (ctx, request) => {
 
 	// Verify the webhook in a Node.js action
 	const verificationResult = await ctx.runAction(
-		internal.auth.webhookVerification.verifyClerkWebhook,
+		internal.auth.actions.verifyClerkWebhook,
 		{
 			payload,
 			svixId,
@@ -101,7 +41,7 @@ export const handleClerkWebhook = httpAction(async (ctx, request) => {
 		});
 	}
 
-	const event = verificationResult.event as ClerkWebhookEvent;
+	const event = verificationResult.data as ClerkWebhookEvent;
 
 	// Handle the event
 	switch (event.type) {
@@ -117,7 +57,7 @@ export const handleClerkWebhook = httpAction(async (ctx, request) => {
 			const onboardingComplete =
 				userEvent.data.public_metadata?.onboardingComplete ?? false;
 
-			await ctx.runMutation(internal.auth.webhooks.handleUserCreated, {
+			await ctx.runMutation(internal.auth.mutations.handleUserCreated, {
 				authId: userEvent.data.id,
 				email,
 				name,
@@ -139,7 +79,7 @@ export const handleClerkWebhook = httpAction(async (ctx, request) => {
 			const onboardingComplete =
 				userEvent.data.public_metadata?.onboardingComplete ?? false;
 
-			await ctx.runMutation(internal.auth.webhooks.handleUserUpdated, {
+			await ctx.runMutation(internal.auth.mutations.handleUserUpdated, {
 				authId: userEvent.data.id,
 				email,
 				name,
@@ -151,7 +91,7 @@ export const handleClerkWebhook = httpAction(async (ctx, request) => {
 
 		case "user.deleted": {
 			const userEvent = event as ClerkUserEvent;
-			await ctx.runMutation(internal.auth.webhooks.handleUserDeleted, {
+			await ctx.runMutation(internal.auth.mutations.handleUserDeleted, {
 				authId: userEvent.data.id,
 			});
 			break;
@@ -188,112 +128,4 @@ export const handleClerkWebhook = httpAction(async (ctx, request) => {
 	}
 
 	return new Response("OK", { status: 200 });
-});
-
-/**
- * Internal mutation: Handle user.created event
- */
-export const handleUserCreated = internalMutation({
-	args: {
-		authId: v.string(),
-		email: v.string(),
-		name: v.string(),
-		profilePictureUrl: v.union(v.string(), v.null()),
-		setupCompleted: v.boolean(),
-	},
-	returns: v.null(),
-	handler: async (ctx, args) => {
-		// Check if user already exists (prevent duplicates)
-		const existingUser = await ctx.db
-			.query("users")
-			.withIndex("authId", (q) => q.eq("authId", args.authId))
-			.unique();
-
-		if (existingUser) {
-			console.warn("User already exists:", args.authId);
-			return null;
-		}
-
-		await ctx.db.insert("users", {
-			authId: args.authId,
-			email: args.email,
-			name: args.name,
-			profilePictureUrl: args.profilePictureUrl ?? "",
-			setupCompleted: args.setupCompleted,
-		});
-
-		return null;
-	},
-});
-
-/**
- * Internal mutation: Handle user.updated event
- * Syncs name, email, profile picture, and onboarding status from Clerk
- */
-export const handleUserUpdated = internalMutation({
-	args: {
-		authId: v.string(),
-		email: v.string(),
-		name: v.string(),
-		profilePictureUrl: v.union(v.string(), v.null()),
-		setupCompleted: v.boolean(),
-	},
-	returns: v.null(),
-	handler: async (ctx, args) => {
-		const user = await ctx.db
-			.query("users")
-			.withIndex("authId", (q) => q.eq("authId", args.authId))
-			.unique();
-
-		if (!user) {
-			console.error("User not found for update:", args.authId);
-			return null;
-		}
-
-		// Build update data - sync name, email, and setupCompleted from Clerk
-		const updateData: {
-			email: string;
-			name: string;
-			setupCompleted: boolean;
-			profilePictureUrl?: string;
-		} = {
-			email: args.email,
-			name: args.name,
-			setupCompleted: args.setupCompleted,
-		};
-
-		// Only update profile picture if user hasn't uploaded a custom one
-		if (!user.profilePictureStorageId && args.profilePictureUrl) {
-			updateData.profilePictureUrl = args.profilePictureUrl;
-		}
-
-		await ctx.db.patch(user._id, updateData);
-
-		return null;
-	},
-});
-
-/**
- * Internal mutation: Handle user.deleted event
- */
-export const handleUserDeleted = internalMutation({
-	args: {
-		authId: v.string(),
-	},
-	returns: v.null(),
-	handler: async (ctx, args) => {
-		const user = await ctx.db
-			.query("users")
-			.withIndex("authId", (q) => q.eq("authId", args.authId))
-			.unique();
-
-		if (!user) {
-			console.warn("User not found for deletion:", args.authId);
-			return null;
-		}
-
-		await ctx.db.delete(user._id);
-
-		return null;
-	},
 });

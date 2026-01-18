@@ -1,7 +1,7 @@
 "use client";
 
 import { forgotPasswordSchema } from "@repo/backend/convex/auth/validation";
-import { getErrorMessage } from "@repo/shared/utils";
+import { getErrorMessage, tryCatch } from "@repo/shared/utils";
 import { FieldGroup, Form, FormSubmit, useAppForm } from "@repo/ui/components";
 import Link from "next/link";
 import type { z } from "zod";
@@ -20,9 +20,11 @@ export function ForgotPasswordForm() {
 		validators: {
 			onSubmit: forgotPasswordSchema,
 			onSubmitAsync: async ({ value }) => {
-				try {
+				const { error } = await tryCatch(async () => {
 					await forgotPassword(value);
-				} catch (error) {
+				});
+
+				if (error) {
 					throw getErrorMessage(error);
 				}
 			},

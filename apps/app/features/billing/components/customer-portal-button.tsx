@@ -14,8 +14,7 @@ type CustomerPortalButtonProps = {
 };
 
 /**
- * A customer portal button that only generates the URL when clicked.
- * Unlike CustomerPortalLink, this doesn't pre-generate the URL on mount.
+ * A button that opens the Stripe Customer Portal for subscription management.
  */
 export function CustomerPortalButton({
 	children,
@@ -29,7 +28,9 @@ export function CustomerPortalButton({
 
 	const { mutate, isPending } = useMutation({
 		mutationFn: async () => {
-			const result = await generatePortalUrl({});
+			const result = await generatePortalUrl({
+				returnUrl: window.location.href,
+			});
 			if (result?.url) {
 				window.open(result.url, "_blank");
 			}

@@ -1,45 +1,66 @@
-import type { Id } from "../_generated/dataModel";
+import type { GenericQueryCtx } from "convex/server";
+import { components } from "../_generated/api";
+import type { DataModel, Id } from "../_generated/dataModel";
 import {
-	type ProductKey,
-	SubscriptionInterval,
-	SubscriptionTier,
+	STRIPE_PRICE_LOOKUP_KEYS,
+	SUBSCRIPTION_INTERVAL,
+	SUBSCRIPTION_PLAN,
 } from "./constants";
-import { polar } from "./index";
 import type { UserSubscriptionStatus } from "./types";
 
 /**
- * Get subscription status for a user.
+ * Get subscription status for a user by querying the Stripe component's subscriptions table.
  */
 export async function getSubscriptionStatusForUser(
-	ctx: Parameters<typeof polar.getCurrentSubscription>[0],
+	ctx: GenericQueryCtx<DataModel>,
 	userId: Id<"users">,
 ): Promise<UserSubscriptionStatus> {
-	const subscription = await polar.getCurrentSubscription(ctx, { userId });
+	// Query the Stripe component's subscriptions by userId
+	const subscriptions = await ctx.runQuery(
+		components.stripe.public.listSubscriptionsByUserId,
+		{ userId },
+	);
 
-	if (!subscription) {
+	// Find active subscription
+	const activeSubscription = subscriptions.find(
+		(sub) => sub.status === "active" || sub.status === "trialing",
+	);
+
+	if (!activeSubscription) {
 		return {
-			tier: SubscriptionTier.FREE,
-			isPro: false,
-			productKey: null,
+			plan: SUBSCRIPTION_PLAN.FREE,
 			interval: null,
+			status: null,
 			currentPeriodEnd: null,
 			cancelAtPeriodEnd: false,
-			status: null,
 		};
 	}
 
-	const interval =
-		subscription.productKey === "proYearly"
-			? SubscriptionInterval.YEAR
-			: SubscriptionInterval.MONTH;
+	// Determine interval and product key from price lookup key in metadata
+	// or fall back to price interval from the subscription
+	const priceLookupKey = activeSubscription.metadata?.priceLookupKey as
+		| string
+		| undefined;
+
+	let interval: SUBSCRIPTION_INTERVAL;
+
+	if (priceLookupKey === STRIPE_PRICE_LOOKUP_KEYS.PRO_YEARLY) {
+		interval = SUBSCRIPTION_INTERVAL.YEAR;
+	} else {
+		// Default to monthly
+		interval = SUBSCRIPTION_INTERVAL.MONTH;
+	}
+
+	// Convert currentPeriodEnd timestamp to ISO string
+	const currentPeriodEnd = activeSubscription.currentPeriodEnd
+		? new Date(activeSubscription.currentPeriodEnd * 1000).toISOString()
+		: null;
 
 	return {
-		tier: SubscriptionTier.PRO,
-		isPro: true,
-		productKey: (subscription.productKey as ProductKey) ?? null,
+		plan: SUBSCRIPTION_PLAN.PRO,
 		interval,
-		currentPeriodEnd: subscription.currentPeriodEnd ?? null,
-		cancelAtPeriodEnd: subscription.cancelAtPeriodEnd ?? false,
-		status: subscription.status ?? null,
+		status: activeSubscription.status,
+		currentPeriodEnd,
+		cancelAtPeriodEnd: activeSubscription.cancelAtPeriodEnd,
 	};
 }

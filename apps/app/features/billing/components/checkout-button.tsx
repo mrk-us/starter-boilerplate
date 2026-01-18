@@ -1,10 +1,11 @@
 "use client";
 
+import type { StripePriceLookupKey } from "@repo/backend/convex/billing/constants";
 import { Button } from "@repo/ui/components";
 import { useCheckout } from "@/features/billing/hooks";
 
 type CheckoutButtonProps = {
-	productIds: string[];
+	priceLookupKey: StripePriceLookupKey;
 	children: React.ReactNode;
 	variant?: "default" | "primary" | "outline";
 	className?: string;
@@ -12,11 +13,10 @@ type CheckoutButtonProps = {
 };
 
 /**
- * A checkout button that only creates a Polar customer when clicked.
- * Unlike CheckoutLink, this doesn't pre-generate the checkout URL on mount.
+ * A checkout button that creates a Stripe checkout session when clicked.
  */
 export function CheckoutButton({
-	productIds,
+	priceLookupKey,
 	children,
 	variant = "primary",
 	className,
@@ -25,7 +25,7 @@ export function CheckoutButton({
 	const { checkout, isPending } = useCheckout();
 
 	const handleClick = () => {
-		checkout({ productIds, successUrl });
+		checkout({ priceLookupKey, successUrl });
 	};
 
 	return (

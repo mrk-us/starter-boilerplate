@@ -7,11 +7,11 @@ import { api, internal } from "../_generated/api";
 import { action } from "../_generated/server";
 import { getAuthId } from "../auth/helpers";
 import {
-	AuthErrorCode,
-	ClerkErrorCode,
-	ErrorCode,
-	ErrorMessage,
-	UserErrorCode,
+	AUTH_ERROR_CODE,
+	CLERK_ERROR_CODE,
+	ERROR_CODE,
+	ERROR_MESSAGE,
+	USER_ERROR_CODE,
 } from "../errors/constants";
 import { rateLimiter } from "../rateLimiter";
 import { userSchema } from "./validation";
@@ -39,8 +39,8 @@ export const updateName = action({
 
 		if (!authId) {
 			throw new ConvexError({
-				code: AuthErrorCode.NOT_AUTHENTICATED,
-				message: ErrorMessage.NOT_AUTHENTICATED,
+				code: AUTH_ERROR_CODE.NOT_AUTHENTICATED,
+				message: ERROR_MESSAGE.NOT_AUTHENTICATED,
 			});
 		}
 
@@ -51,7 +51,7 @@ export const updateName = action({
 
 		if (!validationResult.success) {
 			throw new ConvexError({
-				code: ErrorCode.INVALID_INPUT,
+				code: ERROR_CODE.INVALID_INPUT,
 				message: validationResult.error.issues[0]?.message ?? "Invalid name",
 			});
 		}
@@ -70,8 +70,8 @@ export const updateName = action({
 		if (clerkError) {
 			console.error("Failed to update Clerk user:", clerkError.message);
 			throw new ConvexError({
-				code: ClerkErrorCode.CREATE_USER_FAILED,
-				message: ErrorMessage.UNKNOWN,
+				code: CLERK_ERROR_CODE.CREATE_USER_FAILED,
+				message: ERROR_MESSAGE.UNKNOWN,
 			});
 		}
 
@@ -97,8 +97,8 @@ export const completeSetup = action({
 
 		if (!authId) {
 			throw new ConvexError({
-				code: AuthErrorCode.NOT_AUTHENTICATED,
-				message: ErrorMessage.NOT_AUTHENTICATED,
+				code: AUTH_ERROR_CODE.NOT_AUTHENTICATED,
+				message: ERROR_MESSAGE.NOT_AUTHENTICATED,
 			});
 		}
 
@@ -109,7 +109,7 @@ export const completeSetup = action({
 
 		if (!validationResult.success) {
 			throw new ConvexError({
-				code: ErrorCode.INVALID_INPUT,
+				code: ERROR_CODE.INVALID_INPUT,
 				message: validationResult.error.issues[0]?.message ?? "Invalid name",
 			});
 		}
@@ -131,8 +131,8 @@ export const completeSetup = action({
 		if (clerkError) {
 			console.error("Failed to update Clerk user:", clerkError.message);
 			throw new ConvexError({
-				code: ClerkErrorCode.CREATE_USER_FAILED,
-				message: ErrorMessage.UNKNOWN,
+				code: CLERK_ERROR_CODE.CREATE_USER_FAILED,
+				message: ERROR_MESSAGE.UNKNOWN,
 			});
 		}
 
@@ -156,8 +156,8 @@ export const deleteUser = action({
 
 		if (!authId) {
 			throw new ConvexError({
-				code: AuthErrorCode.NOT_AUTHENTICATED,
-				message: ErrorMessage.NOT_AUTHENTICATED,
+				code: AUTH_ERROR_CODE.NOT_AUTHENTICATED,
+				message: ERROR_MESSAGE.NOT_AUTHENTICATED,
 			});
 		}
 
@@ -168,7 +168,7 @@ export const deleteUser = action({
 
 		if (!ok) {
 			throw new ConvexError({
-				code: AuthErrorCode.RATE_LIMITED,
+				code: AUTH_ERROR_CODE.RATE_LIMITED,
 				message: `Too many attempts. Please try again in ${Math.ceil(retryAfter / 3_600_000)} hours.`,
 			});
 		}
@@ -176,7 +176,7 @@ export const deleteUser = action({
 		// Cancel subscription (non-critical - user may not have one)
 		const { error: cancelSubscriptionError } = await tryCatch(
 			ctx.runAction(api.billing.actions.cancelCurrentSubscription, {
-				revokeImmediately: true,
+				cancelImmediately: true,
 			}),
 		);
 
@@ -199,8 +199,8 @@ export const deleteUser = action({
 				deleteClerkUserError.message,
 			);
 			throw new ConvexError({
-				code: ClerkErrorCode.DELETE_USER_FAILED,
-				message: ErrorMessage.UNKNOWN,
+				code: CLERK_ERROR_CODE.DELETE_USER_FAILED,
+				message: ERROR_MESSAGE.UNKNOWN,
 			});
 		}
 
@@ -217,8 +217,8 @@ export const deleteUser = action({
 				deleteDbUserError.message,
 			);
 			throw new ConvexError({
-				code: UserErrorCode.USER_DELETE_FAILED,
-				message: ErrorMessage.UNKNOWN,
+				code: USER_ERROR_CODE.USER_DELETE_FAILED,
+				message: ERROR_MESSAGE.UNKNOWN,
 			});
 		}
 

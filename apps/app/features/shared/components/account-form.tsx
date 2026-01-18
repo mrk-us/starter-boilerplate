@@ -1,7 +1,7 @@
 "use client";
 
 import { updateUserNameSchema } from "@repo/backend/convex/users/validation";
-import { getErrorMessage } from "@repo/shared/utils";
+import { getErrorMessage, tryCatch } from "@repo/shared/utils";
 import {
 	Button,
 	FieldGroup,
@@ -42,9 +42,9 @@ export function AccountForm() {
 		validators: {
 			onSubmit: accountFormSchema,
 			onSubmitAsync: async ({ value }) => {
-				try {
-					await updateName(value.name);
-				} catch (error) {
+				const { error } = await tryCatch(updateName(value.name));
+
+				if (error) {
 					throw getErrorMessage(error);
 				}
 			},

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePasswordSchema } from "@repo/backend/convex/auth/validation";
-import { getErrorMessage } from "@repo/shared/utils";
+import { getErrorMessage, tryCatch } from "@repo/shared/utils";
 import { FieldGroup, Form, FormSubmit, useAppForm } from "@repo/ui/components";
 import { IconX } from "@tabler/icons-react";
 import Link from "next/link";
@@ -27,9 +27,9 @@ export function SignInPasswordForm() {
 		validators: {
 			onSubmit: signInPasswordSchema,
 			onSubmitAsync: async ({ value }) => {
-				try {
-					await signInWithPassword(value);
-				} catch (error) {
+				const { error } = await tryCatch(signInWithPassword(value));
+
+				if (error) {
 					throw getErrorMessage(error);
 				}
 			},

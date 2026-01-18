@@ -1,7 +1,7 @@
 "use client";
 
 import { verifyEmailSchema } from "@repo/backend/convex/auth/validation";
-import { getErrorMessage } from "@repo/shared/utils";
+import { getErrorMessage, tryCatch } from "@repo/shared/utils";
 import {
 	Button,
 	FieldGroup,
@@ -33,9 +33,9 @@ export function SignUpVerifyForm() {
 		validators: {
 			onSubmit: verifyEmailSchema,
 			onSubmitAsync: async ({ value }) => {
-				try {
-					await verifyEmail(value);
-				} catch (error) {
+				const { error } = await tryCatch(verifyEmail(value));
+
+				if (error) {
 					throw getErrorMessage(error);
 				}
 			},
@@ -43,9 +43,9 @@ export function SignUpVerifyForm() {
 	});
 
 	async function handleResendVerificationEmail() {
-		try {
-			await resendVerificationEmail();
-		} catch (error) {
+		const { error } = await tryCatch(resendVerificationEmail());
+
+		if (error) {
 			console.error(getErrorMessage(error));
 		}
 	}

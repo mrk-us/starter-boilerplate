@@ -1,17 +1,11 @@
-import type {
-	ProductKey,
-	SubscriptionInterval,
-	SubscriptionTier,
-} from "./constants";
+import type { SUBSCRIPTION_INTERVAL, SUBSCRIPTION_PLAN } from "./constants";
 
 /**
  * User subscription status returned by queries
  */
 export type UserSubscriptionStatus = {
-	tier: SubscriptionTier;
-	isPro: boolean;
-	productKey: ProductKey | null;
-	interval: SubscriptionInterval | null;
+	plan: SUBSCRIPTION_PLAN;
+	interval: SUBSCRIPTION_INTERVAL | null;
 	currentPeriodEnd: string | null;
 	cancelAtPeriodEnd: boolean;
 	status: string | null;
@@ -25,5 +19,5 @@ export type ProductInfo = {
 	name: string;
 	priceAmount: number;
 	priceCurrency: string;
-	interval: SubscriptionInterval;
+	interval: SUBSCRIPTION_INTERVAL;
 };

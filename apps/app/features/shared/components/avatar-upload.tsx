@@ -1,5 +1,6 @@
 "use client";
 
+import { tryCatch } from "@repo/shared/utils";
 import {
 	Avatar,
 	AvatarFallback,
@@ -52,10 +53,10 @@ export function AvatarUpload({
 
 			setError(null);
 
-			try {
-				await upload(file);
-			} catch (err) {
-				setError(err instanceof Error ? err.message : "Failed to upload image");
+			const { error } = await tryCatch(upload(file));
+
+			if (error) {
+				setError(error.message ?? "Failed to upload image");
 			}
 
 			// Reset the input so the same file can be selected again
@@ -68,10 +69,11 @@ export function AvatarUpload({
 
 	const handleRemove = useCallback(async () => {
 		setError(null);
-		try {
-			await remove();
-		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to remove image");
+
+		const { error } = await tryCatch(remove());
+
+		if (error) {
+			setError(error.message ?? "Failed to remove image");
 		}
 	}, [remove]);
 

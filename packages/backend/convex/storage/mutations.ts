@@ -1,7 +1,7 @@
 import { ConvexError } from "convex/values";
 import { mutation } from "../_generated/server";
 import { getAuthId } from "../auth/helpers";
-import { AuthErrorCode, ErrorMessage } from "../errors/constants";
+import { AUTH_ERROR_CODE, ERROR_MESSAGE } from "../errors/constants";
 
 /**
  * Generate a URL for uploading a file to Convex storage
@@ -14,8 +14,8 @@ export const generateUploadUrl = mutation({
 
 		if (!authId) {
 			throw new ConvexError({
-				code: AuthErrorCode.NOT_AUTHENTICATED,
-				message: ErrorMessage.NOT_AUTHENTICATED,
+				code: AUTH_ERROR_CODE.NOT_AUTHENTICATED,
+				message: ERROR_MESSAGE.NOT_AUTHENTICATED,
 			});
 		}
 

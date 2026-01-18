@@ -1,5 +1,6 @@
 "use client";
 
+import { SUBSCRIPTION_PLAN } from "@repo/backend/convex/billing/constants";
 import {
 	Badge,
 	Card,
@@ -20,29 +21,19 @@ function formatDate(dateString: string | null): string {
 }
 
 export function CurrentPlan() {
-	const { isLoading, isPro, currentPeriodEnd, cancelAtPeriodEnd, status } =
+	const { currentPeriodEnd, cancelAtPeriodEnd, status, plan } =
 		useSubscription();
 
-	if (isLoading) {
-		return (
-			<Card>
-				<CardHeader>
-					<CardTitle>Current Plan</CardTitle>
-					<CardDescription>Loading...</CardDescription>
-				</CardHeader>
-			</Card>
-		);
-	}
-
-	const statusBadge = isPro ? (
-		cancelAtPeriodEnd ? (
-			<Badge variant="destructive">Cancelling</Badge>
+	const statusBadge =
+		plan === SUBSCRIPTION_PLAN.PRO ? (
+			cancelAtPeriodEnd ? (
+				<Badge variant="destructive">Cancelling</Badge>
+			) : (
+				<Badge variant="default">Active</Badge>
+			)
 		) : (
-			<Badge variant="default">Active</Badge>
-		)
-	) : (
-		<Badge variant="outline">Free</Badge>
-	);
+			<Badge variant="outline">Free</Badge>
+		);
 
 	return (
 		<Card>
@@ -52,14 +43,14 @@ export function CurrentPlan() {
 					{statusBadge}
 				</div>
 				<CardDescription>
-					{isPro
+					{plan === SUBSCRIPTION_PLAN.PRO
 						? "You have access to all Pro features"
 						: "Upgrade to Pro for more features"}
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
 				<div className="space-y-3">
-					{isPro && (
+					{plan === SUBSCRIPTION_PLAN.PRO && (
 						<>
 							<div className="flex justify-between items-center">
 								<span className="text-white/50">Status</span>

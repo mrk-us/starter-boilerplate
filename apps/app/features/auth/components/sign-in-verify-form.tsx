@@ -1,7 +1,7 @@
 "use client";
 
 import { authSchema } from "@repo/backend/convex/auth/validation";
-import { getErrorMessage } from "@repo/shared/utils";
+import { getErrorMessage, tryCatch } from "@repo/shared/utils";
 import {
 	Button,
 	FieldGroup,
@@ -34,9 +34,9 @@ export function SignInVerifyForm() {
 		validators: {
 			onSubmit: signInVerifySchema,
 			onSubmitAsync: async ({ value }) => {
-				try {
-					await verify(value);
-				} catch (error) {
+				const { error } = await tryCatch(verify(value));
+
+				if (error) {
 					throw getErrorMessage(error);
 				}
 			},

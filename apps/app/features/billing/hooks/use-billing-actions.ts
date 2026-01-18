@@ -13,9 +13,9 @@ export function useCancelSubscription() {
 		api.billing.actions.cancelCurrentSubscription,
 	);
 
-	const { mutateAsync, isPending, error } = useMutation({
-		mutationFn: async () => {
-			await cancelSubscription({ revokeImmediately: true });
+	const { mutateAsync, isPending, error } = useMutation<void, Error, boolean>({
+		mutationFn: async (cancelImmediately = false) => {
+			await cancelSubscription({ cancelImmediately });
 		},
 		onError: (err) => {
 			console.error("Cancel subscription failed:", getErrorMessage(err));
@@ -30,24 +30,24 @@ export function useCancelSubscription() {
 }
 
 /**
- * Change user's subscription
+ * Reactivate a subscription that was set to cancel
  */
-export function useChangeSubscription() {
-	const changeSubscription = useConvexAction(
-		api.billing.actions.changeCurrentSubscription,
+export function useReactivateSubscription() {
+	const reactivateSubscription = useConvexAction(
+		api.billing.actions.reactivateSubscription,
 	);
 
 	const { mutateAsync, isPending, error } = useMutation({
-		mutationFn: async (productId: string) => {
-			await changeSubscription({ productId });
+		mutationFn: async () => {
+			await reactivateSubscription({});
 		},
 		onError: (err) => {
-			console.error("Change subscription failed:", getErrorMessage(err));
+			console.error("Reactivate subscription failed:", getErrorMessage(err));
 		},
 	});
 
 	return {
-		change: mutateAsync,
+		reactivate: mutateAsync,
 		isPending,
 		error: error ? getErrorMessage(error) : null,
 	};
@@ -63,15 +63,15 @@ export function useBillingActions() {
 		error: cancelError,
 	} = useCancelSubscription();
 	const {
-		change: upgrade,
-		isPending: isChangePending,
-		error: changeError,
-	} = useChangeSubscription();
+		reactivate,
+		isPending: isReactivatePending,
+		error: reactivateError,
+	} = useReactivateSubscription();
 
 	return {
 		cancel,
-		upgrade,
-		isPending: isCancelPending || isChangePending,
-		error: cancelError ?? changeError,
+		reactivate,
+		isPending: isCancelPending || isReactivatePending,
+		error: cancelError ?? reactivateError,
 	};
 }

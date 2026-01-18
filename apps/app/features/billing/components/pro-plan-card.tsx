@@ -1,6 +1,10 @@
 "use client";
 
 import {
+	STRIPE_PRICE_LOOKUP_KEYS,
+	SUBSCRIPTION_PRICING,
+} from "@repo/backend/convex/billing/constants";
+import {
 	Badge,
 	Button,
 	Card,
@@ -12,10 +16,8 @@ import {
 import { CheckoutButton } from "./checkout-button";
 
 type ProPlanCardProps = {
-	monthlyPrice: number;
-	yearlyPrice: number;
-	productIds: string[];
 	isCurrentPlan: boolean;
+	billingInterval: "month" | "year";
 };
 
 function formatPrice(cents: number): string {
@@ -27,11 +29,19 @@ function formatPrice(cents: number): string {
 }
 
 export function ProPlanCard({
-	yearlyPrice,
-	productIds,
 	isCurrentPlan,
+	billingInterval,
 }: ProPlanCardProps) {
-	const monthlyEquivalentFromYearly = yearlyPrice / 12;
+	const isYearly = billingInterval === "year";
+	const price = isYearly
+		? SUBSCRIPTION_PRICING.PRO_YEARLY
+		: SUBSCRIPTION_PRICING.PRO_MONTHLY;
+	const monthlyEquivalent = isYearly
+		? SUBSCRIPTION_PRICING.PRO_YEARLY / 12
+		: SUBSCRIPTION_PRICING.PRO_MONTHLY;
+	const priceLookupKey = isYearly
+		? STRIPE_PRICE_LOOKUP_KEYS.PRO_YEARLY
+		: STRIPE_PRICE_LOOKUP_KEYS.PRO_MONTHLY;
 
 	return (
 		<Card className={`relative ${isCurrentPlan ? "opacity-75" : ""}`}>
@@ -43,15 +53,18 @@ export function ProPlanCard({
 				<CardDescription>
 					<div className="flex items-center">
 						<span className="text-2xl font-bold text-foreground">
-							{formatPrice(monthlyEquivalentFromYearly)}
+							{formatPrice(monthlyEquivalent)}
 						</span>
-
 						<span className="text-white/50 ml-1">/ mo</span>
 					</div>
 
-					<span className="text-xs text-white/50">
-						(billed yearly at {formatPrice(yearlyPrice)})
-					</span>
+					{isYearly ? (
+						<span className="text-xs text-white/50">
+							(billed yearly at {formatPrice(price)})
+						</span>
+					) : (
+						<span className="text-xs text-white/50">(billed monthly)</span>
+					)}
 				</CardDescription>
 			</CardHeader>
 
@@ -61,7 +74,7 @@ export function ProPlanCard({
 						Current Plan
 					</Button>
 				) : (
-					<CheckoutButton productIds={productIds} className="w-full">
+					<CheckoutButton priceLookupKey={priceLookupKey} className="w-full">
 						Upgrade to Pro
 					</CheckoutButton>
 				)}

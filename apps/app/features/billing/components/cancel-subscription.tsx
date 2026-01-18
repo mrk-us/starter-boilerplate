@@ -1,5 +1,7 @@
 "use client";
 
+import { SUBSCRIPTION_PLAN } from "@repo/backend/convex/billing/constants";
+import { tryCatch } from "@repo/shared/utils";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -19,23 +21,23 @@ import {
 } from "@/features/billing/hooks";
 
 export function CancelSubscription() {
-	const { isPro, cancelAtPeriodEnd } = useSubscription();
+	const { cancelAtPeriodEnd, plan } = useSubscription();
 	const { cancel, isPending, error } = useCancelSubscription();
 	const [open, setOpen] = useState(false);
 
 	// Don't show if user is not Pro or already cancelling
-	if (!isPro || cancelAtPeriodEnd) {
+	if (plan !== SUBSCRIPTION_PLAN.PRO || cancelAtPeriodEnd) {
 		return null;
 	}
 
 	const handleCancel = async () => {
-		try {
-			// Cancel at end of period (not immediately)
-			await cancel();
+		// Cancel at end of period (not immediately)
+		const { error: cancelError } = await tryCatch(cancel(false));
+
+		if (!cancelError) {
 			setOpen(false);
-		} catch {
-			// Error is handled by the hook
 		}
+		// Error is handled by the hook
 	};
 
 	return (

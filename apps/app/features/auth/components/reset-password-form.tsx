@@ -1,7 +1,7 @@
 "use client";
 
 import { createPasswordSchema } from "@repo/backend/convex/auth/validation";
-import { getErrorMessage } from "@repo/shared/utils";
+import { getErrorMessage, tryCatch } from "@repo/shared/utils";
 import { FieldGroup, Form, FormSubmit, useAppForm } from "@repo/ui/components";
 import Link from "next/link";
 import { useState } from "react";
@@ -32,10 +32,12 @@ export function ResetPasswordForm() {
 		validators: {
 			onSubmit: codeSchema,
 			onSubmitAsync: async ({ value }) => {
-				try {
+				const { error } = await tryCatch(async () => {
 					await verifyCode(value);
 					setStep("password");
-				} catch (error) {
+				});
+
+				if (error) {
 					throw getErrorMessage(error);
 				}
 			},
@@ -49,9 +51,11 @@ export function ResetPasswordForm() {
 		validators: {
 			onSubmit: passwordSchema,
 			onSubmitAsync: async ({ value }) => {
-				try {
+				const { error } = await tryCatch(async () => {
 					await resetPassword(value);
-				} catch (error) {
+				});
+
+				if (error) {
 					throw getErrorMessage(error);
 				}
 			},

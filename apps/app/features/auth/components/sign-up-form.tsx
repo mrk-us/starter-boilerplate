@@ -1,7 +1,7 @@
 "use client";
 
 import { signUpSchema } from "@repo/backend/convex/auth/validation";
-import { getErrorMessage } from "@repo/shared/utils";
+import { getErrorMessage, tryCatch } from "@repo/shared/utils";
 import {
 	FieldGroup,
 	FieldSeparator,
@@ -29,9 +29,9 @@ export function SignUpForm() {
 		validators: {
 			onSubmit: signUpEmailPasswordSchema,
 			onSubmitAsync: async ({ value }) => {
-				try {
-					await signUp(value);
-				} catch (error) {
+				const { error } = await tryCatch(signUp(value));
+
+				if (error) {
 					throw getErrorMessage(error);
 				}
 			},

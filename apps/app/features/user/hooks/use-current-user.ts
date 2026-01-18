@@ -5,6 +5,7 @@ import { useConvexAuth, useQuery } from "convex/react";
 
 export function useCurrentUser() {
 	const { isLoading, isAuthenticated } = useConvexAuth();
+
 	const user = useQuery(api.users.queries.getUserWithSubscription);
 
 	return {

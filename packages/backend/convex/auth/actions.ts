@@ -1,11 +1,12 @@
 "use node";
 
+import { getErrorMessage, tryCatch } from "@repo/shared";
 import { v } from "convex/values";
 import { Webhook } from "svix";
 import { internalAction } from "../_generated/server";
 
 /**
- * Verify Clerk webhook signature using svix (requires Node.js runtime)
+ * Verify Clerk webhook signature using svix
  */
 export const verifyClerkWebhook = internalAction({
 	args: {
@@ -16,7 +17,7 @@ export const verifyClerkWebhook = internalAction({
 	},
 	returns: v.object({
 		valid: v.boolean(),
-		event: v.optional(v.any()),
+		data: v.optional(v.any()),
 		error: v.optional(v.string()),
 	}),
 	handler: async (_ctx, args) => {
@@ -29,17 +30,19 @@ export const verifyClerkWebhook = internalAction({
 
 		const wh = new Webhook(webhookSecret);
 
-		try {
-			const event = wh.verify(args.payload, {
+		const { data, error } = tryCatch(() =>
+			wh.verify(args.payload, {
 				"svix-id": args.svixId,
 				"svix-timestamp": args.svixTimestamp,
 				"svix-signature": args.svixSignature,
-			});
+			}),
+		);
 
-			return { valid: true, event };
-		} catch (err) {
-			console.error("Error verifying webhook:", err);
-			return { valid: false, error: "Invalid signature" };
+		if (error) {
+			console.error("Error verifying webhook:", error);
+			return { valid: false, error: getErrorMessage(error) };
 		}
+
+		return { valid: true, data };
 	},
 });

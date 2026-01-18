@@ -1,5 +1,6 @@
 "use client";
 
+import type { StripePriceLookupKey } from "@repo/backend/convex/billing/constants";
 import {
 	Badge,
 	Button,
@@ -16,7 +17,7 @@ type PlanCardProps = {
 	name: string;
 	price: number;
 	interval: "month" | "year";
-	productId: string;
+	priceLookupKey: StripePriceLookupKey;
 	features: string[];
 	isCurrentPlan: boolean;
 	isPro: boolean;
@@ -35,7 +36,7 @@ export function PlanCard({
 	name,
 	price,
 	interval,
-	productId,
+	priceLookupKey,
 	features,
 	isCurrentPlan,
 	isPro,
@@ -90,7 +91,7 @@ export function PlanCard({
 				) : isPro ? (
 					// User is Pro, show option to switch plans
 					<CheckoutButton
-						productIds={[productId]}
+						priceLookupKey={priceLookupKey}
 						variant="default"
 						className="w-full"
 					>
@@ -98,7 +99,7 @@ export function PlanCard({
 					</CheckoutButton>
 				) : (
 					// User is Free, show upgrade option
-					<CheckoutButton productIds={[productId]} className="w-full">
+					<CheckoutButton priceLookupKey={priceLookupKey} className="w-full">
 						Upgrade to {name}
 					</CheckoutButton>
 				)}

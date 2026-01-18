@@ -2,7 +2,7 @@
 
 import { useUser } from "@clerk/nextjs";
 import { userSchema } from "@repo/backend/convex/users/validation";
-import { getErrorMessage } from "@repo/shared/utils";
+import { getErrorMessage, tryCatch } from "@repo/shared/utils";
 import { Form, FormSubmit, useAppForm } from "@repo/ui/components";
 import { z } from "zod";
 import { useCompleteSetup } from "@/features/setup/hooks";
@@ -25,7 +25,7 @@ export function CompleteSetup() {
 		validators: {
 			onSubmit: nameFormSchema,
 			onSubmitAsync: async ({ value }) => {
-				try {
+				const { error } = await tryCatch(async () => {
 					await completeSetup(value.name);
 
 					// Small delay to ensure session token is fully refreshed
@@ -33,8 +33,9 @@ export function CompleteSetup() {
 
 					// Full page reload to ensure middleware sees the updated session claims
 					window.location.href = "/";
-				} catch (error) {
-					// log errors
+				});
+
+				if (error) {
 					throw getErrorMessage(error);
 				}
 			},
