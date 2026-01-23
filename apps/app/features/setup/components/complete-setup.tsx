@@ -6,6 +6,7 @@ import { getErrorMessage, tryCatch } from "@repo/shared/utils";
 import { Form, FormSubmit, useAppForm } from "@repo/ui/components";
 import { z } from "zod";
 import { useCompleteSetup } from "@/features/setup/hooks";
+import { useEnsureUser } from "@/features/user/hooks";
 
 const nameFormSchema = z.object({
 	name: userSchema.shape.name,
@@ -15,12 +16,15 @@ export function CompleteSetup() {
 	const { user: authUser } = useUser();
 	const { completeSetup } = useCompleteSetup();
 
+	// Ensure user exists in Convex DB (runs in background, handles webhook race condition)
+	useEnsureUser();
+
 	// Pre-fill with Auth provider's user's name if available
 	const defaultName = authUser?.firstName ?? "";
 
 	const form = useAppForm({
 		defaultValues: {
-			name: defaultName,
+			name: defaultName ?? "",
 		},
 		validators: {
 			onSubmit: nameFormSchema,

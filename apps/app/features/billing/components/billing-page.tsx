@@ -28,6 +28,8 @@ export function BillingPage() {
 		return interval;
 	};
 
+	const PAYGATE = plan === SUBSCRIPTION_PLAN.PRO;
+
 	return (
 		<main className="flex flex-col mx-auto max-w-lg gap-8 p-6">
 			<div>
@@ -41,6 +43,12 @@ export function BillingPage() {
 				<CurrentPlan />
 				<CancelSubscription />
 			</section>
+
+			{PAYGATE && (
+				<section className="space-y-4">
+					<div className="text-lg font-medium">This is a Pro feature</div>
+				</section>
+			)}
 
 			{/* Available Plans Section */}
 			<section className="space-y-4">

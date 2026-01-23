@@ -2,7 +2,7 @@
 
 import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
-import type { StripePriceLookupKey } from "@repo/backend/convex/billing/constants";
+import type { StripePriceLookupKey } from "@repo/backend/convex/billing/types";
 import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
 
@@ -10,6 +10,14 @@ type CheckoutOptions = {
 	priceLookupKey: StripePriceLookupKey;
 	successUrl?: string;
 };
+
+/**
+ * Get the default checkout success URL.
+ * Uses /account/billing/checkout-success for post-checkout subscription verification.
+ */
+function getDefaultSuccessUrl(): string {
+	return `${window.location.origin}/account/billing/checkout-success`;
+}
 
 /**
  * Checkout with Stripe
@@ -23,7 +31,7 @@ export function useCheckout() {
 		mutationFn: async ({ priceLookupKey, successUrl }: CheckoutOptions) => {
 			const { url } = await generateCheckoutLink({
 				priceLookupKey,
-				successUrl: successUrl ?? window.location.href,
+				successUrl: successUrl ?? getDefaultSuccessUrl(),
 			});
 			return { url };
 		},

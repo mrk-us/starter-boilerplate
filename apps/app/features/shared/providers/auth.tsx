@@ -19,7 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	const isAuthPage = isPublicPath(pathname);
 	const isSetupPage = isSetupPath(pathname);
-	const needsSetup = isAuthenticated && user && !user.setupCompleted;
+	const needsSetup = isAuthenticated && user && !user.setupComplete;
 
 	// Setup redirect (authenticated users only)
 	useEffect(() => {

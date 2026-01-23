@@ -1,5 +1,6 @@
 "use client";
 
+import type { UserSubscription } from "@repo/backend/convex/billing/types";
 import { useCurrentUser } from "@/features/user/hooks";
 
 /**
@@ -8,17 +9,13 @@ import { useCurrentUser } from "@/features/user/hooks";
 export function useSubscription() {
 	const { user } = useCurrentUser();
 
-	if (!user) return {} as const;
-
-	const subscription = user.subscription;
-
-	if (!subscription) return {} as const;
+	if (!user) throw new Error("User not found");
 
 	return {
-		plan: subscription.plan,
-		interval: subscription.interval,
-		status: subscription.status,
-		currentPeriodEnd: subscription.currentPeriodEnd,
-		cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-	} as const;
+		plan: user.subscription.plan,
+		interval: user.subscription.interval,
+		status: user.subscription.status,
+		currentPeriodEnd: user.subscription.currentPeriodEnd,
+		cancelAtPeriodEnd: user.subscription.cancelAtPeriodEnd,
+	} as UserSubscription;
 }

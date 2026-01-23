@@ -1,4 +1,10 @@
+import { ConvexError } from "convex/values";
 import { Resend as ResendSdk, type Tag } from "resend";
+import {
+	EMAIL_ERROR_CODE,
+	ERROR_CODE,
+	ERROR_MESSAGE,
+} from "../errors/constants";
 
 /**
  * Initialize Resend SDK
@@ -6,7 +12,10 @@ import { Resend as ResendSdk, type Tag } from "resend";
 export const resendSdk = new ResendSdk(
 	process.env.RESEND_API_KEY ??
 		(() => {
-			throw new Error("RESEND_API_KEY environment variable is not set");
+			throw new ConvexError({
+				code: ERROR_CODE.UNKNOWN,
+				message: ERROR_MESSAGE.UNKNOWN,
+			});
 		})(),
 );
 
@@ -33,10 +42,27 @@ export const sendResendEmail = async (
 			tags,
 		});
 		if (error) {
-			throw new Error(error.message);
+			console.error("[resend] Failed to send templated email:", {
+				error: error.message,
+				to,
+				subject,
+				templateId: template.id,
+			});
+			throw new ConvexError({
+				code: EMAIL_ERROR_CODE.SEND_FAILED,
+				message: ERROR_MESSAGE.UNKNOWN,
+			});
 		}
 		if (!data?.id) {
-			throw new Error("No id returned from Resend");
+			console.error("[resend] No email id returned (templated)", {
+				to,
+				subject,
+				templateId: template.id,
+			});
+			throw new ConvexError({
+				code: EMAIL_ERROR_CODE.SEND_FAILED,
+				message: ERROR_MESSAGE.UNKNOWN,
+			});
 		}
 		return data.id;
 	}
@@ -66,10 +92,22 @@ export const sendResendEmail = async (
 		sendOptions as Parameters<typeof resendSdk.emails.send>[0],
 	);
 	if (error) {
-		throw new Error(error.message);
+		console.error("[resend] Failed to send email:", {
+			error: error.message,
+			to,
+			subject,
+		});
+		throw new ConvexError({
+			code: EMAIL_ERROR_CODE.SEND_FAILED,
+			message: ERROR_MESSAGE.UNKNOWN,
+		});
 	}
 	if (!data?.id) {
-		throw new Error("No id returned from Resend");
+		console.error("[resend] No email id returned", { to, subject });
+		throw new ConvexError({
+			code: EMAIL_ERROR_CODE.SEND_FAILED,
+			message: ERROR_MESSAGE.UNKNOWN,
+		});
 	}
 	return data.id;
 };

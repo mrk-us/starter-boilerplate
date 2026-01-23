@@ -9,3 +9,14 @@ import { components } from "../_generated/api";
  * - STRIPE_WEBHOOK_SECRET: Your Stripe webhook secret (whsec_...)
  */
 export const stripe = new StripeSubscriptions(components.stripe, {});
+
+/**
+ * Client-safe exports (no "use node" dependencies)
+ * For server-only exports (actions, queries, helpers), import directly from their files:
+ * - import { ... } from "./billing/actions"
+ * - import { ... } from "./billing/queries"
+ * - import { ... } from "./billing/helpers"
+ */
+export * from "./constants";
+export * from "./types";
+export * from "./validation";

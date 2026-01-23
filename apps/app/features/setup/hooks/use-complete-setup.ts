@@ -16,7 +16,7 @@ export function useCompleteSetup() {
 			await completeSetupAction({ name });
 
 			// Reload Clerk user to refresh session claims
-			// This ensures the middleware sees onboardingComplete = true
+			// This ensures the middleware sees setupComplete = true
 			if (user) {
 				await user.reload();
 			}

@@ -7,9 +7,10 @@
  * - CLERK_JWT_ISSUER_DOMAIN: Your Clerk JWT issuer domain
  */
 
-export * from "./actions";
-export * from "./helpers";
-export * from "./mutations";
-export * from "./types";
+/**
+ * Client-safe exports
+ * For server-only exports (events, helpers), import directly from their files:
+ * - import { ... } from "./auth/events"
+ * - import { ... } from "./auth/helpers"
+ */
 export * from "./validation";
-export * from "./webhooks";

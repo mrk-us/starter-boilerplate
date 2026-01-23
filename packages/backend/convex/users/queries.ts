@@ -1,7 +1,8 @@
 import { v } from "convex/values";
+import { internal } from "../_generated/api";
 import { internalQuery, query } from "../_generated/server";
-import { getAuthenticatedUser } from "../auth/helpers";
-import { getSubscriptionStatusForUser } from "../billing/helpers";
+import { getAuthenticatedUser, requireUser } from "../auth/helpers";
+import type { UserSubscription } from "../billing/types";
 
 /**
  * Get current user for billing (internal - avoids circular dependency)
@@ -18,7 +19,37 @@ export const getCurrentUserForBilling = internalQuery({
 		return {
 			_id: user._id,
 			email: user.email,
+			stripeCustomerId: user.stripeCustomerId,
 		};
+	},
+});
+
+/**
+ * Require current user for billing - throws if not authenticated
+ * Use this in actions where authentication is required
+ */
+export const requireCurrentUserForBilling = internalQuery({
+	args: {},
+	handler: async (ctx, _args) => {
+		const user = await requireUser(ctx);
+
+		return {
+			_id: user._id,
+			email: user.email,
+			stripeCustomerId: user.stripeCustomerId,
+		};
+	},
+});
+
+/**
+ * Get user by ID (internal)
+ */
+export const getUserById = internalQuery({
+	args: {
+		userId: v.id("users"),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.db.get(args.userId);
 	},
 });
 
@@ -50,7 +81,7 @@ export const getUserByEmail = internalQuery({
 /**
  * Get user by authId
  */
-export const getUserByAuthId = query({
+export const getUserByAuthId = internalQuery({
 	args: {
 		authId: v.string(),
 	},
@@ -65,28 +96,15 @@ export const getUserByAuthId = query({
 
 		if (!user) return null;
 
-		// TODO: Can we use a helper here?
-		// Generate URL for the profile picture if it exists
-		// Priority: custom uploaded picture (Convex storage) > Clerk profile picture
-		let profilePictureUrl: string | null | undefined;
-
-		if (user.profilePictureStorageId) {
-			profilePictureUrl = await ctx.storage.getUrl(
-				user.profilePictureStorageId,
-			);
-		} else if (user.profilePictureUrl) {
-			profilePictureUrl = user.profilePictureUrl;
-		}
-
 		return {
 			...user,
-			profilePictureUrl,
 		};
 	},
 });
 
 /**
  * Get the current db user with subscription status
+ * Uses runtime query call to billing module (decoupled from import dependency)
  */
 export const getUserWithSubscription = query({
 	args: {},
@@ -95,7 +113,6 @@ export const getUserWithSubscription = query({
 
 		if (!user) return null;
 
-		// TODO: Can we use a helper here?
 		// Generate URL for the profile picture if it exists
 		// Priority: custom uploaded picture (Convex storage) > Clerk profile picture
 		let profilePictureUrl: string | null | undefined;
@@ -108,8 +125,11 @@ export const getUserWithSubscription = query({
 			profilePictureUrl = user.profilePictureUrl;
 		}
 
-		// Get subscription status using shared helper
-		const subscription = await getSubscriptionStatusForUser(ctx, user._id);
+		// Get subscription status via runtime query (decoupled from billing module)
+		const subscription: UserSubscription = await ctx.runQuery(
+			internal.billing.queries.getSubscriptionStatusByUserId,
+			{ userId: user._id },
+		);
 
 		return {
 			...user,

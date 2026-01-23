@@ -27,10 +27,10 @@ export function SetupGuard({ children }: { children: ReactNode }) {
 		if (pathname === "/setup" || pathname.startsWith("/setup/")) return;
 
 		// Check if onboarding is complete via session claims
-		const onboardingComplete = sessionClaims?.metadata?.onboardingComplete;
+		const setupComplete = sessionClaims?.metadata?.setupComplete;
 
 		// Redirect to setup if not complete
-		if (!onboardingComplete) {
+		if (!setupComplete) {
 			router.replace("/setup");
 		}
 	}, [isLoaded, isAuthenticated, sessionClaims, pathname, router]);

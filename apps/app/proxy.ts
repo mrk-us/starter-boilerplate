@@ -19,10 +19,10 @@ export default clerkMiddleware(async (auth, req) => {
 	const { pathname } = req.nextUrl;
 
 	// Get auth state including session claims
-	const { userId, sessionClaims } = await auth();
+	const { userId: authId, sessionClaims } = await auth();
 
 	// Redirect away from auth pages if authenticated
-	if (userId && isPublicRoute(req)) {
+	if (authId && isPublicRoute(req)) {
 		const homeUrl = new URL("/", req.url);
 		return NextResponse.redirect(homeUrl);
 	}
@@ -33,7 +33,7 @@ export default clerkMiddleware(async (auth, req) => {
 	}
 
 	// Redirect to sign-in if not authenticated
-	if (!userId) {
+	if (!authId) {
 		const signInUrl = new URL("/sign-in", req.url);
 		signInUrl.searchParams.set("redirect", pathname);
 		return NextResponse.redirect(signInUrl);
@@ -45,10 +45,10 @@ export default clerkMiddleware(async (auth, req) => {
 	}
 
 	// Check if user has completed onboarding via session claims
-	const onboardingComplete = sessionClaims?.metadata?.onboardingComplete;
+	const setupComplete = sessionClaims?.metadata?.setupComplete;
 
 	// Redirect to setup if onboarding not complete
-	if (!onboardingComplete) {
+	if (!setupComplete) {
 		const setupUrl = new URL("/setup", req.url);
 		return NextResponse.redirect(setupUrl);
 	}

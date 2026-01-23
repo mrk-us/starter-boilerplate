@@ -1,29 +1,8 @@
-"use client";
-
-import { useAuth } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { Suspense } from "react";
 import { CompleteSetup } from "@/features/setup/components";
+import { SectionSpinner } from "@/features/shared/components/section-spinner";
 
 export default function SetupPage() {
-	const { isLoaded, sessionClaims } = useAuth();
-	const router = useRouter();
-
-	// Check if onboarding is already complete via session claims
-	const onboardingComplete = sessionClaims?.metadata?.onboardingComplete;
-
-	// Redirect if setup already completed
-	useEffect(() => {
-		if (isLoaded && onboardingComplete) {
-			router.replace("/");
-		}
-	}, [isLoaded, onboardingComplete, router]);
-
-	// Show nothing while loading or redirecting
-	if (!isLoaded || onboardingComplete) {
-		return null;
-	}
-
 	return (
 		<main className="flex flex-col mx-auto max-w-md gap-6 p-6 justify-center items-center min-h-screen">
 			<div className="text-center space-y-2">
@@ -33,7 +12,9 @@ export default function SetupPage() {
 				</p>
 			</div>
 			<div className="w-full">
-				<CompleteSetup />
+				<Suspense fallback={<SectionSpinner />}>
+					<CompleteSetup />
+				</Suspense>
 			</div>
 		</main>
 	);

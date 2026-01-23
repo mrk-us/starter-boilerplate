@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import type { UserSubscriptionStatus } from "../billing/types";
+import type { UserSubscription } from "../billing/types";
 import type { userSchema } from "./validation";
 
 /**
@@ -12,5 +12,5 @@ export type User = z.infer<typeof userSchema>;
  */
 export type UserWithSubscription = User & {
 	profilePictureUrl?: string;
-	subscription: UserSubscriptionStatus;
+	subscription: UserSubscription;
 };

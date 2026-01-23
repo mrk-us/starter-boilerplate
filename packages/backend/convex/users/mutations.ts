@@ -2,31 +2,159 @@ import { tryCatch } from "@repo/shared";
 import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation, mutation } from "../_generated/server";
-import { getAuthenticatedUser } from "../auth/helpers";
-import { AUTH_ERROR_CODE, ERROR_MESSAGE } from "../errors/constants";
+import { requireUser } from "../auth/helpers";
+import { USER_ERROR_CODE } from "../errors/constants";
 
 /**
- * Internal mutation: Update user's name by authId
- * Called by the updateName action after updating Clerk
- */
-export const updateNameInternal = internalMutation({
+ * Create a new user
+ * */
+export const createUser = internalMutation({
 	args: {
 		authId: v.string(),
+		email: v.string(),
 		name: v.string(),
+		profilePictureUrl: v.union(v.string(), v.null()),
+		setupComplete: v.boolean(),
 	},
 	handler: async (ctx, args) => {
+		// Check for any existing users with the same authId (direct db query)
+		const existingUser = await ctx.db
+			.query("users")
+			.withIndex("authId", (q) => q.eq("authId", args.authId))
+			.unique();
+
+		// If a user already exists, throw an error
+		if (existingUser) {
+			throw new ConvexError({
+				code: USER_ERROR_CODE.USER_CREATE_FAILED,
+				message: "User already exists",
+			});
+		}
+
+		// Create the user in the database
+		await ctx.db.insert("users", {
+			authId: args.authId,
+			email: args.email,
+			name: args.name ?? "",
+			profilePictureUrl: args.profilePictureUrl ?? "",
+			setupComplete: args.setupComplete,
+		});
+	},
+});
+
+/**
+ * Internal mutation: Update user's email
+ */
+export const updateUserEmail = internalMutation({
+	args: {
+		authId: v.string(),
+		email: v.string(),
+	},
+	handler: async (ctx, args) => {
+		// Get the user from the database (direct db query)
 		const user = await ctx.db
 			.query("users")
 			.withIndex("authId", (q) => q.eq("authId", args.authId))
 			.unique();
 
+		// If the user is not found, log an error
 		if (!user) {
-			console.error("User not found for name update:", args.authId);
+			console.error("[updateUserEmail] User not found:", args.authId);
+			// Return failure
 			return { success: false };
 		}
 
+		// Update the user's email in the database
+		await ctx.db.patch(user._id, {
+			email: args.email,
+		});
+
+		// Return success
+		return { success: true };
+	},
+});
+
+/**
+ * Internal mutation: Update user's name
+ */
+export const updateUserName = internalMutation({
+	args: {
+		authId: v.string(),
+		name: v.string(),
+	},
+	handler: async (ctx, args) => {
+		// Get the user from the database (direct db query)
+		const user = await ctx.db
+			.query("users")
+			.withIndex("authId", (q) => q.eq("authId", args.authId))
+			.unique();
+
+		// If the user is not found, log an error
+		if (!user) {
+			console.error("[updateUserName] User not found:", args.authId);
+			return { success: false };
+		}
+
+		// Update the user's name in the database
 		await ctx.db.patch(user._id, {
 			name: args.name,
+		});
+
+		// Return success
+		return { success: true };
+	},
+});
+
+/**
+ * Internal mutation: Update user's profile picture
+ */
+export const updateUserProfilePicture = internalMutation({
+	args: {
+		authId: v.string(),
+		profilePictureUrl: v.string(),
+	},
+	handler: async (ctx, args) => {
+		// Get the user from the database (direct db query)
+		const user = await ctx.db
+			.query("users")
+			.withIndex("authId", (q) => q.eq("authId", args.authId))
+			.unique();
+
+		// If the user is not found, log an error
+		if (!user) {
+			console.error("[updateUserProfilePicture] User not found:", args.authId);
+			return { success: false };
+		}
+
+		// Update the user's profile picture in the database
+		await ctx.db.patch(user._id, {
+			profilePictureUrl: args.profilePictureUrl,
+		});
+
+		// Return success
+		return { success: true };
+	},
+});
+
+// TODO: Replace this with internal mutation and use action to
+// update the profile picture in Clerk and Convex DB
+/**
+ * Update the current user's profile picture
+ */
+export const updateProfilePicture = mutation({
+	args: {
+		storageId: v.id("_storage"),
+	},
+	handler: async (ctx, args) => {
+		const user = await requireUser(ctx);
+
+		// Delete old profile picture from storage
+		if (user.profilePictureStorageId) {
+			await tryCatch(ctx.storage.delete(user.profilePictureStorageId));
+		}
+
+		await ctx.db.patch(user._id, {
+			profilePictureStorageId: args.storageId,
 		});
 
 		return { success: true };
@@ -49,13 +177,13 @@ export const completeSetupInternal = internalMutation({
 			.unique();
 
 		if (!user) {
-			console.error("User not found for setup completion:", args.authId);
+			console.error("[completeSetupInternal] User not found:", args.authId);
 			return { success: false };
 		}
 
 		await ctx.db.patch(user._id, {
 			name: args.name,
-			setupCompleted: true,
+			setupComplete: true,
 		});
 
 		// Send welcome email
@@ -69,49 +197,12 @@ export const completeSetupInternal = internalMutation({
 });
 
 /**
- * Update the current user's profile picture
- */
-export const updateProfilePicture = mutation({
-	args: {
-		storageId: v.id("_storage"),
-	},
-	handler: async (ctx, args) => {
-		const user = await getAuthenticatedUser(ctx);
-
-		if (!user) {
-			throw new ConvexError({
-				code: AUTH_ERROR_CODE.NOT_AUTHENTICATED,
-				message: ERROR_MESSAGE.NOT_AUTHENTICATED,
-			});
-		}
-
-		// Delete old profile picture from storage
-		if (user.profilePictureStorageId) {
-			await tryCatch(ctx.storage.delete(user.profilePictureStorageId));
-		}
-
-		await ctx.db.patch(user._id, {
-			profilePictureStorageId: args.storageId,
-		});
-
-		return { success: true };
-	},
-});
-
-/**
  * Remove the current user's profile picture
  */
 export const removeProfilePicture = mutation({
 	args: {},
 	handler: async (ctx) => {
-		const user = await getAuthenticatedUser(ctx);
-
-		if (!user) {
-			throw new ConvexError({
-				code: AUTH_ERROR_CODE.NOT_AUTHENTICATED,
-				message: ERROR_MESSAGE.NOT_AUTHENTICATED,
-			});
-		}
+		const user = await requireUser(ctx);
 
 		// Delete from Convex storage
 		if (user.profilePictureStorageId) {
@@ -127,30 +218,102 @@ export const removeProfilePicture = mutation({
 });
 
 /**
- * Delete user from db by authId (internal)
+ * Internal mutation: Update user from Clerk webhook data
+ * Consolidates email, name, and profile picture updates into a single mutation
  */
-export const deleteUserByAuthId = internalMutation({
+export const updateUserFromClerk = internalMutation({
 	args: {
 		authId: v.string(),
+		email: v.string(),
+		name: v.string(),
+		profilePictureUrl: v.string(),
 	},
 	handler: async (ctx, args) => {
+		// Get the user from the database (direct db query)
 		const user = await ctx.db
 			.query("users")
 			.withIndex("authId", (q) => q.eq("authId", args.authId))
 			.unique();
 
-		// User may already be deleted
 		if (!user) {
-			return { success: true, deleted: false };
+			console.error("[updateUserFromClerk] User not found:", args.authId);
+			return { success: false };
 		}
 
-		// Delete profile picture from storage
-		if (user.profilePictureStorageId) {
-			await tryCatch(ctx.storage.delete(user.profilePictureStorageId));
+		// Build patch object with only changed fields
+		const updates: Partial<{
+			email: string;
+			name: string;
+			profilePictureUrl: string;
+		}> = {};
+
+		if (args.email !== user.email) {
+			updates.email = args.email;
+		}
+		if (args.name !== user.name) {
+			updates.name = args.name;
+		}
+		if (args.profilePictureUrl !== user.profilePictureUrl) {
+			updates.profilePictureUrl = args.profilePictureUrl;
 		}
 
-		await ctx.db.delete(user._id);
+		// Only patch if there are changes
+		if (Object.keys(updates).length > 0) {
+			await ctx.db.patch(user._id, updates);
+		}
 
-		return { success: true, deleted: true };
+		return { success: true };
+	},
+});
+
+/**
+ * Internal mutation: Update user's Stripe customer ID
+ */
+export const updateStripeCustomerId = internalMutation({
+	args: {
+		userId: v.id("users"),
+		stripeCustomerId: v.string(),
+	},
+	handler: async (ctx, args) => {
+		await ctx.db.patch(args.userId, {
+			stripeCustomerId: args.stripeCustomerId,
+		});
+		return { success: true };
+	},
+});
+
+/**
+ * Internal mutation: Delete user
+ */
+export const deleteUser = internalMutation({
+	args: {
+		authId: v.string(),
+	},
+	handler: async (ctx, args) => {
+		// Get the user from the database (direct db query)
+		const user = await ctx.db
+			.query("users")
+			.withIndex("authId", (q) => q.eq("authId", args.authId))
+			.unique();
+
+		// User may already be deleted - idempotency check
+		if (!user) {
+			console.warn("[deleteUser] User not found :", args.authId);
+			return { success: true };
+		}
+
+		// Delete user from db
+		const { error: deleteUserError } = await tryCatch(ctx.db.delete(user._id));
+
+		// Log errors
+		if (deleteUserError) {
+			console.error(
+				"[deleteUser] Failed to delete user from db:",
+				deleteUserError.message,
+			);
+		}
+
+		// Return success
+		return { success: true };
 	},
 });

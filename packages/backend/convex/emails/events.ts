@@ -5,7 +5,7 @@ import { internalMutation } from "../_generated/server";
 /**
  * Handle Resend webhook events
  */
-export const handleEmailEvent = internalMutation({
+export const handleResendEventWebhook = internalMutation({
 	args: vOnEmailEventArgs,
 	handler: async (ctx, args) => {
 		switch (args.event.type) {
@@ -66,10 +66,7 @@ export const handleEmailEvent = internalMutation({
 			}
 
 			case "email.delivered": {
-				console.log("Email delivered:", {
-					emailId: args.id,
-					to: args.event.data.to,
-				});
+				// Delivered events are expected and high-volume; avoid noisy logging.
 				break;
 			}
 

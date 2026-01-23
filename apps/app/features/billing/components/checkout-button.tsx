@@ -1,13 +1,15 @@
 "use client";
 
-import type { StripePriceLookupKey } from "@repo/backend/convex/billing/constants";
+import type { StripePriceLookupKey } from "@repo/backend/convex/billing/types";
 import { Button } from "@repo/ui/components";
+import type { buttonVariants } from "@repo/ui/components/button";
+import type { VariantProps } from "class-variance-authority";
 import { useCheckout } from "@/features/billing/hooks";
 
 type CheckoutButtonProps = {
 	priceLookupKey: StripePriceLookupKey;
 	children: React.ReactNode;
-	variant?: "default" | "primary" | "outline";
+	variant: VariantProps<typeof buttonVariants>["variant"];
 	className?: string;
 	successUrl?: string;
 };
@@ -34,6 +36,7 @@ export function CheckoutButton({
 			className={className}
 			onClick={handleClick}
 			disabled={isPending}
+			pending={isPending}
 		>
 			{isPending ? "Loading..." : children}
 		</Button>

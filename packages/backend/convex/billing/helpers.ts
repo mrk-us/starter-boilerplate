@@ -1,12 +1,13 @@
+import { createSha256Hash } from "@repo/shared";
 import type { GenericQueryCtx } from "convex/server";
 import { components } from "../_generated/api";
 import type { DataModel, Id } from "../_generated/dataModel";
 import {
-	STRIPE_PRICE_LOOKUP_KEYS,
+	STRIPE_PRICE_LOOKUP_KEY,
 	SUBSCRIPTION_INTERVAL,
 	SUBSCRIPTION_PLAN,
 } from "./constants";
-import type { UserSubscriptionStatus } from "./types";
+import type { SubscriptionInterval, UserSubscription } from "./types";
 
 /**
  * Get subscription status for a user by querying the Stripe component's subscriptions table.
@@ -14,7 +15,7 @@ import type { UserSubscriptionStatus } from "./types";
 export async function getSubscriptionStatusForUser(
 	ctx: GenericQueryCtx<DataModel>,
 	userId: Id<"users">,
-): Promise<UserSubscriptionStatus> {
+): Promise<UserSubscription> {
 	// Query the Stripe component's subscriptions by userId
 	const subscriptions = await ctx.runQuery(
 		components.stripe.public.listSubscriptionsByUserId,
@@ -42,9 +43,9 @@ export async function getSubscriptionStatusForUser(
 		| string
 		| undefined;
 
-	let interval: SUBSCRIPTION_INTERVAL;
+	let interval: SubscriptionInterval;
 
-	if (priceLookupKey === STRIPE_PRICE_LOOKUP_KEYS.PRO_YEARLY) {
+	if (priceLookupKey === STRIPE_PRICE_LOOKUP_KEY.PRO_YEARLY) {
 		interval = SUBSCRIPTION_INTERVAL.YEAR;
 	} else {
 		// Default to monthly
@@ -63,4 +64,21 @@ export async function getSubscriptionStatusForUser(
 		currentPeriodEnd,
 		cancelAtPeriodEnd: activeSubscription.cancelAtPeriodEnd,
 	};
+}
+
+/**
+ * Create a deterministic hash of subscription state.
+ * Used to detect if subscription has changed (e.g., webhook updated it).
+ */
+export async function createSubscriptionHash(
+	subscription: UserSubscription,
+): Promise<string> {
+	const normalized = JSON.stringify({
+		plan: subscription.plan,
+		status: subscription.status,
+		interval: subscription.interval,
+		currentPeriodEnd: subscription.currentPeriodEnd,
+		cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+	});
+	return createSha256Hash(normalized);
 }

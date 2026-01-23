@@ -1,6 +1,7 @@
 export { BillingPage } from "./billing-page";
 export { CancelSubscription } from "./cancel-subscription";
 export { CheckoutButton } from "./checkout-button";
+export { CheckoutSuccessHandler } from "./checkout-success-handler";
 export { CurrentPlan } from "./current-plan";
 export { CustomerPortalButton } from "./customer-portal-button";
 export { FreePlanCard } from "./free-plan-card";

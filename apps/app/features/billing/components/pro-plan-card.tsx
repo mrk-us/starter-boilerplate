@@ -1,7 +1,7 @@
 "use client";
 
 import {
-	STRIPE_PRICE_LOOKUP_KEYS,
+	STRIPE_PRICE_LOOKUP_KEY,
 	SUBSCRIPTION_PRICING,
 } from "@repo/backend/convex/billing/constants";
 import {
@@ -40,8 +40,8 @@ export function ProPlanCard({
 		? SUBSCRIPTION_PRICING.PRO_YEARLY / 12
 		: SUBSCRIPTION_PRICING.PRO_MONTHLY;
 	const priceLookupKey = isYearly
-		? STRIPE_PRICE_LOOKUP_KEYS.PRO_YEARLY
-		: STRIPE_PRICE_LOOKUP_KEYS.PRO_MONTHLY;
+		? STRIPE_PRICE_LOOKUP_KEY.PRO_YEARLY
+		: STRIPE_PRICE_LOOKUP_KEY.PRO_MONTHLY;
 
 	return (
 		<Card className={`relative ${isCurrentPlan ? "opacity-75" : ""}`}>

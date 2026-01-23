@@ -10,7 +10,9 @@ export default defineSchema({
 		profilePictureUrl: v.optional(v.string()),
 		// Convex storage ID for the profile picture (URL is generated on-the-fly)
 		profilePictureStorageId: v.optional(v.id("_storage")),
-		setupCompleted: v.optional(v.boolean()),
+		setupComplete: v.optional(v.boolean()),
+		// Cached Stripe customer ID
+		stripeCustomerId: v.optional(v.string()),
 	})
 		.index("authId", ["authId"])
 		.index("email", ["email"]),
