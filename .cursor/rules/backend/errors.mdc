@@ -1,0 +1,18 @@
+---
+description: Error patterns for the backend (Convex)
+alwaysApply: false
+---
+# Error handling
+
+## Packages/backend (Convex)
+
+- **Public mutations/actions**: throw **`ConvexError`** so the client gets structured `{ code, message }`.
+- **Internal actions**:
+  - **Critical**: throw `ConvexError` (propagate to caller)
+  - **Non-critical**: `console.warn(...)` and return a safe fallback (graceful degradation)
+- **Webhook handlers**: throw `ConvexError` when the request should be treated as failed; otherwise return a non-2xx/2xx as appropriate for the integration.
+- Error codes and messages live at `packages/backend/convex/errors/constants.ts`.
+
+## Error codes
+
+Backend error codes live at `packages/backend/convex/errors/constants.ts`.

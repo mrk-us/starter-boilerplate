@@ -1,0 +1,13 @@
+---
+description: Use Bun instead of npm, pnpm, or vite.
+globs: **/*.ts,**/*.tsx,**/*.html,**/*.css,**/*.js,**/*.jsx,**/*.json,**/*.md,**/*.mdx
+alwaysApply: true
+---
+
+Use **Bun** for installs and scripts in this repo.
+
+## Commands (preferred)
+
+- **Install**: `bun install` or `bun i`
+- **Add packages**: `bun add <package>` or `bun add <package> --dev`
+- **Run a script**: `bun run <script>`

@@ -1,0 +1,22 @@
+---
+description: Types (shared types + validation)
+globs: **/*.ts,**/*.tsx,**/*.js,**/*.jsx
+alwaysApply: false
+---
+# Type strategy (hybrid: backend types + Convex inference + Zod)
+
+Use the backend as the **single source of truth** for shared types + validation.
+
+## Where types live
+
+- **Exported backend types**: `packages/backend/convex/<feature>/types.ts` (import from frontend as needed)
+- **Exported validation**: `packages/backend/convex/<feature>/validation.ts` (Zod schemas; reuse on frontend forms)
+- **Convex inference**: rely on generated types for queries/mutations where possible.
+
+## Rules of thumb
+
+- **Don’t duplicate backend types** in frontend hooks/components; import them.
+- **Prefer Convex inference** for query/mutation result types; avoid unnecessary type assertions.
+- **Explicit hook return types are OK** for DX, but the data types should still come from backend `types.ts`.
+- **Local types are OK** only when truly local (used in one hook/component and not shared).
+

@@ -1,0 +1,43 @@
+---
+description: React effects for frontend (React/Next.js/Tanstack Start)
+alwaysApply: false
+---
+# React effects (concise)
+
+Effects are an escape hatch: use them only to **sync with external systems** (browser APIs, subscriptions, imperative widgets, analytics).
+
+## Don’t use effects for
+
+- **Derived state**: compute during render (use `useMemo` if expensive).
+- **User events**: handle in event handlers.
+- **Resetting on prop change**: prefer `key` or derived state.
+- **Notifying parent**: update parent in the same event handler.
+
+## Do use effects for
+
+- **Subscriptions** (prefer `useSyncExternalStore` when appropriate).
+- **Imperative integrations** (DOM APIs, non-React widgets).
+- **Display-triggered side effects** (analytics, one-time initialization).
+- **Data fetching only when “mount = trigger”** (ensure cleanup / race handling).
+
+## Quick decision tree
+
+If the code is caused by **user interaction** → event handler.  
+If it can be **calculated from props/state** → render (or `useMemo`).  
+If it syncs with an **external system** → effect (or `useSyncExternalStore`).
+
+### Common refactors (effect → render/event handler)
+
+- **Derived state**: remove state+effect and compute during render.
+- **POST requests**: move to the click/submit handler that triggers it.
+- **Resetting state on prop change**: use `key` on the child component, or derive the state.
+
+### When an effect is appropriate
+
+- Subscribing/unsubscribing to browser events
+- Integrating an imperative widget
+- “Run on mount” side effects (analytics, one-time init)
+
+### Async effects
+
+If you must fetch in an effect, ensure you handle stale responses (cleanup/ignore pattern or an abort controller).
