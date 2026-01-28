@@ -26,10 +26,7 @@ export const upsertUser = mutation({
 			// Update existing user (sync from WorkOS)
 			await ctx.db.patch(existingUser._id, {
 				email: args.email,
-				...(args.profilePictureUrl !== undefined &&
-					!existingUser.profilePictureStorageId && {
-						profilePictureUrl: args.profilePictureUrl,
-					}),
+				profilePictureUrl: args.profilePictureUrl,
 			});
 			return { created: false, userId: existingUser._id };
 		}
@@ -39,7 +36,7 @@ export const upsertUser = mutation({
 			authId: args.authId,
 			email: args.email,
 			name: args.name ?? "",
-			profilePictureUrl: args.profilePictureUrl ?? "",
+			profilePictureUrl: args.profilePictureUrl,
 			setupComplete: false,
 		});
 
@@ -142,7 +139,7 @@ export const updateUserProfilePicture = internalMutation({
 });
 
 // TODO: Replace this with internal mutation and use action to
-// update the profile picture in Clerk and Convex DB
+// update the profile picture in WorkOS and Convex DB
 /**
  * Update the current user's profile picture
  */
@@ -151,16 +148,9 @@ export const updateProfilePicture = mutation({
 		storageId: v.id("_storage"),
 	},
 	handler: async (ctx, args) => {
-		const user = await requireUser(ctx);
+		// const user = await requireUser(ctx);
 
-		// Delete old profile picture from storage
-		if (user.profilePictureStorageId) {
-			await tryCatch(ctx.storage.delete(user.profilePictureStorageId));
-		}
-
-		await ctx.db.patch(user._id, {
-			profilePictureStorageId: args.storageId,
-		});
+		// TODO: Update profile picture in WorkOS
 
 		return { success: true };
 	},
@@ -168,7 +158,7 @@ export const updateProfilePicture = mutation({
 
 /**
  * Internal mutation: Complete user setup by authId
- * Called by the completeSetup action after updating Clerk
+ * Called by the completeSetup action after updating WorkOS
  */
 export const completeSetupInternal = internalMutation({
 	args: {
@@ -207,65 +197,9 @@ export const completeSetupInternal = internalMutation({
 export const removeProfilePicture = mutation({
 	args: {},
 	handler: async (ctx) => {
-		const user = await requireUser(ctx);
+		// const user = await requireUser(ctx);
 
-		// Delete from Convex storage
-		if (user.profilePictureStorageId) {
-			await tryCatch(ctx.storage.delete(user.profilePictureStorageId));
-		}
-
-		await ctx.db.patch(user._id, {
-			profilePictureStorageId: undefined,
-		});
-
-		return { success: true };
-	},
-});
-
-/**
- * Internal mutation: Update user from Clerk webhook data
- * Consolidates email, name, and profile picture updates into a single mutation
- */
-export const updateUserFromClerk = internalMutation({
-	args: {
-		authId: v.string(),
-		email: v.string(),
-		name: v.string(),
-		profilePictureUrl: v.string(),
-	},
-	handler: async (ctx, args) => {
-		// Get the user from the database (direct db query)
-		const user = await ctx.db
-			.query("users")
-			.withIndex("authId", (q) => q.eq("authId", args.authId))
-			.unique();
-
-		if (!user) {
-			console.error("[updateUserFromClerk] User not found:", args.authId);
-			return { success: false };
-		}
-
-		// Build patch object with only changed fields
-		const updates: Partial<{
-			email: string;
-			name: string;
-			profilePictureUrl: string;
-		}> = {};
-
-		if (args.email !== user.email) {
-			updates.email = args.email;
-		}
-		if (args.name !== user.name) {
-			updates.name = args.name;
-		}
-		if (args.profilePictureUrl !== user.profilePictureUrl) {
-			updates.profilePictureUrl = args.profilePictureUrl;
-		}
-
-		// Only patch if there are changes
-		if (Object.keys(updates).length > 0) {
-			await ctx.db.patch(user._id, updates);
-		}
+		// TODO: Remove profile picture from WorkOS
 
 		return { success: true };
 	},

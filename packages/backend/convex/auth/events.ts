@@ -68,10 +68,7 @@ export const { authKitEvent } = authKit.events({
 		// Update user data (don't overwrite custom profile picture)
 		await ctx.db.patch(user._id, {
 			email: event.data.email,
-			...(!user.profilePictureStorageId &&
-				"profilePictureUrl" in event.data && {
-					profilePictureUrl: event.data.profilePictureUrl ?? "",
-				}),
+			profilePictureUrl: event.data.profilePictureUrl ?? undefined,
 		});
 	},
 
@@ -102,49 +99,10 @@ export const { authKitEvent } = authKit.events({
 	},
 
 	/**
-	 * Session created - sync profile picture from OAuth provider
+	 * Session created
 	 */
-	"session.created": async (ctx, event) => {
-		if (!event?.data?.userId) {
-			return;
-		}
-
-		// Fetch WorkOS user data
-		const { data: workosUserData, error: workosUserError } = await tryCatch(
-			ctx.runQuery(components.workOSAuthKit.lib.getAuthUser, {
-				id: event.data.userId,
-			}),
-		);
-
-		// Non-critical - don't fail session creation
-		if (workosUserError) {
-			console.warn(
-				"Failed to fetch WorkOS user for profile sync:",
-				workosUserError.message,
-			);
-			return;
-		}
-
-		if (!workosUserData) {
-			return;
-		}
-
-		const user = await ctx.db
-			.query("users")
-			.withIndex("authId", (q) => q.eq("authId", workosUserData.id))
-			.unique();
-
-		// Update profile picture if user has no custom picture and it changed
-		if (
-			user &&
-			!user.profilePictureStorageId &&
-			workosUserData.profilePictureUrl !== undefined &&
-			user.profilePictureUrl !== workosUserData.profilePictureUrl
-		) {
-			await ctx.db.patch(user._id, {
-				profilePictureUrl: workosUserData.profilePictureUrl ?? undefined,
-			});
-		}
+	"session.created": async (_ctx, _event) => {
+		// TODO: Implement session creation
 	},
 
 	/**

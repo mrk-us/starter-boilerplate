@@ -1,21 +1,24 @@
-import type { OAuthStrategy } from "@clerk/types";
+/**
+ * WorkOS OAuth provider identifiers
+ * @see https://workos.com/docs/sso/guide
+ */
 
 export type OAuthProviders = {
-	strategy: OAuthStrategy;
+	provider: "GoogleOAuth" | "GitHubOAuth" | "AppleOAuth" | "MicrosoftOAuth";
 	message: string;
 };
 
 export const OAUTH_PROVIDERS: OAuthProviders[] = [
 	{
-		strategy: "oauth_google",
+		provider: "GoogleOAuth",
 		message: "You previously signed in with Google.",
 	},
 	{
-		strategy: "oauth_github",
+		provider: "GitHubOAuth",
 		message: "You previously signed in with GitHub.",
 	},
 	{
-		strategy: "oauth_apple",
+		provider: "AppleOAuth",
 		message: "You previously signed in with Apple.",
 	},
 ];

@@ -2,23 +2,23 @@ import { ConvexError } from "convex/values";
 import { UNKNOWN_ERROR } from "../errors";
 import type { AppError } from "../errors/types";
 
-/** Clerk error structure */
-type ClerkErrorShape = {
+/** WorkOS error structure */
+type WorkOSErrorShape = {
 	code?: string;
 	message?: string;
-	errors?: Array<{ code: string; message: string; longMessage?: string }>;
+	errors?: Array<{ code: string; message: string }>;
 };
 
-/** Check if error looks like a Clerk API error */
-function isClerkError(error: unknown): error is ClerkErrorShape {
+/** Check if error looks like a WorkOS API error */
+function isWorkOSError(error: unknown): error is WorkOSErrorShape {
 	if (!error || typeof error !== "object") return false;
-	const err = error as ClerkErrorShape;
+	const err = error as WorkOSErrorShape;
 	return Array.isArray(err.errors) || typeof err.message === "string";
 }
 
 /**
  * Parse any error into a typed AppError
- * Handles: ConvexError, Clerk errors, HTTP client errors, standard Error, unknown
+ * Handles: ConvexError, WorkOS errors, HTTP client errors, standard Error, unknown
  */
 export function parseAppError(error: unknown): AppError {
 	// 1. ConvexError from Convex SDK (has .data property)
@@ -30,17 +30,13 @@ export function parseAppError(error: unknown): AppError {
 		};
 	}
 
-	// 2. Clerk API errors (have errors[] array or message property)
-	if (isClerkError(error)) {
+	// 2. WorkOS API errors (have errors[] array or message property)
+	if (isWorkOSError(error)) {
 		// Check nested errors array first (more specific)
 		if (error.errors?.length) {
-			const firstError = error.errors[0];
 			return {
-				code: firstError?.code ?? UNKNOWN_ERROR.code,
-				message:
-					firstError?.longMessage ??
-					firstError?.message ??
-					UNKNOWN_ERROR.message,
+				code: error?.errors?.[0]?.code ?? UNKNOWN_ERROR.code,
+				message: error?.errors?.[0]?.message ?? UNKNOWN_ERROR.message,
 			};
 		}
 		// Fall back to top-level message

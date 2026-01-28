@@ -14,7 +14,7 @@ import { rateLimiter } from "../rateLimiter";
 import { resend } from "./index";
 
 /**
- * Send email verification email (triggered by Clerk webhook)
+ * Send email verification email (triggered by webhook)
  */
 export const sendEmailVerificationEmail = internalAction({
 	args: {
@@ -90,7 +90,7 @@ export const sendEmailVerificationEmail = internalAction({
 });
 
 /**
- * Send password reset email (triggered by Clerk webhook)
+ * Send password reset email (triggered by webhook)
  */
 export const sendPasswordResetEmail = internalAction({
 	args: {
