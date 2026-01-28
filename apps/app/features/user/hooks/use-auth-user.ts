@@ -1,15 +1,13 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
-import { useConvexAuth } from "convex/react";
+import { useAuth } from "@workos-inc/authkit-nextjs/components";
 
 export function useAuthUser() {
-	const { user } = useUser();
-	const { isLoading, isAuthenticated } = useConvexAuth();
+	const { user, loading } = useAuth();
 
 	return {
 		user,
-		isLoading,
-		isAuthenticated,
+		isLoading: loading,
+		isAuthenticated: !!user,
 	};
 }

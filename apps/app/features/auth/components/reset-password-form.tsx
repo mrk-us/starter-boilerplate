@@ -1,106 +1,52 @@
 "use client";
 
-import { createPasswordSchema } from "@repo/backend/convex/auth/validation";
-import { getErrorMessage, tryCatch } from "@repo/shared/utils";
+import { resetPasswordSchema } from "@repo/backend/convex/auth/validation";
+import { getErrorMessage } from "@repo/shared/utils";
 import { FieldGroup, Form, FormSubmit, useAppForm } from "@repo/ui/components";
 import Link from "next/link";
-import { useState } from "react";
-import { z } from "zod";
+import { useSearchParams } from "next/navigation";
+import type { z } from "zod";
 import { AuthCard } from "@/features/auth/components";
-import { useResetPassword, useVerifyResetCode } from "@/features/auth/hooks";
+import { useResetPassword } from "@/features/auth/hooks";
 
-const codeSchema = z.object({
-	code: z.string().length(6, "Code must be 6 digits"),
-});
-
-const passwordSchema = z.object({
-	password: createPasswordSchema.shape.password,
-});
-
-type CodeFormData = z.infer<typeof codeSchema>;
-type PasswordFormData = z.infer<typeof passwordSchema>;
+type FormData = z.infer<typeof resetPasswordSchema>;
 
 export function ResetPasswordForm() {
-	const [step, setStep] = useState<"code" | "password">("code");
-	const { verifyCode } = useVerifyResetCode();
+	const searchParams = useSearchParams();
+	const token = searchParams.get("token");
+
 	const { resetPassword } = useResetPassword();
 
-	const codeForm = useAppForm({
+	const form = useAppForm({
 		defaultValues: {
-			code: "",
-		} satisfies CodeFormData as CodeFormData,
-		validators: {
-			onSubmit: codeSchema,
-			onSubmitAsync: async ({ value }) => {
-				const { error } = await tryCatch(async () => {
-					await verifyCode(value);
-					setStep("password");
-				});
-
-				if (error) {
-					throw getErrorMessage(error);
-				}
-			},
-		},
-	});
-
-	const passwordForm = useAppForm({
-		defaultValues: {
+			token: token ?? "",
 			password: "",
-		} satisfies PasswordFormData as PasswordFormData,
+		} satisfies FormData as FormData,
 		validators: {
-			onSubmit: passwordSchema,
+			onSubmit: resetPasswordSchema,
 			onSubmitAsync: async ({ value }) => {
-				const { error } = await tryCatch(async () => {
+				try {
 					await resetPassword(value);
-				});
-
-				if (error) {
+				} catch (error) {
 					throw getErrorMessage(error);
 				}
 			},
 		},
 	});
 
-	if (step === "code") {
+	if (!token) {
 		return (
-			<AuthCard
-				title="Enter reset code"
-				description="Enter the 6-digit code sent to your email address"
-				footer={
-					<p className="text-sm text-muted-foreground text-center w-full">
-						Didn't receive a code?{" "}
-						<Link
-							href="/forgot-password"
-							className="text-foreground underline underline-offset-4 hover:text-primary"
-						>
-							Try again
-						</Link>
-					</p>
-				}
-			>
-				<Form form={codeForm}>
-					<FieldGroup>
-						<codeForm.AppField name="code">
-							{(field) => (
-								<field.Input
-									label="Reset code"
-									placeholder="123456"
-									autoComplete="one-time-code"
-									autoFocus
-								/>
-							)}
-						</codeForm.AppField>
-
-						<codeForm.Errors />
-
-						<FormSubmit
-							label="Verify code"
-							isPending={codeForm.state.isSubmitting}
-							hasChanged={(values) => values.code !== ""}
-						/>
-					</FieldGroup>
-				</Form>
+			<AuthCard title="Invalid reset link">
+				<p className="text-xs text-muted-foreground">
+					This password reset link is invalid or has expired. Please{" "}
+					<Link
+						href="/forgot-password"
+						className="text-foreground underline underline-offset-4 hover:text-primary"
+					>
+						request a new one
+					</Link>
+					.
+				</p>
 			</AuthCard>
 		);
 	}
@@ -110,9 +56,9 @@ export function ResetPasswordForm() {
 			title="Set new password"
 			description="Enter your new password below"
 		>
-			<Form form={passwordForm}>
+			<Form form={form}>
 				<FieldGroup>
-					<passwordForm.AppField name="password">
+					<form.AppField name="password">
 						{(field) => (
 							<field.Input
 								label="New Password"
@@ -123,13 +69,13 @@ export function ResetPasswordForm() {
 								placeholder="••••••••"
 							/>
 						)}
-					</passwordForm.AppField>
+					</form.AppField>
 
-					<passwordForm.Errors />
+					<form.Errors />
 
 					<FormSubmit
 						label="Reset password"
-						isPending={passwordForm.state.isSubmitting}
+						isPending={form.state.isSubmitting}
 						hasChanged={(values) => values.password !== ""}
 					/>
 				</FieldGroup>

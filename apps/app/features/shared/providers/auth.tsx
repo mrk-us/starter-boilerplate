@@ -14,8 +14,7 @@ import { isPublicPath, isSetupPath } from "@/lib/routes";
 export function AuthProvider({ children }: { children: ReactNode }) {
 	const router = useRouter();
 	const pathname = usePathname();
-	const { isAuthenticated } = useConvexAuth();
-	const { user, isLoading } = useCurrentUser();
+	const { user, isLoading, isAuthenticated } = useCurrentUser();
 
 	const isAuthPage = isPublicPath(pathname);
 	const isSetupPage = isSetupPath(pathname);

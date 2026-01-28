@@ -21,14 +21,13 @@ import {
 } from "@/features/billing/hooks";
 
 export function CancelSubscription() {
-	const { cancelAtPeriodEnd, plan } = useSubscription();
+	const { plan, cancelAtPeriodEnd, isLoading } = useSubscription();
 	const { cancel, isPending, error } = useCancelSubscription();
 	const [open, setOpen] = useState(false);
 
-	// Don't show if user is not Pro or already cancelling
-	if (plan !== SUBSCRIPTION_PLAN.PRO || cancelAtPeriodEnd) {
-		return null;
-	}
+	if (isLoading) return null;
+
+	if (plan !== SUBSCRIPTION_PLAN.PRO || cancelAtPeriodEnd) return null;
 
 	const handleCancel = async () => {
 		// Cancel at end of period (not immediately)

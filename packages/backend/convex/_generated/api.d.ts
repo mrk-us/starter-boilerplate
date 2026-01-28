@@ -8,9 +8,11 @@
  * @module
  */
 
+import type * as auth_actions from "../auth/actions.js";
 import type * as auth_events from "../auth/events.js";
 import type * as auth_helpers from "../auth/helpers.js";
 import type * as auth_index from "../auth/index.js";
+import type * as auth_types from "../auth/types.js";
 import type * as auth_validation from "../auth/validation.js";
 import type * as billing_actions from "../billing/actions.js";
 import type * as billing_constants from "../billing/constants.js";
@@ -33,6 +35,7 @@ import type * as rateLimiter from "../rateLimiter.js";
 import type * as storage_index from "../storage/index.js";
 import type * as storage_mutations from "../storage/mutations.js";
 import type * as users_actions from "../users/actions.js";
+import type * as users_helpers from "../users/helpers.js";
 import type * as users_mutations from "../users/mutations.js";
 import type * as users_queries from "../users/queries.js";
 import type * as users_types from "../users/types.js";
@@ -46,9 +49,11 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "auth/actions": typeof auth_actions;
   "auth/events": typeof auth_events;
   "auth/helpers": typeof auth_helpers;
   "auth/index": typeof auth_index;
+  "auth/types": typeof auth_types;
   "auth/validation": typeof auth_validation;
   "billing/actions": typeof billing_actions;
   "billing/constants": typeof billing_constants;
@@ -71,6 +76,7 @@ declare const fullApi: ApiFromModules<{
   "storage/index": typeof storage_index;
   "storage/mutations": typeof storage_mutations;
   "users/actions": typeof users_actions;
+  "users/helpers": typeof users_helpers;
   "users/mutations": typeof users_mutations;
   "users/queries": typeof users_queries;
   "users/types": typeof users_types;
@@ -105,6 +111,43 @@ export declare const internal: FilterApi<
 >;
 
 export declare const components: {
+  workOSAuthKit: {
+    lib: {
+      enqueueWebhookEvent: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          apiKey: string;
+          event: string;
+          eventId: string;
+          eventTypes?: Array<string>;
+          logLevel?: "DEBUG";
+          onEventHandle?: string;
+          updatedAt?: string;
+        },
+        any
+      >;
+      getAuthUser: FunctionReference<
+        "query",
+        "internal",
+        { id: string },
+        {
+          createdAt: string;
+          email: string;
+          emailVerified: boolean;
+          externalId?: null | string;
+          firstName?: null | string;
+          id: string;
+          lastName?: null | string;
+          lastSignInAt?: null | string;
+          locale?: null | string;
+          metadata: Record<string, any>;
+          profilePictureUrl?: null | string;
+          updatedAt: string;
+        } | null
+      >;
+    };
+  };
   resend: {
     lib: {
       cancelEmail: FunctionReference<

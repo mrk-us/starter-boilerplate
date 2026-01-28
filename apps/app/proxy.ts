@@ -1,60 +1,51 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
-import { PUBLIC_ROUTE_PATTERNS } from "./lib";
+import { authkit, handleAuthkitHeaders } from "@workos-inc/authkit-nextjs";
+import type { NextRequest } from "next/server";
+import { isPublicPath, isSetupPath } from "./lib/routes";
 
 /**
- * Public routes that don't require authentication
+ * AuthKit proxy with custom redirect logic and setup route handling
+ *
+ * Note: Setup completion check (onboarding) is handled at the page/layout level
+ * via SetupGuard since WorkOS session doesn't include custom metadata.
  */
-const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS]);
+export default async function proxy(request: NextRequest) {
+	const { pathname } = request.nextUrl;
 
-/**
- * Setup/onboarding route
- */
-const isSetupRoute = createRouteMatcher(["/setup(.*)"]);
+	// Get session info using AuthKit
+	const { session, headers } = await authkit(request);
 
-/**
- * Clerk middleware with custom redirect logic and onboarding enforcement
- */
-export default clerkMiddleware(async (auth, req) => {
-	const { pathname } = req.nextUrl;
+	const isPublic = isPublicPath(pathname);
+	const isSetup = isSetupPath(pathname);
 
-	// Get auth state including session claims
-	const { userId: authId, sessionClaims } = await auth();
-
-	// Redirect away from auth pages if authenticated
-	if (authId && isPublicRoute(req)) {
-		const homeUrl = new URL("/", req.url);
-		return NextResponse.redirect(homeUrl);
+	// Redirect authenticated users away from auth pages
+	if (session.user && isPublic) {
+		return handleAuthkitHeaders(request, headers, { redirect: "/" });
 	}
 
 	// Allow public routes without authentication
-	if (isPublicRoute(req)) {
-		return NextResponse.next();
+	if (isPublic) {
+		return handleAuthkitHeaders(request, headers);
 	}
 
-	// Redirect to sign-in if not authenticated
-	if (!authId) {
-		const signInUrl = new URL("/sign-in", req.url);
+	// Redirect unauthenticated users to sign-in
+	if (!session.user) {
+		const signInUrl = new URL("/sign-in", request.url);
 		signInUrl.searchParams.set("redirect", pathname);
-		return NextResponse.redirect(signInUrl);
+		return handleAuthkitHeaders(request, headers, {
+			redirect: signInUrl.toString(),
+		});
 	}
 
+	// TODO: Get setupComplete from db or workos
 	// Allow access to setup route for authenticated users
-	if (isSetupRoute(req)) {
-		return NextResponse.next();
+	if (isSetup) {
+		return handleAuthkitHeaders(request, headers);
 	}
 
-	// Check if user has completed onboarding via session claims
-	const setupComplete = sessionClaims?.metadata?.setupComplete;
-
-	// Redirect to setup if onboarding not complete
-	if (!setupComplete) {
-		const setupUrl = new URL("/setup", req.url);
-		return NextResponse.redirect(setupUrl);
-	}
-
-	return NextResponse.next();
-});
+	// For all other authenticated routes, continue
+	// Setup completion enforcement is handled by SetupGuard at the layout level
+	return handleAuthkitHeaders(request, headers);
+}
 
 export const config = {
 	matcher: [

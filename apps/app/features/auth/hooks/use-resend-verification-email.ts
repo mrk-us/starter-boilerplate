@@ -1,33 +1,35 @@
 "use client";
 
-import { useSignUp } from "@clerk/nextjs";
+import { useConvexAction } from "@convex-dev/react-query";
+import { api } from "@repo/backend/convex/_generated/api";
 import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
 
+type ResendVerificationEmailData = {
+	authId: string;
+};
+
 export function useResendVerificationEmail() {
-	const { signUp, isLoaded } = useSignUp();
+	const resendUserVerificationEmail = useConvexAction(
+		api.auth.actions.resendVerificationEmail,
+	);
 
-	const { mutateAsync, isPending, error, isSuccess } = useMutation({
-		mutationFn: async () => {
-			if (!isLoaded || !signUp) throw new Error("Clerk is not loaded");
-			// Use Clerk's email verification method
-			await signUp.prepareEmailAddressVerification({
-				strategy: "email_code",
-			});
-
-			// Return success
-			return { success: true };
+	const { mutateAsync, isPending, error } = useMutation({
+		mutationFn: (data: ResendVerificationEmailData) =>
+			resendUserVerificationEmail({ authId: data.authId }),
+		onSuccess: (res) => {
+			if (res.success) {
+				// TODO: Show success message
+			}
 		},
 		onError: (err) => {
-			// Log errors
 			console.error(getErrorMessage(err));
 		},
 	});
 
 	return {
 		resendVerificationEmail: mutateAsync,
-		isPending: isPending || !isLoaded,
-		isSuccess,
+		isPending,
 		error: error ? new Error(getErrorMessage(error)) : undefined,
 	};
 }

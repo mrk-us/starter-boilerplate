@@ -5,12 +5,11 @@ import { useSubscription } from "@/features/billing/hooks";
 import { CustomerPortalButton } from "./customer-portal-button";
 
 export function ManageSubscription() {
-	const { plan } = useSubscription();
+	const { plan, isLoading } = useSubscription();
 
-	// Only show for Pro users
-	if (plan !== SUBSCRIPTION_PLAN.PRO) {
-		return null;
-	}
+	if (isLoading) return null;
+
+	if (plan !== SUBSCRIPTION_PLAN.PRO) return null;
 
 	return <CustomerPortalButton>Manage Subscription</CustomerPortalButton>;
 }

@@ -29,7 +29,6 @@ export const usePasswordSchema = z.object({
 export const signUpSchema = z.object({
 	email: authSchema.shape.email,
 	password: createPasswordSchema.shape.password,
-	code: authSchema.shape.verificationCode,
 });
 
 /**
@@ -45,7 +44,6 @@ export const verifyEmailSchema = z.object({
 export const signInSchema = z.object({
 	email: authSchema.shape.email,
 	password: usePasswordSchema.shape.password,
-	code: authSchema.shape.verificationCode,
 });
 
 /**
@@ -60,4 +58,5 @@ export const forgotPasswordSchema = z.object({
  */
 export const resetPasswordSchema = z.object({
 	password: createPasswordSchema.shape.password,
+	token: z.string().min(1, "Token is required"),
 });

@@ -1,7 +1,6 @@
 import type {
 	AUTH_ERROR_CODE,
 	BILLING_ERROR_CODE,
-	CLERK_ERROR_CODE,
 	EMAIL_ERROR_CODE,
 	ERROR_CODE,
 	ERROR_MESSAGE,
@@ -24,12 +23,6 @@ export type AuthErrorCode =
  */
 export type UserErrorCode =
 	(typeof USER_ERROR_CODE)[keyof typeof USER_ERROR_CODE];
-
-/**
- * Clerk API error codes
- */
-export type ClerkErrorCode =
-	(typeof CLERK_ERROR_CODE)[keyof typeof CLERK_ERROR_CODE];
 
 /**
  * Billing error codes

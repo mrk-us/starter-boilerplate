@@ -21,8 +21,10 @@ function formatDate(dateString: string | null): string {
 }
 
 export function CurrentPlan() {
-	const { currentPeriodEnd, cancelAtPeriodEnd, status, plan } =
+	const { currentPeriodEnd, cancelAtPeriodEnd, status, plan, isLoading } =
 		useSubscription();
+
+	if (isLoading) return null;
 
 	const statusBadge =
 		plan === SUBSCRIPTION_PLAN.PRO ? (

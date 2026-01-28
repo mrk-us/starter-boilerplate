@@ -1,207 +1,188 @@
-import { verifyWebhook } from "@clerk/backend/webhooks";
 import { tryCatch } from "@repo/shared";
 import { ConvexError } from "convex/values";
-import { internal } from "../_generated/api";
-import type { ActionCtx } from "../_generated/server";
-import { ERROR_CODE, USER_ERROR_CODE } from "../errors/constants";
-import { getFullName, getPrimaryEmail } from "./helpers";
+import { components, internal } from "../_generated/api";
+import { ERROR_CODE } from "../errors/constants";
+import { authKit } from "./index";
 
 /**
- * HTTP handler for Clerk webhook events
+ * WorkOS webhook event handlers
+ * These are backup/sync handlers - primary user creation happens in auth callback
  */
-export async function handleClerkEventWebhook(
-	ctx: ActionCtx,
-	request: Request,
-): Promise<Response> {
+export const { authKitEvent } = authKit.events({
 	/**
-	 * Verify the webhook
-	 *
-	 * @see https://clerk.com/docs/reference/backend/verify-webhook
-	 *
-	 * */
-	const { data: event, error } = await tryCatch(
-		verifyWebhook(request, {
-			signingSecret: process.env.CLERK_WEBHOOK_SECRET,
-		}),
-	);
+	 * User created - backup sync to local db
+	 * User should already exist from auth callback, but create if not (idempotent)
+	 */
+	"user.created": async (ctx, event) => {
+		const existingUser = await ctx.db
+			.query("users")
+			.withIndex("authId", (q) => q.eq("authId", event.data.id))
+			.unique();
 
-	// If the webhook verification fails, return error
-	if (error) {
-		console.error("[verifyWebhook] Webhook verification failed:", error);
-		return new Response("Webhook verification failed", { status: 400 });
-	}
+		// User already exists (created by callback) - nothing to do
+		if (existingUser) {
+			return;
+		}
+
+		// Create user if callback didn't
+		await ctx.db.insert("users", {
+			authId: event.data.id,
+			email: event.data.email,
+			name: event.data.firstName ?? "",
+			profilePictureUrl: event.data.profilePictureUrl ?? "",
+			setupComplete: false,
+		});
+	},
 
 	/**
-	 * Handle the events
-	 *
-	 * @see https://clerk.com/docs/guides/development/webhooks/overview
-	 *
-	 * */
-	switch (event.type) {
-		/**
-		 * User created
-		 * */
-		case "user.created": {
-			// Check if user already exists (may have already been created by backend)
-			const existingUser = await ctx.runQuery(
-				internal.users.queries.getUserByAuthId,
+	 * User updated - sync changes to local db
+	 * Creates user if not exists (handles edge cases)
+	 */
+	"user.updated": async (ctx, event) => {
+		const user = await ctx.db
+			.query("users")
+			.withIndex("authId", (q) => q.eq("authId", event.data.id))
+			.unique();
+
+		// User doesn't exist - create them (shouldn't ever run, but just in case)
+		if (!user) {
+			await ctx.db.insert("users", {
+				authId: event.data.id,
+				email: event.data.email,
+				name: event.data.firstName ?? "",
+				profilePictureUrl: event.data.profilePictureUrl ?? "",
+				setupComplete: false,
+			});
+			return;
+		}
+
+		// Trigger re-verification if email changed
+		if (event.data.email !== user.email) {
+			await ctx.scheduler.runAfter(
+				0,
+				internal.auth.actions.resendVerificationEmailOnEmailChange,
 				{ authId: event.data.id },
 			);
-
-			if (existingUser) {
-				// User already exists, skip creation (idempotent)
-				break;
-			}
-
-			// Get the user's primary email
-			const email = getPrimaryEmail(event.data);
-			// If user signed up without an email, throw an error
-			if (!email) {
-				throw new ConvexError({
-					code: ERROR_CODE.INVALID_INPUT,
-					message: "[user.created] Missing primary email",
-				});
-			}
-
-			// Get the user's full name
-			const name = getFullName(event.data);
-			// Get the user's account setup status (should be false at this stage)
-			const setupComplete = Boolean(event.data.public_metadata?.setupComplete);
-
-			// Run the create user mutation
-			await ctx.runMutation(internal.users.mutations.createUser, {
-				authId: event.data.id,
-				email,
-				name,
-				profilePictureUrl: event.data.image_url,
-				setupComplete: setupComplete,
-			});
-			break;
 		}
 
-		/**
-		 * User updated
-		 * */
-		case "user.updated": {
-			// Get the user's primary email
-			const email = getPrimaryEmail(event.data);
-			// If the user has no email, throw an error
-			if (!email) {
-				throw new ConvexError({
-					code: ERROR_CODE.INVALID_INPUT,
-					message: "[user.updated] Missing primary email",
-				});
-			}
+		// Update user data (don't overwrite custom profile picture)
+		await ctx.db.patch(user._id, {
+			email: event.data.email,
+			...(!user.profilePictureStorageId &&
+				"profilePictureUrl" in event.data && {
+					profilePictureUrl: event.data.profilePictureUrl ?? "",
+				}),
+		});
+	},
 
-			// Get the user's full name and profile picture URL
-			const name = getFullName(event.data);
-			const profilePictureUrl = event.data.image_url;
+	/**
+	 * User deleted - remove from local db
+	 */
+	"user.deleted": async (ctx, event) => {
+		if (!event) {
+			console.error("No event data for user.deleted webhook");
+			throw new ConvexError({
+				code: ERROR_CODE.UNKNOWN,
+				message: "Invalid webhook event",
+			});
+		}
 
-			// Update user in a single mutation (handles change detection internally)
-			const result = await ctx.runMutation(
-				internal.users.mutations.updateUserFromClerk,
-				{
-					authId: event.data.id,
-					email,
-					name,
-					profilePictureUrl,
-				},
+		const user = await ctx.db
+			.query("users")
+			.withIndex("authId", (q) => q.eq("authId", event.data.id))
+			.unique();
+
+		// User may already be deleted or never synced
+		if (!user) {
+			console.warn("User not found for deletion:", event.data.id);
+			return;
+		}
+
+		await ctx.db.delete(user._id);
+	},
+
+	/**
+	 * Session created - sync profile picture from OAuth provider
+	 */
+	"session.created": async (ctx, event) => {
+		if (!event?.data?.userId) {
+			return;
+		}
+
+		// Fetch WorkOS user data
+		const { data: workosUserData, error: workosUserError } = await tryCatch(
+			ctx.runQuery(components.workOSAuthKit.lib.getAuthUser, {
+				id: event.data.userId,
+			}),
+		);
+
+		// Non-critical - don't fail session creation
+		if (workosUserError) {
+			console.warn(
+				"Failed to fetch WorkOS user for profile sync:",
+				workosUserError.message,
 			);
-
-			if (!result.success) {
-				throw new ConvexError({
-					code: USER_ERROR_CODE.USER_NOT_FOUND,
-					message: `[user.updated] User ${event.data.id} not found`,
-				});
-			}
-
-			break;
+			return;
 		}
 
-		/**
-		 * User deleted
-		 * */
-		case "user.deleted": {
-			// If the user's id is not found, treat as a bad payload
-			if (!event.data.id) {
-				console.error("[user.deleted] Missing event.data.id");
-				return new Response("Missing user id", { status: 400 });
-			}
+		if (!workosUserData) {
+			return;
+		}
 
-			// Delete user and cancel subscription
-			// This is idempotent - safe if user was already deleted by deleteUser action
-			await ctx.runAction(internal.users.actions.deleteUserWithSubscription, {
-				authId: event.data.id,
+		const user = await ctx.db
+			.query("users")
+			.withIndex("authId", (q) => q.eq("authId", workosUserData.id))
+			.unique();
+
+		// Update profile picture if user has no custom picture and it changed
+		if (
+			user &&
+			!user.profilePictureStorageId &&
+			workosUserData.profilePictureUrl !== undefined &&
+			user.profilePictureUrl !== workosUserData.profilePictureUrl
+		) {
+			await ctx.db.patch(user._id, {
+				profilePictureUrl: workosUserData.profilePictureUrl ?? undefined,
 			});
-			break;
+		}
+	},
+
+	/**
+	 * Invitation created (placeholder for future implementation)
+	 */
+	"invitation.created": async (_ctx, _event) => {
+		// TODO: Implement invitation email
+	},
+
+	/**
+	 * Password reset requested - send reset email
+	 */
+	"password_reset.created": async (ctx, event) => {
+		if (!event) {
+			console.warn("No event data for password_reset.created webhook");
+			return;
 		}
 
-		/**
-		 * Email created
-		 * */
-		case "email.created": {
-			const emailEvent = event;
-			const { slug, to_email_address, data } = emailEvent.data;
+		await ctx.scheduler.runAfter(
+			0,
+			internal.emails.actions.sendPasswordResetEmail,
+			{ passwordResetId: event.data.id },
+		);
+	},
 
-			if (!to_email_address) {
-				throw new ConvexError({
-					code: ERROR_CODE.INVALID_INPUT,
-					message: "[email.created] Missing to_email_address",
-				});
-			}
-
-			switch (slug) {
-				// Type: verification_code
-				case "verification_code":
-					if (data?.otp_code) {
-						// Send email verification email
-						await ctx.runAction(
-							internal.emails.actions.sendEmailVerificationEmail,
-							{
-								email: to_email_address,
-								code: data.otp_code,
-							},
-						);
-					} else {
-						console.warn(
-							"[email.created] Missing otp_code for verification_code",
-						);
-					}
-					break;
-
-				// Type: reset_password_code
-				case "reset_password_code":
-					if (data?.otp_code) {
-						// Send password reset email
-						await ctx.runAction(
-							internal.emails.actions.sendPasswordResetEmail,
-							{
-								email: to_email_address,
-								code: data.otp_code,
-							},
-						);
-					} else {
-						console.warn(
-							"[email.created] Missing otp_code for reset_password_code",
-						);
-					}
-					break;
-
-				// Default
-				default:
-					break;
-			}
-			break;
+	/**
+	 * Email verification requested - send verification email
+	 */
+	"email_verification.created": async (ctx, event) => {
+		if (!event) {
+			console.warn("No event data for email_verification.created webhook");
+			return;
 		}
 
-		/**
-		 * Default case
-		 * */
-		default: {
-			// Silently ignore other events we don't need to handle for now
-			break;
-		}
-	}
-
-	return new Response("OK", { status: 200 });
-}
+		await ctx.scheduler.runAfter(
+			0,
+			internal.emails.actions.sendEmailVerificationEmail,
+			{ emailVerificationId: event.data.id },
+		);
+	},
+});

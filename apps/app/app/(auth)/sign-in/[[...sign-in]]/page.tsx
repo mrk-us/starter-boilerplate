@@ -1,6 +1,7 @@
 import { APP_DESCRIPTION, APP_NAME } from "@repo/config";
 import type { Metadata } from "next";
-import { SignIn } from "@/features/auth/components/sign-in";
+import { Suspense } from "react";
+import { SignInForm } from "@/features/auth/components";
 
 export const metadata: Metadata = {
 	title: `Sign In | ${APP_NAME}`,
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function SignInPage() {
-	return <SignIn />;
+	return (
+		<Suspense>
+			<SignInForm />
+		</Suspense>
+	);
 }

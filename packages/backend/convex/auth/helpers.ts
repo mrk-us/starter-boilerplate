@@ -1,22 +1,16 @@
-import type { User, UserJSON } from "@clerk/backend";
+import type { User } from "@workos-inc/node";
 import { ConvexError } from "convex/values";
 import type { ActionCtx, MutationCtx, QueryCtx } from "../_generated/server";
 import { AUTH_ERROR_CODE, ERROR_MESSAGE } from "../errors/constants";
+import { authKit } from "./index";
 
 /**
- * Clerk user data type that supports both webhook data (UserJSON) and SDK data (User)
+ * WorkOS user data type
  */
-type ClerkUserData = UserJSON | User;
+export type WorkOSUser = User;
 
 /**
- * Type guard to check if data is from Clerk SDK (User) vs webhook (UserJSON)
- */
-function isClerkSdkUser(data: ClerkUserData): data is User {
-	return "emailAddresses" in data;
-}
-
-/**
- * Get the authenticated user's Clerk ID from the Convex identity
+ * Get the authenticated user's WorkOS ID from the Convex identity
  * Returns null if not authenticated
  */
 export async function getAuthId(
@@ -31,7 +25,7 @@ export async function getAuthId(
 
 /**
  * Require authentication - throws NOT_AUTHENTICATED if not signed in
- * Use this when authentication is required (mutations, actions)
+ * Returns the WorkOS user ID
  */
 export async function requireAuthId(
 	ctx: QueryCtx | MutationCtx | ActionCtx,
@@ -53,13 +47,13 @@ export async function requireAuthId(
  * Returns null if not authenticated or user not found
  */
 export async function getAuthenticatedUser(ctx: QueryCtx | MutationCtx) {
-	const clerkUserId = await getAuthId(ctx);
+	const authUser = await authKit.getAuthUser(ctx);
 
-	if (!clerkUserId) return null;
+	if (!authUser) return null;
 
 	return ctx.db
 		.query("users")
-		.withIndex("authId", (q) => q.eq("authId", clerkUserId))
+		.withIndex("authId", (q) => q.eq("authId", authUser.id))
 		.unique();
 }
 
@@ -81,38 +75,16 @@ export async function requireUser(ctx: QueryCtx | MutationCtx) {
 }
 
 /**
- * Get primary email from Clerk user data
- * Supports both webhook data (UserJSON) and SDK data (User)
- * Returns the email string or undefined if not found
+ * Get email from WorkOS user data
  */
-export function getPrimaryEmail(data: ClerkUserData): string | undefined {
-	if (isClerkSdkUser(data)) {
-		// SDK User type (camelCase)
-		const email = data.emailAddresses.find(
-			(e) => e.id === data.primaryEmailAddressId,
-		);
-		return email?.emailAddress;
-	}
-
-	// Webhook UserJSON type (snake_case)
-	const email = data.email_addresses.find(
-		(e) => e.id === data.primary_email_address_id,
-	);
-	return email?.email_address;
+export function getPrimaryEmail(user: WorkOSUser): string {
+	return user.email;
 }
 
 /**
- * Get full name from Clerk user data
- * Supports both webhook data (UserJSON) and SDK data (User)
+ * Get full name from WorkOS user data
  */
-export function getFullName(data: ClerkUserData): string {
-	if (isClerkSdkUser(data)) {
-		// SDK User type (camelCase)
-		const parts = [data.firstName, data.lastName].filter(Boolean);
-		return parts.join(" ").trim();
-	}
-
-	// Webhook UserJSON type (snake_case)
-	const parts = [data.first_name, data.last_name].filter(Boolean);
+export function getFullName(user: WorkOSUser): string {
+	const parts = [user.firstName, user.lastName].filter(Boolean);
 	return parts.join(" ").trim();
 }

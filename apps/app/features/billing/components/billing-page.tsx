@@ -11,13 +11,17 @@ import {
 	ProPlanCard,
 } from "@/features/billing/components";
 import { useSubscription } from "@/features/billing/hooks";
-import { useCurrentUser } from "@/features/user/hooks";
+import { SectionSpinner } from "@/features/shared/components";
 
 export function BillingPage() {
-	const { isLoading } = useCurrentUser();
-	const { plan, interval } = useSubscription();
+	const { plan, interval, isLoading } = useSubscription();
 
 	const [isYearly, setIsYearly] = useState(true);
+
+	// Show loading while subscription data loads
+	if (isLoading) {
+		return <SectionSpinner />;
+	}
 
 	const billingInterval = () => {
 		if (plan === SUBSCRIPTION_PLAN.FREE || !interval) {
@@ -78,15 +82,13 @@ export function BillingPage() {
 					)}
 				</div>
 
-				{!isLoading && (
-					<div className="grid gap-4 md:grid-cols-2">
-						<FreePlanCard isCurrentPlan={plan === SUBSCRIPTION_PLAN.FREE} />
-						<ProPlanCard
-							isCurrentPlan={plan === SUBSCRIPTION_PLAN.PRO}
-							billingInterval={billingInterval()}
-						/>
-					</div>
-				)}
+				<div className="grid gap-4 md:grid-cols-2">
+					<FreePlanCard isCurrentPlan={plan === SUBSCRIPTION_PLAN.FREE} />
+					<ProPlanCard
+						isCurrentPlan={plan === SUBSCRIPTION_PLAN.PRO}
+						billingInterval={billingInterval()}
+					/>
+				</div>
 			</section>
 		</main>
 	);

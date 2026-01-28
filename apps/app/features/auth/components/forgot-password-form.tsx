@@ -1,7 +1,7 @@
 "use client";
 
 import { forgotPasswordSchema } from "@repo/backend/convex/auth/validation";
-import { getErrorMessage, tryCatch } from "@repo/shared/utils";
+import { getErrorMessage } from "@repo/shared/utils";
 import { FieldGroup, Form, FormSubmit, useAppForm } from "@repo/ui/components";
 import Link from "next/link";
 import type { z } from "zod";
@@ -20,11 +20,9 @@ export function ForgotPasswordForm() {
 		validators: {
 			onSubmit: forgotPasswordSchema,
 			onSubmitAsync: async ({ value }) => {
-				const { error } = await tryCatch(async () => {
+				try {
 					await forgotPassword(value);
-				});
-
-				if (error) {
+				} catch (error) {
 					throw getErrorMessage(error);
 				}
 			},
@@ -34,9 +32,9 @@ export function ForgotPasswordForm() {
 	return (
 		<AuthCard
 			title="Reset password"
-			description="Enter your email address and we'll send you a code to reset your password"
+			description="Enter your email address and we'll send you a link to reset your password"
 			footer={
-				<p className="text-sm text-muted-foreground text-center w-full">
+				<p className="text-xs text-muted-foreground text-center w-full">
 					Remember your password?{" "}
 					<Link
 						href="/sign-in"
@@ -50,7 +48,8 @@ export function ForgotPasswordForm() {
 			<Form form={form}>
 				<FieldGroup>
 					{isSuccess && (
-						<div className="rounded-md bg-green-500/10 p-3 text-sm text-green-500 dark:text-green-400">
+						<div className="relative flex flex-row gap-3 rounded-lg bg-positive/7.5 pr-3 pl-2 py-2 font-medium text-xs text-positive">
+							<div className="w-1 shrink-0 self-stretch rounded-full bg-positive" />
 							Check your email for a password reset link.
 						</div>
 					)}
@@ -71,7 +70,7 @@ export function ForgotPasswordForm() {
 					<form.Errors />
 
 					<FormSubmit
-						label="Send reset code"
+						label="Send reset link"
 						isPending={form.state.isSubmitting}
 						hasChanged={(values) => values.email !== ""}
 					/>

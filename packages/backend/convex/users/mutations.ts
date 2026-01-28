@@ -1,44 +1,49 @@
 import { tryCatch } from "@repo/shared";
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation, mutation } from "../_generated/server";
 import { requireUser } from "../auth/helpers";
-import { USER_ERROR_CODE } from "../errors/constants";
 
 /**
- * Create a new user
- * */
-export const createUser = internalMutation({
+ * Upsert user - create if doesn't exist, update if exists
+ * Called from auth callback to ensure user exists immediately after sign-in/up
+ * Public mutation (called from Next.js server action after WorkOS auth)
+ */
+export const upsertUser = mutation({
 	args: {
 		authId: v.string(),
 		email: v.string(),
-		name: v.string(),
-		profilePictureUrl: v.union(v.string(), v.null()),
-		setupComplete: v.boolean(),
+		name: v.optional(v.string()),
+		profilePictureUrl: v.optional(v.string()),
 	},
 	handler: async (ctx, args) => {
-		// Check for any existing users with the same authId (direct db query)
 		const existingUser = await ctx.db
 			.query("users")
 			.withIndex("authId", (q) => q.eq("authId", args.authId))
 			.unique();
 
-		// If a user already exists, throw an error
 		if (existingUser) {
-			throw new ConvexError({
-				code: USER_ERROR_CODE.USER_CREATE_FAILED,
-				message: "User already exists",
+			// Update existing user (sync from WorkOS)
+			await ctx.db.patch(existingUser._id, {
+				email: args.email,
+				...(args.profilePictureUrl !== undefined &&
+					!existingUser.profilePictureStorageId && {
+						profilePictureUrl: args.profilePictureUrl,
+					}),
 			});
+			return { created: false, userId: existingUser._id };
 		}
 
-		// Create the user in the database
-		await ctx.db.insert("users", {
+		// Create new user
+		const userId = await ctx.db.insert("users", {
 			authId: args.authId,
 			email: args.email,
 			name: args.name ?? "",
 			profilePictureUrl: args.profilePictureUrl ?? "",
-			setupComplete: args.setupComplete,
+			setupComplete: false,
 		});
+
+		return { created: true, userId };
 	},
 });
 

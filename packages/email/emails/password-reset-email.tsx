@@ -11,13 +11,7 @@ import {
 	Text,
 } from "@react-email/components";
 
-export default function PasswordResetEmail({
-	code,
-	url,
-}: {
-	code?: string;
-	url: string;
-}) {
+export default function PasswordResetEmail({ url }: { url: string }) {
 	return (
 		<Html>
 			<Head />
@@ -48,20 +42,10 @@ export default function PasswordResetEmail({
 								Reset your password
 							</Heading>
 							<Text className="text-[16px] text-secondary">
-								We received a request to reset your password.{" "}
-								{code
-									? "Enter the code below on the reset password page."
-									: "Click the link below to choose a new password."}
+								We received a request to reset your password. Click the link
+								below to choose a new password.
 							</Text>
 						</Section>
-
-						{code ? (
-							<Section className="mt-4 rounded-2xl border border-border bg-card p-4 text-center">
-								<Text className="font-medium font-mono text-[24px] text-primary tracking-widest">
-									{code}
-								</Text>
-							</Section>
-						) : null}
 
 						<Section className="mt-4">
 							<Link
@@ -74,7 +58,7 @@ export default function PasswordResetEmail({
 
 						<Section className="mt-6">
 							<Text className="m-0 text-[16px] text-secondary">
-								This {code ? "code" : "link"} will expire in 10 minutes.
+								This link will expire in 24 hours.
 							</Text>
 							<Text className="mt-4 text-[14px] text-secondary/70">
 								If you didn't request a password reset, you can safely ignore

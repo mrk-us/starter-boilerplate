@@ -5,6 +5,22 @@ import { getAuthenticatedUser, requireUser } from "../auth/helpers";
 import type { UserSubscription } from "../billing/types";
 
 /**
+ * Check if user exists by authId
+ * Public query used by auth callback to skip sync for returning users
+ */
+export const userExistsByAuthId = query({
+	args: { authId: v.string() },
+	returns: v.boolean(),
+	handler: async (ctx, args) => {
+		const user = await ctx.db
+			.query("users")
+			.withIndex("authId", (q) => q.eq("authId", args.authId))
+			.first();
+		return user !== null;
+	},
+});
+
+/**
  * Get current user for billing (internal - avoids circular dependency)
  * This query is used by the Stripe billing module to get user info
  * without fetching subscription data (which would create a circular reference)
@@ -113,18 +129,6 @@ export const getUserWithSubscription = query({
 
 		if (!user) return null;
 
-		// Generate URL for the profile picture if it exists
-		// Priority: custom uploaded picture (Convex storage) > Clerk profile picture
-		let profilePictureUrl: string | null | undefined;
-
-		if (user.profilePictureStorageId) {
-			profilePictureUrl = await ctx.storage.getUrl(
-				user.profilePictureStorageId,
-			);
-		} else if (user.profilePictureUrl) {
-			profilePictureUrl = user.profilePictureUrl;
-		}
-
 		// Get subscription status via runtime query (decoupled from billing module)
 		const subscription: UserSubscription = await ctx.runQuery(
 			internal.billing.queries.getSubscriptionStatusByUserId,
@@ -133,7 +137,6 @@ export const getUserWithSubscription = query({
 
 		return {
 			...user,
-			profilePictureUrl,
 			subscription,
 		};
 	},

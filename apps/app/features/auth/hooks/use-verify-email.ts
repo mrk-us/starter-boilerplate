@@ -1,47 +1,37 @@
 "use client";
 
-import { useSignUp } from "@clerk/nextjs";
+import { useConvexAction } from "@convex-dev/react-query";
+import { api } from "@repo/backend/convex/_generated/api";
 import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 
 type VerifyEmailData = {
+	authId: string;
 	code: string;
 };
 
 export function useVerifyEmail() {
-	const { signUp, setActive, isLoaded } = useSignUp();
+	const router = useRouter();
+
+	const verifyUserEmail = useConvexAction(api.auth.actions.verifyEmail);
 
 	const { mutateAsync, isPending, error } = useMutation({
-		mutationFn: async (data: VerifyEmailData) => {
-			if (!isLoaded || !signUp) throw new Error("Clerk is not loaded");
-			// Use Clerk's verify email method
-			const result = await signUp.attemptEmailAddressVerification({
-				code: data.code,
-			});
-
-			if (result.status === "complete") {
-				// Set the active session
-				await setActive({ session: result.createdSessionId });
-				// Return success
-				return { success: true };
+		mutationFn: (data: VerifyEmailData) =>
+			verifyUserEmail({ authId: data.authId, code: data.code }),
+		onSuccess: (res) => {
+			if (res.success) {
+				router.push("/");
 			}
-
-			// Handle other statuses (e.g., expired)
-			throw new Error("Verification failed");
-		},
-		onSuccess: () => {
-			// Full page reload to ensure session is properly set
-			window.location.href = "/";
 		},
 		onError: (err) => {
-			// Log errors
 			console.error(getErrorMessage(err));
 		},
 	});
 
 	return {
 		verifyEmail: mutateAsync,
-		isPending: isPending || !isLoaded,
+		isPending,
 		error: error ? new Error(getErrorMessage(error)) : undefined,
 	};
 }

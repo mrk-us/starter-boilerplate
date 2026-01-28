@@ -12,7 +12,7 @@ export const PUBLIC_ROUTE_PATTERNS = [
 	"/forgot-password(.*)",
 	"/reset-password(.*)",
 	"/verify-email(.*)",
-	"/sso-callback(.*)",
+	"/callback(.*)",
 ] as const;
 
 /**
