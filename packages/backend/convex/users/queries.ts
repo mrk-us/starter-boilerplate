@@ -3,6 +3,8 @@ import { internal } from "../_generated/api";
 import { internalQuery, query } from "../_generated/server";
 import { getAuthenticatedUser, requireUser } from "../auth/helpers";
 import type { UserSubscription } from "../billing/types";
+import { r2 } from "../r2";
+import { PROFILE_PICTURE_URL_EXPIRY } from "./constants";
 
 /**
  * Check if user exists by authId
@@ -135,8 +137,20 @@ export const getUserWithSubscription = query({
 			{ userId: user._id },
 		);
 
+		// Generate profile picture URL
+		// Priority: custom R2 upload > OAuth profile picture
+		let profilePictureUrl: string | undefined;
+		if (user.profilePictureKey) {
+			profilePictureUrl = await r2.getUrl(user.profilePictureKey, {
+				expiresIn: PROFILE_PICTURE_URL_EXPIRY,
+			});
+		} else if (user.profilePictureUrl) {
+			profilePictureUrl = user.profilePictureUrl;
+		}
+
 		return {
 			...user,
+			profilePictureUrl,
 			subscription,
 		};
 	},

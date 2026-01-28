@@ -1,5 +1,8 @@
 import { v } from "convex/values";
 
+/**
+ * Subscription schema
+ */
 export const subscriptionSchema = v.object({
 	plan: v.union(v.literal("free"), v.literal("pro")),
 	interval: v.union(v.literal("month"), v.literal("year"), v.null()),

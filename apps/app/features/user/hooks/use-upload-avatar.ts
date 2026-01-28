@@ -1,14 +1,16 @@
 "use client";
 
+import { useUploadFile } from "@convex-dev/r2/react";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
-import type { Id } from "@repo/backend/convex/_generated/dataModel";
+import { profilePictureUploadSchema } from "@repo/backend/convex/users/validation";
 import { useMutation } from "@tanstack/react-query";
 
 export function useUploadAvatar() {
-	const generateUploadUrl = useConvexMutation(
-		api.storage.mutations.generateUploadUrl,
-	);
+	// R2 upload hook - handles generate URL → upload → sync metadata
+	const uploadFile = useUploadFile(api.r2);
+
+	// Mutations for profile picture management
 	const updateProfilePicture = useConvexMutation(
 		api.users.mutations.updateProfilePicture,
 	);
@@ -16,49 +18,30 @@ export function useUploadAvatar() {
 		api.users.mutations.removeProfilePicture,
 	);
 
-	// Upload avatar: generate URL → upload file → save storage ID
+	// Upload avatar: validate → upload to R2 → save key to profile
 	const {
 		mutateAsync: upload,
 		isPending: isUploading,
 		error: uploadError,
 	} = useMutation({
 		mutationFn: async (file: File) => {
-			// Validate file type
-			const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-			if (!validTypes.includes(file.type)) {
-				throw new Error(
-					"Invalid file type. Please upload a JPEG, PNG, GIF, or WebP image.",
-				);
-			}
-
-			// Validate file size (max 5MB)
-			const maxSize = 5 * 1024 * 1024;
-			if (file.size > maxSize) {
-				throw new Error("File size must be less than 5MB.");
-			}
-
-			// Get a short-lived upload URL from Convex
-			const uploadUrl = await generateUploadUrl({});
-
-			// Upload the file directly to Convex storage
-			const result = await fetch(uploadUrl, {
-				method: "POST",
-				headers: { "Content-Type": file.type },
-				body: file,
+			// Validate file
+			const validation = profilePictureUploadSchema.safeParse({
+				type: file.type,
+				size: file.size,
 			});
 
-			if (!result.ok) {
-				throw new Error("Failed to upload file");
+			if (!validation.success) {
+				throw new Error(validation.error.issues[0]?.message);
 			}
 
-			const { storageId } = (await result.json()) as {
-				storageId: Id<"_storage">;
-			};
+			// Upload to R2 (returns the object key)
+			const key = await uploadFile(file);
 
-			// Save the storage ID to the user's profile
-			await updateProfilePicture({ storageId });
+			// Save the key to user's profile (handles deleting old picture)
+			await updateProfilePicture({ key });
 
-			return { success: true, storageId };
+			return { success: true, key };
 		},
 	});
 

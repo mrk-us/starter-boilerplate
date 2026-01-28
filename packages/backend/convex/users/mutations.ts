@@ -1,8 +1,11 @@
 import { tryCatch } from "@repo/shared";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation, mutation } from "../_generated/server";
 import { requireUser } from "../auth/helpers";
+import { ERROR_CODE } from "../errors/constants";
+import { r2 } from "../r2";
+import { PROFILE_PICTURE_VALIDATION } from "./constants";
 
 /**
  * Upsert user - create if doesn't exist, update if exists
@@ -108,49 +111,60 @@ export const updateUserName = internalMutation({
 });
 
 /**
- * Internal mutation: Update user's profile picture
- */
-export const updateUserProfilePicture = internalMutation({
-	args: {
-		authId: v.string(),
-		profilePictureUrl: v.string(),
-	},
-	handler: async (ctx, args) => {
-		// Get the user from the database (direct db query)
-		const user = await ctx.db
-			.query("users")
-			.withIndex("authId", (q) => q.eq("authId", args.authId))
-			.unique();
-
-		// If the user is not found, log an error
-		if (!user) {
-			console.error("[updateUserProfilePicture] User not found:", args.authId);
-			return { success: false };
-		}
-
-		// Update the user's profile picture in the database
-		await ctx.db.patch(user._id, {
-			profilePictureUrl: args.profilePictureUrl,
-		});
-
-		// Return success
-		return { success: true };
-	},
-});
-
-// TODO: Replace this with internal mutation and use action to
-// update the profile picture in WorkOS and Convex DB
-/**
- * Update the current user's profile picture
+ * Update the current user's profile picture (R2 storage)
+ * Validates file, deletes old picture if exists, then saves new key
  */
 export const updateProfilePicture = mutation({
 	args: {
-		storageId: v.id("_storage"),
+		key: v.string(),
 	},
 	handler: async (ctx, args) => {
-		// const user = await requireUser(ctx);
+		const user = await requireUser(ctx);
 
-		// TODO: Update profile picture in WorkOS
+		// Validate uploaded file metadata (server-side security check)
+		const metadata = await r2.getMetadata(ctx, args.key);
+
+		if (metadata) {
+			// Validate content type
+			const allowedTypes =
+				PROFILE_PICTURE_VALIDATION.allowedTypes as readonly string[];
+
+			if (
+				metadata.contentType &&
+				!allowedTypes.includes(metadata.contentType)
+			) {
+				// Delete invalid file
+				await tryCatch(r2.deleteObject(ctx, args.key));
+				throw new ConvexError({
+					code: ERROR_CODE.INVALID_INPUT,
+					message:
+						"Invalid file type. Please upload a JPEG, PNG, GIF, or WebP image.",
+				});
+			}
+
+			// Validate file size
+			if (
+				metadata.size &&
+				metadata.size > PROFILE_PICTURE_VALIDATION.maxSizeBytes
+			) {
+				// Delete invalid file
+				await tryCatch(r2.deleteObject(ctx, args.key));
+				throw new ConvexError({
+					code: ERROR_CODE.INVALID_INPUT,
+					message: `File size must be less than ${PROFILE_PICTURE_VALIDATION.maxSizeMB}MB.`,
+				});
+			}
+		}
+
+		// Delete old profile picture from R2 (non-critical)
+		if (user.profilePictureKey) {
+			await tryCatch(r2.deleteObject(ctx, user.profilePictureKey));
+		}
+
+		// Save new key
+		await ctx.db.patch(user._id, {
+			profilePictureKey: args.key,
+		});
 
 		return { success: true };
 	},
@@ -192,14 +206,22 @@ export const completeSetupInternal = internalMutation({
 });
 
 /**
- * Remove the current user's profile picture
+ * Remove the current user's profile picture from R2
  */
 export const removeProfilePicture = mutation({
 	args: {},
 	handler: async (ctx) => {
-		// const user = await requireUser(ctx);
+		const user = await requireUser(ctx);
 
-		// TODO: Remove profile picture from WorkOS
+		// Delete from R2 (non-critical)
+		if (user.profilePictureKey) {
+			await tryCatch(r2.deleteObject(ctx, user.profilePictureKey));
+		}
+
+		// Clear the key
+		await ctx.db.patch(user._id, {
+			profilePictureKey: undefined,
+		});
 
 		return { success: true };
 	},
@@ -229,7 +251,6 @@ export const deleteUser = internalMutation({
 		authId: v.string(),
 	},
 	handler: async (ctx, args) => {
-		// Get the user from the database (direct db query)
 		const user = await ctx.db
 			.query("users")
 			.withIndex("authId", (q) => q.eq("authId", args.authId))
@@ -237,14 +258,18 @@ export const deleteUser = internalMutation({
 
 		// User may already be deleted - idempotency check
 		if (!user) {
-			console.warn("[deleteUser] User not found :", args.authId);
+			console.warn("[deleteUser] User not found:", args.authId);
 			return { success: true };
+		}
+
+		// Delete profile picture from R2 (non-critical)
+		if (user.profilePictureKey) {
+			await tryCatch(r2.deleteObject(ctx, user.profilePictureKey));
 		}
 
 		// Delete user from db
 		const { error: deleteUserError } = await tryCatch(ctx.db.delete(user._id));
 
-		// Log errors
 		if (deleteUserError) {
 			console.error(
 				"[deleteUser] Failed to delete user from db:",
@@ -252,7 +277,6 @@ export const deleteUser = internalMutation({
 			);
 		}
 
-		// Return success
 		return { success: true };
 	},
 });
