@@ -9,6 +9,7 @@
  */
 
 import type * as auth_actions from "../auth/actions.js";
+import type * as auth_constants from "../auth/constants.js";
 import type * as auth_events from "../auth/events.js";
 import type * as auth_helpers from "../auth/helpers.js";
 import type * as auth_index from "../auth/index.js";
@@ -50,6 +51,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "auth/actions": typeof auth_actions;
+  "auth/constants": typeof auth_constants;
   "auth/events": typeof auth_events;
   "auth/helpers": typeof auth_helpers;
   "auth/index": typeof auth_index;

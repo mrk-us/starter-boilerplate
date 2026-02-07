@@ -25,6 +25,7 @@ export function Form({ children, form, onSubmit, ...formProps }: FormProps) {
 			}}
 			{...formProps}
 			noValidate
+			className="space-y-4 w-full"
 		>
 			<form.AppForm>{children}</form.AppForm>
 		</form>

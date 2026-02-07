@@ -29,18 +29,21 @@ export function FormBase({
 	horizontal,
 }: FormBaseProps) {
 	const field = useFieldContext();
+
 	const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+
 	const labelElement = (
 		<>
 			<FieldLabel
 				htmlFor={field.name}
-				className={hideLabel ? "sr-only" : undefined}
+				className={hideLabel ? "sr-only" : "pb-1"}
 			>
 				{label}
 			</FieldLabel>
 			{description && <FieldDescription>{description}</FieldDescription>}
 		</>
 	);
+
 	const errorElement = isInvalid && (
 		<FieldError errors={field.state.meta.errors} />
 	);

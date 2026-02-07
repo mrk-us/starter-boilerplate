@@ -47,6 +47,13 @@ export const signInSchema = z.object({
 });
 
 /**
+ * Check email schema (for backend validation)
+ */
+export const checkEmailSchema = z.object({
+	email: authSchema.shape.email,
+});
+
+/**
  * Forgot password schema
  */
 export const forgotPasswordSchema = z.object({

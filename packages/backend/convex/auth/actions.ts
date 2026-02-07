@@ -3,10 +3,15 @@ import { ConvexError, v } from "convex/values";
 import { isDisposableEmail } from "disposable-email-domains-js";
 import type { ActionCtx } from "../_generated/server";
 import { action, internalAction } from "../_generated/server";
-import { AUTH_ERROR_CODE, ERROR_MESSAGE } from "../errors/constants";
+import {
+	AUTH_ERROR_CODE,
+	ERROR_CODE,
+	ERROR_MESSAGE,
+} from "../errors/constants";
 import { rateLimiter } from "../rateLimiter";
 import { authKit } from "./index";
-import type { AuthenticateResult } from "./types";
+import type { AuthenticateResult, CheckEmailResult } from "./types";
+import { checkEmailSchema } from "./validation";
 
 /**
  * AuthKit action handler (required by WorkOS AuthKit component)
@@ -100,6 +105,79 @@ export const verifyEmail = action({
 		}
 
 		return { success: true };
+	},
+});
+
+/**
+ * Check if email exists in WorkOS and get OAuth providers
+ */
+export const checkEmailExists = action({
+	args: {
+		email: v.string(),
+	},
+	handler: async (ctx, args): Promise<CheckEmailResult> => {
+		// Validate input
+		const validationResult = checkEmailSchema.safeParse({
+			email: args.email.toLowerCase().trim(),
+		});
+
+		if (!validationResult.success) {
+			throw new ConvexError({
+				code: ERROR_CODE.INVALID_INPUT,
+				message: validationResult.error.issues[0]?.message ?? "Invalid email",
+			});
+		}
+
+		const email = validationResult.data.email;
+
+		// Rate limit: 10 attempts per day per email
+		const { ok, retryAfter } = await rateLimiter.limit(ctx, "checkEmail", {
+			key: email,
+		});
+
+		if (!ok) {
+			throw new ConvexError({
+				code: AUTH_ERROR_CODE.RATE_LIMITED,
+				message: `Too many attempts. Please try again in ${Math.ceil(retryAfter / 3_600_000)} ${Math.ceil(retryAfter / 3_600_000) === 1 ? "hour" : "hours"}.`,
+			});
+		}
+
+		// Check if user exists in WorkOS
+		const { data: listUsersData, error: listUsersError } = await tryCatch(
+			authKit.workos.userManagement.listUsers({ email }),
+		);
+
+		if (listUsersError) {
+			throw new ConvexError({
+				code: AUTH_ERROR_CODE.GET_USER_FAILED,
+				message: listUsersError.message,
+			});
+		}
+
+		// User doesn't exist
+		if (listUsersData.data.length === 0) {
+			return { exists: false, oauthProviders: [] };
+		}
+
+		const user = listUsersData.data[0];
+
+		// Get user's OAuth identities
+		const { data: identitiesData, error: identitiesError } = await tryCatch(
+			authKit.workos.userManagement.getUserIdentities(user.id),
+		);
+
+		if (identitiesError) {
+			// If we can't get identities, still return that user exists
+			// but with empty OAuth providers
+			return { exists: true, oauthProviders: [] };
+		}
+
+		// Extract OAuth provider names
+		const oauthProviders = identitiesData
+			.filter((identity) => identity.type === "OAuth")
+			.map((identity) => identity.provider);
+
+		return { exists: true, oauthProviders };
 	},
 });
 

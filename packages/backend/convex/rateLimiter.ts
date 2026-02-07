@@ -73,4 +73,14 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
 		period: DAY,
 		capacity: 5,
 	},
+
+	/*
+	 * Check email rate limit: 10 attempts per day per email
+	 */
+	checkEmail: {
+		kind: "token bucket",
+		rate: 100,
+		period: DAY,
+		capacity: 100,
+	},
 });

@@ -52,7 +52,7 @@ function FieldGroup({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 const fieldVariants = cva(
-	"data-[invalid=true]:text-destructive gap-2 group/field flex w-full",
+	"data-[invalid=true]:text-destructive gap-0 group/field flex w-full",
 	{
 		variants: {
 			orientation: {
@@ -197,7 +197,7 @@ function FieldError({
 		}
 
 		return (
-			<ul className="ml-4 flex list-disc flex-col gap-1">
+			<ul className="ml-3 flex list-disc flex-col">
 				{uniqueErrors.map((error) =>
 					error?.message ? <li key={error.message}>{error.message}</li> : null,
 				)}
@@ -213,9 +213,13 @@ function FieldError({
 		<div
 			role="alert"
 			data-slot="field-error"
-			className={cn("text-destructive text-xs/relaxed font-normal", className)}
+			className={cn(
+				"mt-2 relative flex flex-row gap-3 rounded-lg bg-destructive/7.5 pr-3 pl-2 py-2 font-medium text-xs text-destructive",
+				className,
+			)}
 			{...props}
 		>
+			<div className="w-1 shrink-0 self-stretch rounded-full bg-destructive" />
 			{content}
 		</div>
 	);

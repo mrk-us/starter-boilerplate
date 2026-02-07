@@ -21,3 +21,8 @@ export type AuthenticateResult = {
 	refreshToken: string;
 	user: WorkOSUser;
 };
+
+export type CheckEmailResult = {
+	exists: boolean;
+	oauthProviders: string[];
+};

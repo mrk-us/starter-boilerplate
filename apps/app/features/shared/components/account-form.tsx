@@ -52,7 +52,7 @@ export function AccountForm() {
 	});
 
 	return (
-		<main className="flex flex-col mx-auto max-w-lg gap-10 p-6 justify-center items-center">
+		<main className="flex flex-col mx-auto max-w-md gap-10 p-6 justify-center items-center">
 			<h1>Account</h1>
 
 			<AvatarUpload
@@ -60,18 +60,16 @@ export function AccountForm() {
 				userName={user?.name}
 			/>
 
-			<Form form={form} className="w-full">
-				<FieldGroup>
-					<form.AppField name="name">
-						{(field) => <field.Input label="Name" />}
-					</form.AppField>
+			<Form form={form}>
+				<form.AppField name="name">
+					{(field) => <field.Input label="Name" />}
+				</form.AppField>
 
-					<FormSubmit
-						label="Save"
-						isPending={isUpdatingName}
-						hasChanged={(values) => values.name !== user?.name}
-					/>
-				</FieldGroup>
+				<FormSubmit
+					label="Save"
+					isPending={isUpdatingName}
+					hasChanged={(values) => values.name !== user?.name}
+				/>
 			</Form>
 
 			<Button onClick={() => void deleteAccount()} disabled={isDeletingUser}>
