@@ -19,6 +19,21 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "dev:desktop": {
+      "cache": false,
+      "persistent": true
+    },
+    "dev:next": {
+      "cache": false,
+      "persistent": true
+    },
+    "dev:electron": {
+      "cache": false,
+      "persistent": true
+    },
+    "build:desktop": {
+      "cache": false
     }
   }
 }

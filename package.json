@@ -3,10 +3,12 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev",
+    "dev": "turbo run dev dev:electron",
+    "dev:desktop": "turbo run dev:next dev:electron --filter=app",
     "check": "ultracite check",
     "fix": "ultracite fix",
     "check-types": "turbo run check-types",
+    "build:desktop": "turbo run build:desktop --filter=app",
     "prepare": "husky"
   },
   "devDependencies": {

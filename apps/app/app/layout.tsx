@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "@repo/ui/globals.css";
 import "@/styles/globals.css";
-import { ConditionalUserMenu } from "@/features/shared/components";
+import {
+	ConditionalUserMenu,
+	ElectronWindow,
+} from "@/features/shared/components";
 import {
 	AuthProvider,
 	ConvexClientProvider,
@@ -35,16 +38,18 @@ export default function RootLayout({
 			<body
 				className={`${fontSans.variable} ${fontMono.variable} font-sans antialiased`}
 			>
-				<ConvexClientProvider>
-					<ThemeProvider>
-						<AuthProvider>
-							<SetupGuard>
-								<ConditionalUserMenu />
-								{children}
-							</SetupGuard>
-						</AuthProvider>
-					</ThemeProvider>
-				</ConvexClientProvider>
+				<ElectronWindow>
+					<ConvexClientProvider>
+						<ThemeProvider>
+							<AuthProvider>
+								<SetupGuard>
+									<ConditionalUserMenu />
+									{children}
+								</SetupGuard>
+							</AuthProvider>
+						</ThemeProvider>
+					</ConvexClientProvider>
+				</ElectronWindow>
 			</body>
 		</html>
 	);

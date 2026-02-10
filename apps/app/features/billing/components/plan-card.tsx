@@ -1,6 +1,6 @@
 "use client";
 
-import type { StripePriceLookupKey } from "@repo/backend/convex/billing/constants";
+import type { StripePriceLookupKey } from "@repo/backend/convex/billing/types";
 import {
 	Badge,
 	Button,
@@ -99,7 +99,11 @@ export function PlanCard({
 					</CheckoutButton>
 				) : (
 					// User is Free, show upgrade option
-					<CheckoutButton priceLookupKey={priceLookupKey} className="w-full">
+					<CheckoutButton
+						priceLookupKey={priceLookupKey}
+						variant="default"
+						className="w-full"
+					>
 						Upgrade to {name}
 					</CheckoutButton>
 				)}

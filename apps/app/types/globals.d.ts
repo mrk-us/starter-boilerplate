@@ -6,4 +6,10 @@ declare global {
 			setupComplete?: boolean;
 		};
 	}
+
+	interface Window {
+		electron?: {
+			openExternal: (url: string) => Promise<void>;
+		};
+	}
 }

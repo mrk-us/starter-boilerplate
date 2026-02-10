@@ -1,15 +1,55 @@
 {
 	"name": "app",
 	"version": "0.1.0",
+	"description": "Starter desktop app",
+	"author": "Starter",
 	"type": "module",
 	"private": true,
+	"main": "electron/main.cjs",
 	"scripts": {
 		"dev": "next dev --port 3001",
+		"dev:next": "next dev --port 3001",
+		"dev:electron": "ELECTRON_DEV_URL=http://localhost:3001 electron .",
 		"build": "next build",
+		"build:desktop": "next build && electron-builder --mac",
 		"start": "next start",
 		"check": "ultracite check",
 		"fix": "ultracite fix",
 		"check-types": "next typegen && tsc --noEmit"
+	},
+	"build": {
+		"appId": "com.starter.app",
+		"productName": "Starter",
+		"asar": true,
+		"files": [
+			".env*",
+			".next/**",
+			"public/**",
+			"electron/**",
+			"next.config.js",
+			"package.json",
+			"node_modules/**",
+			"!**/node_modules/.cache/**",
+			"!**/node_modules/**/test/**",
+			"!**/node_modules/**/__tests__/**",
+			"!**/node_modules/**/docs/**",
+			"!**/node_modules/**/examples/**",
+			"!**/node_modules/**/src/**",
+			"!**/*.map"
+		],
+		"protocols": [
+			{
+				"name": "Starter",
+				"schemes": [
+					"starter"
+				]
+			}
+		],
+		"mac": {
+			"target": [
+				"dmg"
+			]
+		}
 	},
 	"dependencies": {
 		"@convex-dev/react-query": "^0.1.0",
@@ -36,6 +76,8 @@
 		"@types/react": "19.2.2",
 		"@types/react-dom": "19.2.2",
 		"babel-plugin-react-compiler": "^1.0.0",
+		"electron": "37.4.0",
+		"electron-builder": "^26.0.16",
 		"tailwindcss": "^4.1.11",
 		"typescript": "5.9.2"
 	}

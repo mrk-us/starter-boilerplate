@@ -3,13 +3,14 @@
 import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
 import { getErrorMessage } from "@repo/shared/utils";
-import { Button, type ButtonProps } from "@repo/ui/components";
+import { Button, type buttonVariants } from "@repo/ui/components";
 import { useMutation } from "@tanstack/react-query";
+import type { VariantProps } from "class-variance-authority";
 
 type CustomerPortalButtonProps = {
 	children: React.ReactNode;
-	variant?: ButtonProps["variant"];
-	size?: ButtonProps["size"];
+	variant?: VariantProps<typeof buttonVariants>["variant"];
+	size?: VariantProps<typeof buttonVariants>["size"];
 	className?: string;
 };
 

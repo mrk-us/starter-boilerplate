@@ -74,7 +74,11 @@ export function ProPlanCard({
 						Current Plan
 					</Button>
 				) : (
-					<CheckoutButton priceLookupKey={priceLookupKey} className="w-full">
+					<CheckoutButton
+						priceLookupKey={priceLookupKey}
+						variant="default"
+						className="w-full"
+					>
 						Upgrade to Pro
 					</CheckoutButton>
 				)}

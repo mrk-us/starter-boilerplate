@@ -35,6 +35,7 @@ export const signUpSchema = z.object({
  * Verify email schema
  */
 export const verifyEmailSchema = z.object({
+	authId: authSchema.shape.authId,
 	code: authSchema.shape.verificationCode,
 });
 

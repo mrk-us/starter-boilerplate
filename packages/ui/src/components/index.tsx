@@ -14,7 +14,7 @@ export {
 } from "./alert-dialog";
 export { Avatar, AvatarFallback, AvatarImage } from "./avatar";
 export { Badge } from "./badge";
-export { Button } from "./button";
+export { Button, type buttonVariants } from "./button";
 export {
 	Card,
 	CardAction,

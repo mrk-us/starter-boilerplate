@@ -1,1 +1,5 @@
 @import "tailwindcss";
+
+.window {
+	-electron-corner-smoothing: system-ui;
+}
