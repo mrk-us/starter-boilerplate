@@ -1,5 +1,1 @@
-export {
-  getGoogleOAuthAuthorizationUrl,
-  signIn,
-  syncUserToDb,
-} from "./actions";
+export { signIn, syncUserToDb } from "./actions";

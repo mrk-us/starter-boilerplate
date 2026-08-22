@@ -10,22 +10,22 @@ import { useEffect } from "react";
  * the `--titlebar-*` CSS variables rather than from here.
  */
 export function DesktopClassSync() {
-  useEffect(() => {
-    const overlay = navigator.windowControlsOverlay;
+	useEffect(() => {
+		const overlay = navigator.windowControlsOverlay;
 
-    if (!overlay) {
-      return;
-    }
+		if (!overlay) {
+			return;
+		}
 
-    const update = () => {
-      document.documentElement.classList.toggle("wco", overlay.visible);
-    };
+		const update = () => {
+			document.documentElement.classList.toggle("wco", overlay.visible);
+		};
 
-    update();
-    overlay.addEventListener("geometrychange", update);
+		update();
+		overlay.addEventListener("geometrychange", update);
 
-    return () => overlay.removeEventListener("geometrychange", update);
-  }, []);
+		return () => overlay.removeEventListener("geometrychange", update);
+	}, []);
 
-  return null;
+	return null;
 }

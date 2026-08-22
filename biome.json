@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "root": true,
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true
+    }
+  },
+  "formatter": {
+    "lineWidth": 180,
+    "indentStyle": "tab",
+    "indentWidth": 2
+  },
+  "extends": ["ultracite/core", "ultracite/next", "ultracite/react"],
+  "files": {
+    "includes": ["!**/convex/_generated"]
+  }
+}

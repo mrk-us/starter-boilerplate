@@ -6,32 +6,35 @@ import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
-interface ResetPasswordData {
-  password: string;
-  token: string;
-}
+type ResetPasswordData = {
+	token: string;
+	password: string;
+};
 
 export function useResetPassword() {
-  const router = useRouter();
+	const router = useRouter();
 
-  const resetPasswordWithToken = useConvexAction(
-    api.auth.actions.resetPasswordWithToken
-  );
+	const resetPasswordWithToken = useConvexAction(
+		api.auth.actions.resetPasswordWithToken,
+	);
 
-  const { mutateAsync, isPending, error } = useMutation({
-    mutationFn: (data: ResetPasswordData) =>
-      resetPasswordWithToken({
-        newPassword: data.password,
-        token: data.token,
-      }),
-    onSuccess: () => {
-      router.push("/sign-in?reset=success");
-    },
-  });
+	const { mutateAsync, isPending, error } = useMutation({
+		mutationFn: (data: ResetPasswordData) =>
+			resetPasswordWithToken({
+				token: data.token,
+				newPassword: data.password,
+			}),
+		onSuccess: () => {
+			router.push("/sign-in?reset=success");
+		},
+		onError: (err) => {
+			console.error(getErrorMessage(err));
+		},
+	});
 
-  return {
-    error: error ? new Error(getErrorMessage(error)) : undefined,
-    isPending,
-    resetPassword: mutateAsync,
-  };
+	return {
+		resetPassword: mutateAsync,
+		isPending,
+		error: error ? new Error(getErrorMessage(error)) : undefined,
+	};
 }

@@ -1,9 +1,15 @@
 {
-  "extends": "@repo/typescript-config/react-library.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "strictNullChecks": true
-  },
-  "include": ["emails"],
-  "exclude": ["node_modules", "dist"]
+	"extends": "@repo/typescript-config/react-library.json",
+	"compilerOptions": {
+		"outDir": "dist",
+		"strictNullChecks": true,
+		"baseUrl": ".",
+		"paths": {
+			"@repo/email/*": ["./emails/*"],
+			"@repo/config": ["../config/src/index.ts"],
+			"@repo/config/*": ["../config/src/*"]
+		}
+	},
+	"include": ["emails"],
+	"exclude": ["node_modules", "dist"]
 }

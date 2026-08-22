@@ -4,14 +4,14 @@ import { Suspense } from "react";
 import { ResetPasswordForm } from "@/features/auth/components";
 
 export const metadata: Metadata = {
-  description: APP_DESCRIPTION,
-  title: `Reset your password | ${APP_NAME}`,
+	title: `Reset your password | ${APP_NAME}`,
+	description: APP_DESCRIPTION,
 };
 
 export default function ResetPasswordPage() {
-  return (
-    <Suspense>
-      <ResetPasswordForm />
-    </Suspense>
-  );
+	return (
+		<Suspense>
+			<ResetPasswordForm />
+		</Suspense>
+	);
 }

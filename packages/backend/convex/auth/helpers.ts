@@ -14,15 +14,13 @@ export type WorkOSUser = User;
  * Returns null if not authenticated
  */
 export async function getAuthId(
-  ctx: QueryCtx | MutationCtx | ActionCtx
+	ctx: QueryCtx | MutationCtx | ActionCtx,
 ): Promise<string | null> {
-  const identity = await ctx.auth.getUserIdentity();
+	const identity = await ctx.auth.getUserIdentity();
 
-  if (!identity) {
-    return null;
-  }
+	if (!identity) return null;
 
-  return identity.subject;
+	return identity.subject;
 }
 
 /**
@@ -30,18 +28,18 @@ export async function getAuthId(
  * Returns the WorkOS user ID
  */
 export async function requireAuthId(
-  ctx: QueryCtx | MutationCtx | ActionCtx
+	ctx: QueryCtx | MutationCtx | ActionCtx,
 ): Promise<string> {
-  const authId = await getAuthId(ctx);
+	const authId = await getAuthId(ctx);
 
-  if (!authId) {
-    throw new ConvexError({
-      code: AUTH_ERROR_CODE.NOT_AUTHENTICATED,
-      message: ERROR_MESSAGE.NOT_AUTHENTICATED,
-    });
-  }
+	if (!authId) {
+		throw new ConvexError({
+			code: AUTH_ERROR_CODE.NOT_AUTHENTICATED,
+			message: ERROR_MESSAGE.NOT_AUTHENTICATED,
+		});
+	}
 
-  return authId;
+	return authId;
 }
 
 /**
@@ -49,16 +47,14 @@ export async function requireAuthId(
  * Returns null if not authenticated or user not found
  */
 export async function getAuthenticatedUser(ctx: QueryCtx | MutationCtx) {
-  const authUser = await authKit.getAuthUser(ctx);
+	const authUser = await authKit.getAuthUser(ctx);
 
-  if (!authUser) {
-    return null;
-  }
+	if (!authUser) return null;
 
-  return ctx.db
-    .query("users")
-    .withIndex("authId", (q) => q.eq("authId", authUser.id))
-    .unique();
+	return ctx.db
+		.query("users")
+		.withIndex("authId", (q) => q.eq("authId", authUser.id))
+		.unique();
 }
 
 /**
@@ -66,29 +62,29 @@ export async function getAuthenticatedUser(ctx: QueryCtx | MutationCtx) {
  * Use this when you need the user record (most mutations)
  */
 export async function requireUser(ctx: QueryCtx | MutationCtx) {
-  const user = await getAuthenticatedUser(ctx);
+	const user = await getAuthenticatedUser(ctx);
 
-  if (!user) {
-    throw new ConvexError({
-      code: AUTH_ERROR_CODE.NOT_AUTHENTICATED,
-      message: ERROR_MESSAGE.NOT_AUTHENTICATED,
-    });
-  }
+	if (!user) {
+		throw new ConvexError({
+			code: AUTH_ERROR_CODE.NOT_AUTHENTICATED,
+			message: ERROR_MESSAGE.NOT_AUTHENTICATED,
+		});
+	}
 
-  return user;
+	return user;
 }
 
 /**
  * Get email from WorkOS user data
  */
 export function getPrimaryEmail(user: WorkOSUser): string {
-  return user.email;
+	return user.email;
 }
 
 /**
  * Get full name from WorkOS user data
  */
 export function getFullName(user: WorkOSUser): string {
-  const parts = [user.firstName, user.lastName].filter(Boolean);
-  return parts.join(" ").trim();
+	const parts = [user.firstName, user.lastName].filter(Boolean);
+	return parts.join(" ").trim();
 }

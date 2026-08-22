@@ -8,44 +8,44 @@ import { useCompleteSetup } from "@/features/setup/hooks";
 import { useCurrentUser } from "@/features/user/hooks";
 
 const nameFormSchema = z.object({
-  name: userSchema.shape.name,
+	name: userSchema.shape.name,
 });
 
 export function CompleteSetup() {
-  const { user } = useCurrentUser();
-  const { completeSetup } = useCompleteSetup();
+	const { user } = useCurrentUser();
+	const { completeSetup } = useCompleteSetup();
 
-  const form = useAppForm({
-    defaultValues: {
-      name: user?.name ?? "",
-    },
-    validators: {
-      onSubmit: nameFormSchema,
-      onSubmitAsync: async ({ value }) => {
-        const { error } = await tryCatch(async () => {
-          await completeSetup(value.name);
-        });
+	const form = useAppForm({
+		defaultValues: {
+			name: user?.name ?? "",
+		},
+		validators: {
+			onSubmit: nameFormSchema,
+			onSubmitAsync: async ({ value }) => {
+				const { error } = await tryCatch(async () => {
+					await completeSetup(value.name);
+				});
 
-        if (error) {
-          throw getErrorMessage(error);
-        }
-      },
-    },
-  });
+				if (error) {
+					throw getErrorMessage(error);
+				}
+			},
+		},
+	});
 
-  return (
-    <Form form={form}>
-      <form.AppField name="name">
-        {(field) => <field.Input autoFocus label="What should we call you?" />}
-      </form.AppField>
+	return (
+		<Form form={form}>
+			<form.AppField name="name">
+				{(field) => <field.Input label="What should we call you?" autoFocus />}
+			</form.AppField>
 
-      <form.Errors />
+			<form.Errors />
 
-      <FormSubmit
-        hasChanged={(values) => values.name !== ""}
-        isPending={form.state.isSubmitting}
-        label="Continue"
-      />
-    </Form>
-  );
+			<FormSubmit
+				label="Continue"
+				isPending={form.state.isSubmitting}
+				hasChanged={(values) => values.name !== ""}
+			/>
+		</Form>
+	);
 }

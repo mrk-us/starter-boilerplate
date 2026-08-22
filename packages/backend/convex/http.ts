@@ -19,11 +19,11 @@ authKit.registerRoutes(http);
  * Webhook endpoint: https://<your-convex-site>.convex.site/resend/webhooks
  */
 http.route({
-  handler: httpAction(
-    async (ctx, req) => await resend.handleResendEventWebhook(ctx, req)
-  ),
-  method: "POST",
-  path: "/resend/webhooks",
+	path: "/resend/webhooks",
+	method: "POST",
+	handler: httpAction(
+		async (ctx, req) => await resend.handleResendEventWebhook(ctx, req),
+	),
 });
 
 /**
@@ -31,9 +31,9 @@ http.route({
  * Webhook endpoint: https://<your-convex-site>.convex.site/stripe/webhook
  */
 registerRoutes(http, components.stripe, {
-  events: stripeEventHandlers,
-  onEvent: onStripeEvent,
-  webhookPath: "/stripe/webhooks",
+	webhookPath: "/stripe/webhooks",
+	events: stripeEventHandlers,
+	onEvent: onStripeEvent,
 });
 
 export default http;

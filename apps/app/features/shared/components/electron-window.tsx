@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 
-interface ElectronWindowProps {
-  children: ReactNode;
-}
+type ElectronWindowProps = {
+	children: ReactNode;
+};
 
 /**
  * The desktop window frame. A pass-through in a browser (`display: contents`);
@@ -13,15 +13,15 @@ interface ElectronWindowProps {
  * web and desktop, with the root class doing all the branching.
  */
 export function ElectronWindow({ children }: ElectronWindowProps) {
-  return (
-    <div className="electron:fixed electron:inset-0 electron:block contents electron:overflow-hidden electron:bg-page">
-      <div
-        aria-hidden="true"
-        className="electron:fixed electron:inset-x-0 electron:top-0 electron:block hidden electron:h-(--titlebar-height) electron:[app-region:drag]"
-      />
-      <div className="electron:block contents electron:size-full electron:overflow-auto electron:pt-(--titlebar-height)">
-        {children}
-      </div>
-    </div>
-  );
+	return (
+		<div className="contents electron:fixed electron:inset-0 electron:block electron:overflow-hidden electron:bg-page">
+			<div
+				aria-hidden="true"
+				className="hidden electron:block electron:fixed electron:inset-x-0 electron:top-0 electron:h-(--titlebar-height) electron:[app-region:drag]"
+			/>
+			<div className="contents electron:block electron:size-full electron:overflow-auto electron:pt-(--titlebar-height)">
+				{children}
+			</div>
+		</div>
+	);
 }

@@ -7,12 +7,12 @@
  * These routes don't require authentication
  */
 export const PUBLIC_ROUTE_PATTERNS = [
-  "/sign-in(.*)",
-  "/sign-up(.*)",
-  "/forgot-password(.*)",
-  "/reset-password(.*)",
-  "/verify-email(.*)",
-  "/callback(.*)",
+	"/sign-in(.*)",
+	"/sign-up(.*)",
+	"/forgot-password(.*)",
+	"/reset-password(.*)",
+	"/verify-email(.*)",
+	"/callback(.*)",
 ] as const;
 
 /**
@@ -25,18 +25,18 @@ export const SETUP_ROUTE_PATTERN = "/setup(.*)";
  * Used for client-side route checking in AuthProvider
  */
 export function isPublicPath(pathname: string): boolean {
-  return PUBLIC_ROUTE_PATTERNS.some((pattern) => {
-    // Convert glob pattern to regex: "/sign-in(.*)" -> /^\/sign-in.*$/
-    const regexPattern = pattern.replace("(.*)", ".*");
-    const regex = new RegExp(`^${regexPattern}$`);
-    return regex.test(pathname);
-  });
+	return PUBLIC_ROUTE_PATTERNS.some((pattern) => {
+		// Convert glob pattern to regex: "/sign-in(.*)" -> /^\/sign-in.*$/
+		const regexPattern = pattern.replace("(.*)", ".*");
+		const regex = new RegExp(`^${regexPattern}$`);
+		return regex.test(pathname);
+	});
 }
 
 /**
  * Check if a pathname is the setup route
  */
 export function isSetupPath(pathname: string): boolean {
-  const regex = new RegExp(`^${SETUP_ROUTE_PATTERN.replace("(.*)", ".*")}$`);
-  return regex.test(pathname);
+	const regex = new RegExp(`^${SETUP_ROUTE_PATTERN.replace("(.*)", ".*")}$`);
+	return regex.test(pathname);
 }

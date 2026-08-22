@@ -15,30 +15,30 @@
 export const DESKTOP_BRIDGE_VERSION = 1;
 
 export const DesktopIpcChannels = {
-  openExternal: "desktop:open-external",
-  windowClose: "desktop:window-close",
-  windowMinimize: "desktop:window-minimize",
-  windowToggleMaximize: "desktop:window-toggle-maximize",
+	openExternal: "desktop:open-external",
+	windowMinimize: "desktop:window-minimize",
+	windowToggleMaximize: "desktop:window-toggle-maximize",
+	windowClose: "desktop:window-close",
 } as const;
 
 export type DesktopPlatform = "darwin" | "win32" | "linux";
 
-export interface DesktopWindowControls {
-  close: () => void;
-  minimize: () => void;
-  toggleMaximize: () => void;
-}
+export type DesktopWindowControls = {
+	minimize(): void;
+	toggleMaximize(): void;
+	close(): void;
+};
 
-export interface DesktopBridge {
-  readonly bridgeVersion: typeof DESKTOP_BRIDGE_VERSION;
-  openExternal: (url: string) => Promise<void>;
-  readonly platform: DesktopPlatform;
-  readonly windowControls: DesktopWindowControls;
-}
+export type DesktopBridge = {
+	readonly bridgeVersion: typeof DESKTOP_BRIDGE_VERSION;
+	readonly platform: DesktopPlatform;
+	openExternal(url: string): Promise<void>;
+	readonly windowControls: DesktopWindowControls;
+};
 
 declare global {
-  interface Window {
-    /** Injected by the Electron preload. `undefined` in a browser. */
-    desktop?: DesktopBridge;
-  }
+	interface Window {
+		/** Injected by the Electron preload. `undefined` in a browser. */
+		desktop?: DesktopBridge;
+	}
 }

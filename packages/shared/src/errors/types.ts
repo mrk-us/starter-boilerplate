@@ -1,7 +1,7 @@
 /**
  * Standard error shape for all app errors
  */
-export interface AppError {
-  code: string;
-  message: string;
-}
+export type AppError = {
+	code: string;
+	message: string;
+};

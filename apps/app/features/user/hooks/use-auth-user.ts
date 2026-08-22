@@ -3,11 +3,11 @@
 import { useAuth } from "@workos-inc/authkit-nextjs/components";
 
 export function useAuthUser() {
-  const { user, loading } = useAuth();
+	const { user, loading } = useAuth();
 
-  return {
-    isAuthenticated: !!user,
-    isLoading: loading,
-    user,
-  };
+	return {
+		user,
+		isLoading: loading,
+		isAuthenticated: !!user,
+	};
 }

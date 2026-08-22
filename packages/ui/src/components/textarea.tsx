@@ -1,17 +1,17 @@
 import { cn } from "@repo/ui/lib/utils";
-import type * as React from "react";
+import * as React from "react";
 
 function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
-  return (
-    <textarea
-      className={cn(
-        "field-sizing-content flex min-h-16 w-full resize-none rounded-[14px] border-input bg-input/50 px-3 py-2 text-sm shadow-glass-secondary outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[2px] focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-[2px] aria-invalid:ring-destructive/20 md:text-xs/relaxed dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
-        className
-      )}
-      data-slot="textarea"
-      {...props}
-    />
-  );
+	return (
+		<textarea
+			data-slot="textarea"
+			className={cn(
+				"border-input bg-input/50 dark:bg-input/30 focus-visible:border-ring focus-visible:ring-ring/30 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 resize-none rounded-[14px] px-3 shadow-glass-secondary py-2 text-sm transition-colors focus-visible:ring-[2px] aria-invalid:ring-[2px] md:text-xs/relaxed placeholder:text-muted-foreground flex field-sizing-content min-h-16 w-full outline-none disabled:cursor-not-allowed disabled:opacity-50",
+				className,
+			)}
+			{...props}
+		/>
+	);
 }
 
 export { Textarea };

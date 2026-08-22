@@ -24,26 +24,19 @@ import { parseAppError } from "./parse-errors";
  * ```
  */
 
-interface Success<T> {
-  data: T;
-  error: undefined;
-}
-interface Failure {
-  data: undefined;
-  error: AppError;
-}
+type Success<T> = { data: T; error: undefined };
+type Failure = { data: undefined; error: AppError };
 type Result<T> = Success<T> | Failure;
 
 /**
  * Execute a promise and return a typed result object
  */
+export function tryCatch<T>(promise: Promise<T>): Promise<Result<T>>;
 
 /**
  * Execute an async function and return a typed result object
  */
-export function tryCatch<T>(
-  input: Promise<T> | (() => Promise<T>)
-): Promise<Result<T>>;
+export function tryCatch<T>(fn: () => Promise<T>): Promise<Result<T>>;
 
 /**
  * Execute a sync function and return a typed result object
@@ -51,33 +44,33 @@ export function tryCatch<T>(
 export function tryCatch<T>(fn: () => T): Result<T>;
 
 export function tryCatch<T>(
-  input: Promise<T> | (() => T) | (() => Promise<T>)
+	input: Promise<T> | (() => T) | (() => Promise<T>),
 ): Result<T> | Promise<Result<T>> {
-  if (input instanceof Promise) {
-    return input
-      .then((data): Success<T> => ({ data, error: undefined }))
-      .catch(
-        (error): Failure => ({ data: undefined, error: parseAppError(error) })
-      );
-  }
+	if (input instanceof Promise) {
+		return input
+			.then((data): Success<T> => ({ data, error: undefined }))
+			.catch(
+				(error): Failure => ({ data: undefined, error: parseAppError(error) }),
+			);
+	}
 
-  try {
-    const result = input();
+	try {
+		const result = input();
 
-    // Handle async functions that return Promises
-    if (result instanceof Promise) {
-      return result
-        .then((data): Success<T> => ({ data, error: undefined }))
-        .catch(
-          (error): Failure => ({
-            data: undefined,
-            error: parseAppError(error),
-          })
-        );
-    }
+		// Handle async functions that return Promises
+		if (result instanceof Promise) {
+			return result
+				.then((data): Success<T> => ({ data, error: undefined }))
+				.catch(
+					(error): Failure => ({
+						data: undefined,
+						error: parseAppError(error),
+					}),
+				);
+		}
 
-    return { data: result, error: undefined };
-  } catch (error) {
-    return { data: undefined, error: parseAppError(error) };
-  }
+		return { data: result, error: undefined };
+	} catch (error) {
+		return { data: undefined, error: parseAppError(error) };
+	}
 }

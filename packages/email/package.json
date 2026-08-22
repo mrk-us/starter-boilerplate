@@ -1,27 +1,31 @@
 {
-  "name": "@repo/email",
-  "private": true,
-  "type": "module",
-  "exports": {
-    "./emails/*": "./emails/*.tsx"
-  },
-  "scripts": {
-    "dev": "email dev --port 3002",
-    "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "@react-email/components": "^1.0.12",
-    "react": "19.2.8",
-    "react-dom": "19.2.8"
-  },
-  "devDependencies": {
-    "@react-email/preview-server": "^5.2.10",
-    "@repo/typescript-config": "workspace:*",
-    "@tailwindcss/postcss": "^4.3.3",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.4",
-    "react-email": "^6.9.2",
-    "tailwindcss": "^4.3.3",
-    "typescript": "^7.0.2"
-  }
+	"name": "@repo/email",
+	"module": "index.ts",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"dev": "email dev --port 3002"
+	},
+	"dependencies": {
+		"@repo/config": "*",
+		"@repo/ui": "*",
+		"@react-email/components": "1.0.3",
+		"react": "19.2.3",
+		"react-dom": "19.2.3"
+	},
+	"devDependencies": {
+		"@react-email/preview-server": "5.1.1",
+		"@repo/typescript-config": "*",
+		"@tailwindcss/postcss": "^4.1.18",
+		"@types/bun": "latest",
+		"react-email": "5.1.1",
+		"tailwindcss": "^4.1.11"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	},
+	"exports": {
+		"./emails": "./emails/index.ts",
+		"./emails/*": "./emails/*.tsx"
+	}
 }

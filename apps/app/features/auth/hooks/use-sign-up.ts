@@ -6,29 +6,32 @@ import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
-interface SignUpData {
-  email: string;
-  password: string;
-}
+type SignUpData = {
+	email: string;
+	password: string;
+};
 
 export function useSignUp() {
-  const router = useRouter();
+	const router = useRouter();
 
-  const createUserAccount = useConvexAction(api.auth.actions.createUserAccount);
+	const createUserAccount = useConvexAction(api.auth.actions.createUserAccount);
 
-  const { mutateAsync, isPending, error } = useMutation({
-    mutationFn: (data: SignUpData) =>
-      createUserAccount({ email: data.email, password: data.password }),
-    onSuccess: (res) => {
-      if (res) {
-        router.push(`/verify-email?authId=${res.id}`);
-      }
-    },
-  });
+	const { mutateAsync, isPending, error } = useMutation({
+		mutationFn: (data: SignUpData) =>
+			createUserAccount({ email: data.email, password: data.password }),
+		onSuccess: (res) => {
+			if (res) {
+				router.push(`/verify-email?authId=${res.id}`);
+			}
+		},
+		onError: (err) => {
+			console.error(getErrorMessage(err));
+		},
+	});
 
-  return {
-    error: error ? new Error(getErrorMessage(error)) : undefined,
-    isPending,
-    signUp: mutateAsync,
-  };
+	return {
+		signUp: mutateAsync,
+		isPending,
+		error: error ? new Error(getErrorMessage(error)) : undefined,
+	};
 }

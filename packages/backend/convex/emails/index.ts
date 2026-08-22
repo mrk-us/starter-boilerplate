@@ -15,6 +15,6 @@ import { components, internal } from "../_generated/api";
  * Initialize Resend component with event handler
  */
 export const resend: Resend = new Resend(components.resend, {
-  onEmailEvent: internal.emails.events.handleResendEventWebhook,
-  testMode: false,
+	onEmailEvent: internal.emails.events.handleResendEventWebhook,
+	testMode: false,
 });

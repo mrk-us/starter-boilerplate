@@ -3,13 +3,13 @@
 import { useCurrentUser } from "@/features/user/hooks";
 
 export function UserData() {
-  const { user: currentUser } = useCurrentUser();
+	const { user: currentUser } = useCurrentUser();
 
-  return (
-    <pre className="max-w-sm truncate">
-      <code className="whitespace-pre-wrap font-mono text-xs">
-        {JSON.stringify(currentUser, null, 2)}
-      </code>
-    </pre>
-  );
+	return (
+		<pre className="truncate max-w-sm">
+			<code className="text-xs font-mono whitespace-pre-wrap">
+				{JSON.stringify(currentUser, null, 2)}
+			</code>
+		</pre>
+	);
 }

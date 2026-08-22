@@ -4,20 +4,20 @@ import { usePathname } from "next/navigation";
 import { UserMenu } from "./user-menu";
 
 const AUTH_PATHS = [
-  "/sign-in",
-  "/sign-up",
-  "/forgot-password",
-  "/reset-password",
-  "/verify-email",
+	"/sign-in",
+	"/sign-up",
+	"/forgot-password",
+	"/reset-password",
+	"/verify-email",
 ];
 
 export function ConditionalUserMenu() {
-  const pathname = usePathname();
+	const pathname = usePathname();
 
-  // Don't show UserMenu on auth pages
-  if (AUTH_PATHS.includes(pathname)) {
-    return null;
-  }
+	// Don't show UserMenu on auth pages
+	if (AUTH_PATHS.includes(pathname)) {
+		return null;
+	}
 
-  return <UserMenu />;
+	return <UserMenu />;
 }

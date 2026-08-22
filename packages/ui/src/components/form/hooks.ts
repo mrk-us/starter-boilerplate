@@ -7,21 +7,21 @@ import { FormSubmit } from "./form-submit";
 import { FormTextarea } from "./form-textarea";
 
 const { fieldContext, formContext, useFieldContext, useFormContext } =
-  createFormHookContexts();
+	createFormHookContexts();
 
 const { useAppForm } = createFormHook({
-  fieldComponents: {
-    Checkbox: FormCheckbox,
-    Input: FormInput,
-    Select: FormSelect,
-    Textarea: FormTextarea,
-  },
-  fieldContext,
-  formComponents: {
-    Errors: FormErrors,
-    Submit: FormSubmit,
-  },
-  formContext,
+	fieldComponents: {
+		Input: FormInput,
+		Textarea: FormTextarea,
+		Select: FormSelect,
+		Checkbox: FormCheckbox,
+	},
+	formComponents: {
+		Submit: FormSubmit,
+		Errors: FormErrors,
+	},
+	fieldContext,
+	formContext,
 });
 
 export { useAppForm, useFieldContext, useFormContext };

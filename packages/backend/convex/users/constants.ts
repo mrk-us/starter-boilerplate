@@ -2,10 +2,10 @@
  * Profile picture configuration
  */
 export const PROFILE_PICTURE_VALIDATION = {
-  allowedExtensions: [".jpg", ".jpeg", ".png", ".gif", ".webp"] as const,
-  allowedTypes: ["image/jpeg", "image/png", "image/gif", "image/webp"] as const,
-  maxSizeBytes: 5 * 1024 * 1024, // 5MB
-  maxSizeMB: 5,
+	maxSizeBytes: 5 * 1024 * 1024, // 5MB
+	maxSizeMB: 5,
+	allowedTypes: ["image/jpeg", "image/png", "image/gif", "image/webp"] as const,
+	allowedExtensions: [".jpg", ".jpeg", ".png", ".gif", ".webp"] as const,
 } as const;
 
 /*
