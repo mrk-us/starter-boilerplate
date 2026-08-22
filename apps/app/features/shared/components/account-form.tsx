@@ -2,82 +2,80 @@
 
 import { updateUserNameSchema } from "@repo/backend/convex/users/validation";
 import { getErrorMessage, tryCatch } from "@repo/shared/utils";
-import {
-	Button,
-	FieldGroup,
-	Form,
-	FormSubmit,
-	useAppForm,
-} from "@repo/ui/components";
+import { Button, Form, FormSubmit, useAppForm } from "@repo/ui/components";
 import { z } from "zod";
 import { AvatarUpload } from "@/features/shared/components";
 import {
-	useCurrentUser,
-	useDeleteAccount,
-	useUpdateName,
+  useCurrentUser,
+  useDeleteAccount,
+  useUpdateName,
 } from "@/features/user/hooks";
 
 // Validation schema
 const accountFormSchema = z.object({
-	name: updateUserNameSchema.shape.name,
+  name: updateUserNameSchema.shape.name,
 });
 
 type FormData = z.infer<typeof accountFormSchema>;
 
 export function AccountForm() {
-	const { user } = useCurrentUser();
+  const { user } = useCurrentUser();
 
-	const { updateName, isPending: isUpdatingName } = useUpdateName();
+  const { updateName, isPending: isUpdatingName } = useUpdateName();
 
-	const {
-		deleteAccount,
-		isPending: isDeletingUser,
-		error: deleteUserError,
-	} = useDeleteAccount();
+  const {
+    deleteAccount,
+    isPending: isDeletingUser,
+    error: deleteUserError,
+  } = useDeleteAccount();
 
-	const form = useAppForm({
-		defaultValues: {
-			name: user?.name ?? "",
-		} satisfies FormData as FormData,
-		validators: {
-			onSubmit: accountFormSchema,
-			onSubmitAsync: async ({ value }) => {
-				const { error } = await tryCatch(updateName(value.name));
+  const form = useAppForm({
+    defaultValues: {
+      name: user?.name ?? "",
+    } satisfies FormData as FormData,
+    validators: {
+      onSubmit: accountFormSchema,
+      onSubmitAsync: async ({ value }) => {
+        const { error } = await tryCatch(updateName(value.name));
 
-				if (error) {
-					throw getErrorMessage(error);
-				}
-			},
-		},
-	});
+        if (error) {
+          throw getErrorMessage(error);
+        }
+      },
+    },
+  });
 
-	return (
-		<main className="flex flex-col mx-auto max-w-md gap-10 p-6 justify-center items-center">
-			<h1>Account</h1>
+  const handleDeleteAccount = async () => {
+    await deleteAccount();
+  };
 
-			<AvatarUpload
-				currentAvatarUrl={user?.profilePictureUrl}
-				userName={user?.name}
-			/>
+  return (
+    <main className="mx-auto flex max-w-md flex-col items-center justify-center gap-10 p-6">
+      <h1>Account</h1>
 
-			<Form form={form}>
-				<form.AppField name="name">
-					{(field) => <field.Input label="Name" />}
-				</form.AppField>
+      <AvatarUpload
+        currentAvatarUrl={user?.profilePictureUrl}
+        userName={user?.name}
+      />
 
-				<FormSubmit
-					label="Save"
-					isPending={isUpdatingName}
-					hasChanged={(values) => values.name !== user?.name}
-				/>
-			</Form>
+      <Form form={form}>
+        <form.AppField name="name">
+          {(field) => <field.Input label="Name" />}
+        </form.AppField>
 
-			<Button onClick={() => void deleteAccount()} disabled={isDeletingUser}>
-				Delete Account
-			</Button>
-			{deleteUserError && (
-				<div className="text-red-500 text-sm">{deleteUserError}</div>
-			)}
-		</main>
-	);
+        <FormSubmit
+          hasChanged={(values) => values.name !== user?.name}
+          isPending={isUpdatingName}
+          label="Save"
+        />
+      </Form>
+
+      <Button disabled={isDeletingUser} onClick={handleDeleteAccount}>
+        Delete Account
+      </Button>
+      {deleteUserError && (
+        <div className="text-red-500 text-sm">{deleteUserError}</div>
+      )}
+    </main>
+  );
 }

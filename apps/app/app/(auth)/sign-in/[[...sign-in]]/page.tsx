@@ -4,14 +4,14 @@ import { Suspense } from "react";
 import { SignInForm } from "@/features/auth/components";
 
 export const metadata: Metadata = {
-	title: `Sign In | ${APP_NAME}`,
-	description: APP_DESCRIPTION,
+  description: APP_DESCRIPTION,
+  title: `Sign In | ${APP_NAME}`,
 };
 
 export default function SignInPage() {
-	return (
-		<Suspense>
-			<SignInForm />
-		</Suspense>
-	);
+  return (
+    <Suspense>
+      <SignInForm />
+    </Suspense>
+  );
 }
