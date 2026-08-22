@@ -1,12 +1,6 @@
 export {};
 
 declare global {
-  interface CustomJwtSessionClaims {
-    metadata: {
-      setupComplete?: boolean;
-    };
-  }
-
   /**
    * Window Controls Overlay — shipped by Chromium and enabled by the Electron
    * shell's `titleBarOverlay`, but not yet in TypeScript's DOM lib.

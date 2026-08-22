@@ -1,17 +1,17 @@
 "use client";
 
+import { useClerk } from "@clerk/nextjs";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@repo/ui/components/avatar";
 import { Button } from "@repo/ui/components/button";
-import { useAuth } from "@workos-inc/authkit-nextjs/components";
 import Link from "next/link";
 import { useCurrentUser } from "@/features/user/hooks";
 
 export function UserMenu() {
-  const { signOut } = useAuth();
+  const { signOut } = useClerk();
   const { user } = useCurrentUser();
 
   if (!user) {
@@ -37,7 +37,9 @@ export function UserMenu() {
           <AvatarFallback />
         </Avatar>
         <span className="text-sm">{user.email}</span>
-        <Button onClick={() => signOut()}>Sign out</Button>
+        <Button onClick={() => signOut({ redirectUrl: "/sign-in" })}>
+          Sign out
+        </Button>
       </div>
     </div>
   );

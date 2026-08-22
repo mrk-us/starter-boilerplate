@@ -1,21 +1,14 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { isPublicPath } from "@/lib/routes";
 import { UserMenu } from "./user-menu";
-
-const AUTH_PATHS = [
-  "/sign-in",
-  "/sign-up",
-  "/forgot-password",
-  "/reset-password",
-  "/verify-email",
-];
 
 export function ConditionalUserMenu() {
   const pathname = usePathname();
 
   // Don't show UserMenu on auth pages
-  if (AUTH_PATHS.includes(pathname)) {
+  if (isPublicPath(pathname)) {
     return null;
   }
 

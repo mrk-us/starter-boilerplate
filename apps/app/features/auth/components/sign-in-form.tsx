@@ -1,10 +1,12 @@
 "use client";
 
+import { useSignIn } from "@clerk/nextjs";
 import {
   checkEmailSchema,
   signInSchema,
+  verifyEmailSchema,
 } from "@repo/backend/convex/auth/validation";
-import { getErrorMessage, tryCatch } from "@repo/shared/utils";
+import { tryCatch } from "@repo/shared/utils";
 import {
   FieldGroup,
   FieldSeparator,
@@ -18,10 +20,18 @@ import { IconX } from "@tabler/icons-react";
 import Link from "next/link";
 import { useState } from "react";
 import type { z } from "zod";
-import { AuthCard, OAuthButtons } from "@/features/auth/components";
-import { useCheckEmail, useSignIn } from "@/features/auth/hooks";
+import {
+  AuthCard,
+  OAuthButtons,
+  ResendCodeButton,
+} from "@/features/auth/components";
+import {
+  useCheckEmail,
+  useSignInWithPassword,
+  useVerifySignIn,
+} from "@/features/auth/hooks";
 
-type Step = "email" | "password";
+type Step = "email" | "password" | "verify";
 
 function EmailStep({ onSuccess }: { onSuccess: (email: string) => void }) {
   const { checkEmail } = useCheckEmail();
@@ -38,7 +48,7 @@ function EmailStep({ onSuccess }: { onSuccess: (email: string) => void }) {
         const { error } = await tryCatch(checkEmail({ email: value.email }));
 
         if (error) {
-          throw getErrorMessage(error);
+          throw error.message;
         }
 
         onSuccess(value.email);
@@ -77,12 +87,14 @@ function EmailStep({ onSuccess }: { onSuccess: (email: string) => void }) {
 
 function PasswordStep({
   email,
+  onNeedsVerification,
   onReset,
 }: {
   email: string;
+  onNeedsVerification: () => void;
   onReset: () => void;
 }) {
-  const { signIn } = useSignIn();
+  const { signInWithPassword } = useSignInWithPassword();
 
   type PasswordFormData = z.infer<typeof signInSchema>;
 
@@ -94,10 +106,16 @@ function PasswordStep({
     validators: {
       onSubmit: signInSchema,
       onSubmitAsync: async ({ value }) => {
-        const { error } = await tryCatch(signIn(value));
+        const { data: needsVerification, error } = await tryCatch(
+          signInWithPassword(value)
+        );
 
         if (error) {
-          throw getErrorMessage(error);
+          throw error.message;
+        }
+
+        if (needsVerification) {
+          onNeedsVerification();
         }
       },
     },
@@ -160,7 +178,72 @@ function PasswordStep({
   );
 }
 
+function VerifyStep({ onReset }: { onReset: () => void }) {
+  const { resendCode, verifySignIn } = useVerifySignIn();
+
+  type VerifyFormData = z.infer<typeof verifyEmailSchema>;
+
+  const form = useAppForm({
+    defaultValues: {
+      code: "",
+    } satisfies VerifyFormData as VerifyFormData,
+    validators: {
+      onSubmit: verifyEmailSchema,
+      onSubmitAsync: async ({ value }) => {
+        const { error } = await tryCatch(verifySignIn(value));
+
+        if (error) {
+          throw error.message;
+        }
+      },
+    },
+  });
+
+  return (
+    <>
+      <Form form={form}>
+        <FieldGroup>
+          <form.AppField name="code">
+            {(field) => (
+              <field.Input
+                autoComplete="one-time-code"
+                autoFocus
+                hideLabel
+                inputMode="numeric"
+                label="Code"
+                placeholder="123456"
+              />
+            )}
+          </form.AppField>
+        </FieldGroup>
+
+        <form.Errors />
+
+        <FormSubmit
+          className="w-full"
+          hasChanged={(values) => values.code !== ""}
+          isPending={form.state.isSubmitting}
+          label="Verify"
+        />
+      </Form>
+
+      <div className="flex flex-col items-center gap-2">
+        <ResendCodeButton resend={resendCode} />
+
+        <button
+          className="text-muted-foreground text-xs hover:text-foreground hover:underline hover:underline-offset-2"
+          onClick={onReset}
+          type="button"
+        >
+          Use a different email
+        </button>
+      </div>
+    </>
+  );
+}
+
 export function SignInForm() {
+  const { signIn } = useSignIn();
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
 
@@ -172,7 +255,19 @@ export function SignInForm() {
   const handleReset = () => {
     setEmail("");
     setStep("email");
+    signIn.reset();
   };
+
+  if (step === "verify") {
+    return (
+      <AuthCard
+        description={`Enter the 6-digit code sent to ${email}`}
+        title="Verify it's you"
+      >
+        <VerifyStep onReset={handleReset} />
+      </AuthCard>
+    );
+  }
 
   return (
     <AuthCard
@@ -192,7 +287,11 @@ export function SignInForm() {
       {step === "email" && <EmailStep onSuccess={handleEmailSuccess} />}
 
       {step === "password" && (
-        <PasswordStep email={email} onReset={handleReset} />
+        <PasswordStep
+          email={email}
+          onNeedsVerification={() => setStep("verify")}
+          onReset={handleReset}
+        />
       )}
 
       <FieldSeparator>or</FieldSeparator>

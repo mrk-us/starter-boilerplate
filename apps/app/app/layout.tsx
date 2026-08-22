@@ -1,3 +1,4 @@
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "@repo/ui/globals.css";
@@ -7,7 +8,6 @@ import {
   ElectronWindow,
 } from "@/features/shared/components";
 import {
-  AuthProvider,
   ConvexClientProvider,
   SetupGuard,
   ThemeProvider,
@@ -56,18 +56,18 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: DESKTOP_ROOT_CLASS_SCRIPT }}
         />
         <DesktopClassSync />
-        <ElectronWindow>
-          <ConvexClientProvider>
-            <ThemeProvider>
-              <AuthProvider>
+        <ClerkProvider>
+          <ElectronWindow>
+            <ConvexClientProvider>
+              <ThemeProvider>
                 <SetupGuard>
                   <ConditionalUserMenu />
                   {children}
                 </SetupGuard>
-              </AuthProvider>
-            </ThemeProvider>
-          </ConvexClientProvider>
-        </ElectronWindow>
+              </ThemeProvider>
+            </ConvexClientProvider>
+          </ElectronWindow>
+        </ClerkProvider>
       </body>
     </html>
   );

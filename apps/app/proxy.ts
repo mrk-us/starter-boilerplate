@@ -1,51 +1,28 @@
-import { authkit, handleAuthkitHeaders } from "@workos-inc/authkit-nextjs";
-import type { NextRequest } from "next/server";
-import { isPublicPath, isSetupPath } from "./lib/routes";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+import { PUBLIC_ROUTE_PATTERNS } from "./lib/routes";
+
+const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS]);
 
 /**
- * AuthKit proxy with custom redirect logic and setup route handling
+ * Everything is protected unless it is one of the auth screens.
  *
- * Note: Setup completion check (onboarding) is handled at the page/layout level
- * via SetupGuard since WorkOS session doesn't include custom metadata.
+ * Setup completion is enforced client-side by `SetupGuard`: it lives in Convex,
+ * and Clerk's session token does not carry it.
  */
-export default async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+export default clerkMiddleware(async (auth, request) => {
+  if (isPublicRoute(request)) {
+    const { userId } = await auth();
 
-  // Get session info using AuthKit
-  const { session, headers } = await authkit(request);
+    if (userId) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
 
-  const isPublic = isPublicPath(pathname);
-  const isSetup = isSetupPath(pathname);
-
-  // Redirect authenticated users away from auth pages
-  if (session.user && isPublic) {
-    return handleAuthkitHeaders(request, headers, { redirect: "/" });
+    return;
   }
 
-  // Allow public routes without authentication
-  if (isPublic) {
-    return handleAuthkitHeaders(request, headers);
-  }
-
-  // Redirect unauthenticated users to sign-in
-  if (!session.user) {
-    const signInUrl = new URL("/sign-in", request.url);
-    signInUrl.searchParams.set("redirect", pathname);
-    return handleAuthkitHeaders(request, headers, {
-      redirect: signInUrl.toString(),
-    });
-  }
-
-  // TODO: Get setupComplete from db or workos
-  // Allow access to setup route for authenticated users
-  if (isSetup) {
-    return handleAuthkitHeaders(request, headers);
-  }
-
-  // For all other authenticated routes, continue
-  // Setup completion enforcement is handled by SetupGuard at the layout level
-  return handleAuthkitHeaders(request, headers);
-}
+  await auth.protect();
+});
 
 export const config = {
   matcher: [

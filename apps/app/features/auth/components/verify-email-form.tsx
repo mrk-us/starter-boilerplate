@@ -1,91 +1,93 @@
 "use client";
 
+import { useClerk, useSignUp } from "@clerk/nextjs";
 import { verifyEmailSchema } from "@repo/backend/convex/auth/validation";
-import { getErrorMessage } from "@repo/shared/utils";
+import { tryCatch } from "@repo/shared/utils";
 import { FieldGroup, Form, FormSubmit, useAppForm } from "@repo/ui/components";
-import { useSearchParams } from "next/navigation";
-import { AuthCard } from "@/features/auth/components";
-import {
-  useResendVerificationEmail,
-  useVerifyEmail,
-} from "@/features/auth/hooks";
+import Link from "next/link";
+import type { z } from "zod";
+import { AuthCard, ResendCodeButton } from "@/features/auth/components";
+import { useVerifyEmail } from "@/features/auth/hooks";
+import { SectionSpinner } from "@/features/shared/components";
+
+type FormData = z.infer<typeof verifyEmailSchema>;
 
 export function VerifyEmailForm() {
-  const searchParams = useSearchParams();
-  const authId = searchParams.get("authId");
-
-  if (!authId) {
-    console.error("Invalid verification link (no authId)");
-  }
-
-  const { verifyEmail } = useVerifyEmail();
+  const { loaded } = useClerk();
+  const { signUp } = useSignUp();
+  const { resendCode, verifyEmail } = useVerifyEmail();
 
   const form = useAppForm({
     defaultValues: {
-      authId: authId ?? "",
       code: "",
-    },
+    } satisfies FormData as FormData,
     validators: {
       onSubmit: verifyEmailSchema,
       onSubmitAsync: async ({ value }) => {
-        try {
-          if (!authId) {
-            console.error("Unable to process verification (no authId)");
-            return;
-          }
-          await verifyEmail(value);
-        } catch (error) {
-          throw getErrorMessage(error);
+        const { error } = await tryCatch(verifyEmail(value));
+
+        if (error) {
+          throw error.message;
         }
       },
     },
   });
 
-  const { resendVerificationEmail } = useResendVerificationEmail();
+  if (!loaded) {
+    return <SectionSpinner />;
+  }
 
-  async function handleResendVerificationEmail() {
-    if (!authId) {
-      console.error("Unable to resend verification email (no authId)");
-      return;
-    }
-
-    try {
-      const res = await resendVerificationEmail({ authId });
-
-      if (res.success) {
-        // TODO: Handle resend timer
-      }
-
-      return res;
-    } catch (error) {
-      console.error(getErrorMessage(error));
-    }
+  // The sign-up attempt lives on the Clerk client, so it is lost if the browser
+  // reaches this page without having started one.
+  if (!signUp.emailAddress) {
+    return (
+      <AuthCard title="Nothing to verify">
+        <p className="text-center text-muted-foreground text-xs">
+          This verification step has expired. Please{" "}
+          <Link
+            className="text-foreground underline underline-offset-4 hover:text-primary"
+            href="/sign-up"
+          >
+            create your account again
+          </Link>
+          .
+        </p>
+      </AuthCard>
+    );
   }
 
   return (
     <AuthCard
-      description="Enter the 6-digit code sent to your email address"
+      description={`Enter the 6-digit code sent to ${signUp.emailAddress}`}
       title="Verify your email"
     >
       <Form form={form}>
         <FieldGroup>
           <form.AppField name="code">
-            {(field) => <field.Input label="Code" />}
+            {(field) => (
+              <field.Input
+                autoComplete="one-time-code"
+                autoFocus
+                hideLabel
+                inputMode="numeric"
+                label="Code"
+                placeholder="123456"
+              />
+            )}
           </form.AppField>
-
-          <form.Errors />
-
-          <FormSubmit
-            hasChanged={(values) => values.code !== ""}
-            isPending={form.state.isSubmitting}
-            label="Verify email"
-          />
         </FieldGroup>
+
+        <form.Errors />
+
+        <FormSubmit
+          className="w-full"
+          hasChanged={(values) => values.code !== ""}
+          isPending={form.state.isSubmitting}
+          label="Verify email"
+        />
       </Form>
 
-      <button onClick={handleResendVerificationEmail} type="button">
-        Resend verification email
-      </button>
+      <ResendCodeButton resend={resendCode} />
     </AuthCard>
   );
 }

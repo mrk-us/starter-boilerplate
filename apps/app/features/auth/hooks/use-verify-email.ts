@@ -1,34 +1,36 @@
 "use client";
 
-import { useConvexAction } from "@convex-dev/react-query";
-import { api } from "@repo/backend/convex/_generated/api";
-import { getErrorMessage } from "@repo/shared";
-import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useSignUp } from "@clerk/nextjs";
+import { useAuthRedirect } from "./use-auth-redirect";
 
-interface VerifyEmailData {
-  authId: string;
-  code: string;
-}
-
+/**
+ * Second step of an email/password sign-up
+ */
 export function useVerifyEmail() {
-  const router = useRouter();
+  const { signUp } = useSignUp();
+  const { navigate } = useAuthRedirect();
 
-  const verifyUserEmail = useConvexAction(api.auth.actions.verifyEmail);
+  const verifyEmail = async ({ code }: { code: string }) => {
+    const { error } = await signUp.verifications.verifyEmailCode({ code });
 
-  const { mutateAsync, isPending, error } = useMutation({
-    mutationFn: (data: VerifyEmailData) =>
-      verifyUserEmail({ authId: data.authId, code: data.code }),
-    onSuccess: (res) => {
-      if (res.success) {
-        router.push("/");
-      }
-    },
-  });
+    if (error) {
+      throw error;
+    }
 
-  return {
-    error: error ? new Error(getErrorMessage(error)) : undefined,
-    isPending,
-    verifyEmail: mutateAsync,
+    if (signUp.status !== "complete") {
+      throw new Error(`Sign-up requires an unsupported step: ${signUp.status}`);
+    }
+
+    await signUp.finalize({ navigate });
   };
+
+  const resendCode = async () => {
+    const { error } = await signUp.verifications.sendEmailCode();
+
+    if (error) {
+      throw error;
+    }
+  };
+
+  return { resendCode, verifyEmail };
 }

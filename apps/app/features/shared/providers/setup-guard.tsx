@@ -3,18 +3,20 @@
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect } from "react";
 import { SectionSpinner } from "@/features/shared/components";
-import { useCurrentUser } from "@/features/user/hooks";
+import { useCurrentUser, useEnsureUser } from "@/features/user/hooks";
 import { isPublicPath, isSetupPath } from "@/lib/routes";
 
 /**
  * Client-side guard for setup redirect + loading state
- * Shows full-page spinner while auth/user data loads
- * Redirects to /setup if onboarding not complete (or user not found yet)
+ * Provisions the Convex user row, shows a full-page spinner while it resolves,
+ * and redirects to /setup until onboarding is complete
  */
 export function SetupGuard({ children }: { children: ReactNode }) {
   const { user, isLoading, isAuthenticated } = useCurrentUser();
   const pathname = usePathname();
   const router = useRouter();
+
+  useEnsureUser();
 
   const isAuthPage = isPublicPath(pathname);
   const isSetupPage = isSetupPath(pathname);

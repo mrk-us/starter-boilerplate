@@ -13,14 +13,13 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.8.0",
     "@convex-dev/react-query": "^0.1.0",
     "@repo/backend": "workspace:*",
     "@repo/config": "workspace:*",
     "@repo/shared": "workspace:*",
     "@repo/ui": "workspace:*",
     "@tanstack/react-query": "^5.101.4",
-    "@workos-inc/authkit-nextjs": "^4.3.1",
-    "@workos-inc/node": "^10.10.0",
     "convex": "^1.45.0",
     "next": "16.3.2",
     "next-themes": "^0.4.6",

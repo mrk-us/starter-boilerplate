@@ -1,7 +1,8 @@
 export { useCheckEmail } from "./use-check-email";
 export { useForgotPassword } from "./use-forgot-password";
-export { useResendVerificationEmail } from "./use-resend-verification-email";
+export { useOAuthSignIn } from "./use-oauth-sign-in";
 export { useResetPassword } from "./use-reset-password";
-export { useSignIn } from "./use-sign-in";
-export { useSignUp } from "./use-sign-up";
+export { useSignInWithPassword } from "./use-sign-in-with-password";
+export { useSignUpWithPassword } from "./use-sign-up-with-password";
 export { useVerifyEmail } from "./use-verify-email";
+export { useVerifySignIn } from "./use-verify-sign-in";

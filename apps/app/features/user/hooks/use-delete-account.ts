@@ -1,28 +1,25 @@
 "use client";
 
+import { useClerk } from "@clerk/nextjs";
 import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
 import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
-import { useAuth } from "@workos-inc/authkit-nextjs/components";
-import { useRouter } from "next/navigation";
 
 export function useDeleteAccount() {
-  const router = useRouter();
-  const { signOut } = useAuth();
+  const { signOut } = useClerk();
 
   const deleteUser = useConvexAction(api.users.actions.deleteUser);
 
   const { mutateAsync, isPending, isError, error, isSuccess } = useMutation({
     mutationFn: async () => {
+      // The action deletes the Clerk user too, so the local session has to go
+      // before anything else tries to use it.
       await deleteUser();
-      await signOut();
+      await signOut({ redirectUrl: "/sign-in" });
     },
     onError: (mutationError) => {
       console.error(getErrorMessage(mutationError));
-    },
-    onSuccess: () => {
-      router.push("/sign-in");
     },
   });
 

@@ -3,7 +3,7 @@
  */
 
 /**
- * Public route patterns (glob-style for middleware)
+ * Public route patterns (also used as `clerkMiddleware` route matchers)
  * These routes don't require authentication
  */
 export const PUBLIC_ROUTE_PATTERNS = [
@@ -12,7 +12,7 @@ export const PUBLIC_ROUTE_PATTERNS = [
   "/forgot-password(.*)",
   "/reset-password(.*)",
   "/verify-email(.*)",
-  "/callback(.*)",
+  "/sso-callback(.*)",
 ] as const;
 
 /**
@@ -22,7 +22,7 @@ export const SETUP_ROUTE_PATTERN = "/setup(.*)";
 
 /**
  * Check if a pathname matches any public route
- * Used for client-side route checking in AuthProvider
+ * Used for client-side route checking in SetupGuard
  */
 export function isPublicPath(pathname: string): boolean {
   return PUBLIC_ROUTE_PATTERNS.some((pattern) => {
