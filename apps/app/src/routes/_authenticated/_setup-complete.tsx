@@ -1,0 +1,31 @@
+import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { SectionSpinner } from "@/features/shared/components";
+import { useCurrentUser } from "@/features/user/hooks";
+
+export const Route = createFileRoute("/_authenticated/_setup-complete")({
+  component: SetupCompleteLayout,
+});
+
+/**
+ * A WorkOS session carries no application metadata, so whether onboarding is
+ * finished is only knowable from Convex. That puts this gate on the client,
+ * after the user document has loaded, rather than in `beforeLoad`.
+ */
+function SetupCompleteLayout() {
+  const { isLoading, user } = useCurrentUser();
+  const navigate = useNavigate();
+  const needsSetup = !(isLoading || user?.setupComplete);
+
+  useEffect(() => {
+    if (needsSetup) {
+      navigate({ replace: true, to: "/setup" });
+    }
+  }, [navigate, needsSetup]);
+
+  if (isLoading || needsSetup) {
+    return <SectionSpinner />;
+  }
+
+  return <Outlet />;
+}
