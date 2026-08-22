@@ -26,11 +26,11 @@ export const signIn = createServerFn({ method: "POST" })
       })
     );
 
-    // Server function errors are serialized to the browser, and Convex embeds
-    // its request id and source location in the raw message, so only the domain
-    // message crosses the boundary.
+    // Server function errors are serialized to the browser, and seroval copies
+    // an error's own properties across, so the raw Convex message (request id
+    // and source location included) must not be attached as a `cause`.
     if (error) {
-      throw new Error(getErrorMessage(error), { cause: error });
+      throw new Error(getErrorMessage(error));
     }
 
     await syncUserToDb(authResponse.user);
