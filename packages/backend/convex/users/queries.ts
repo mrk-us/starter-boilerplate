@@ -7,22 +7,6 @@ import { r2 } from "../r2";
 import { PROFILE_PICTURE_URL_EXPIRY } from "./constants";
 
 /**
- * Check if user exists by authId
- * Public query used by auth callback to skip sync for returning users
- */
-export const userExistsByAuthId = query({
-  args: { authId: v.string() },
-  handler: async (ctx, args) => {
-    const user = await ctx.db
-      .query("users")
-      .withIndex("authId", (q) => q.eq("authId", args.authId))
-      .first();
-    return user !== null;
-  },
-  returns: v.boolean(),
-});
-
-/**
  * Get current user for billing (internal - avoids circular dependency)
  * This query is used by the Stripe billing module to get user info
  * without fetching subscription data (which would create a circular reference)

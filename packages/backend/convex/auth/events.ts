@@ -1,144 +1,126 @@
-import { ConvexError } from "convex/values";
+import type { UserJSON } from "@clerk/backend";
+import { verifyWebhook } from "@clerk/backend/webhooks";
+import { tryCatch } from "@repo/shared";
+import { z } from "zod";
 import { internal } from "../_generated/api";
-import { ERROR_CODE } from "../errors/constants";
-import { authKit } from "./index";
+import type { ActionCtx } from "../_generated/server";
 
 /**
- * WorkOS webhook event handlers
- * These are backup/sync handlers - primary user creation happens in auth callback
+ * One-time codes arrive as free-form `data` on `email.created`, so the payload
+ * is parsed here instead of being trusted further down the call chain.
  */
-export const { authKitEvent } = authKit.events({
-  /**
-   * Email verification requested - send verification email
-   */
-  "email_verification.created": async (ctx, event) => {
-    if (!event) {
-      console.warn("No event data for email_verification.created webhook");
-      return;
-    }
-
-    await ctx.scheduler.runAfter(
-      0,
-      internal.emails.actions.sendEmailVerificationEmail,
-      { emailVerificationId: event.data.id }
-    );
-  },
-
-  /**
-   * Invitation created (placeholder for future implementation)
-   */
-  "invitation.created": async (_ctx, _event) => {
-    // TODO: Implement invitation email
-  },
-
-  /**
-   * Password reset requested - send reset email
-   */
-  "password_reset.created": async (ctx, event) => {
-    if (!event) {
-      console.warn("No event data for password_reset.created webhook");
-      return;
-    }
-
-    await ctx.scheduler.runAfter(
-      0,
-      internal.emails.actions.sendPasswordResetEmail,
-      { passwordResetId: event.data.id }
-    );
-  },
-
-  /**
-   * Session created
-   */
-  "session.created": async (_ctx, _event) => {
-    // TODO: Implement session creation
-  },
-  /**
-   * User created - backup sync to local db
-   * User should already exist from auth callback, but create if not (idempotent)
-   */
-  "user.created": async (ctx, event) => {
-    const existingUser = await ctx.db
-      .query("users")
-      .withIndex("authId", (q) => q.eq("authId", event.data.id))
-      .unique();
-
-    // User already exists (created by callback) - nothing to do
-    if (existingUser) {
-      return;
-    }
-
-    // Create user if callback didn't
-    await ctx.db.insert("users", {
-      authId: event.data.id,
-      email: event.data.email,
-      name: event.data.firstName ?? "",
-      profilePictureUrl: event.data.profilePictureUrl ?? "",
-      setupComplete: false,
-    });
-  },
-
-  /**
-   * User deleted - remove from local db
-   */
-  "user.deleted": async (ctx, event) => {
-    if (!event) {
-      console.error("No event data for user.deleted webhook");
-      throw new ConvexError({
-        code: ERROR_CODE.UNKNOWN,
-        message: "Invalid webhook event",
-      });
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("authId", (q) => q.eq("authId", event.data.id))
-      .unique();
-
-    // User may already be deleted or never synced
-    if (!user) {
-      console.warn("User not found for deletion:", event.data.id);
-      return;
-    }
-
-    await ctx.db.delete(user._id);
-  },
-
-  /**
-   * User updated - sync changes to local db
-   * Creates user if not exists (handles edge cases)
-   */
-  "user.updated": async (ctx, event) => {
-    const user = await ctx.db
-      .query("users")
-      .withIndex("authId", (q) => q.eq("authId", event.data.id))
-      .unique();
-
-    // User doesn't exist - create them (shouldn't ever run, but just in case)
-    if (!user) {
-      await ctx.db.insert("users", {
-        authId: event.data.id,
-        email: event.data.email,
-        name: event.data.firstName ?? "",
-        profilePictureUrl: event.data.profilePictureUrl ?? "",
-        setupComplete: false,
-      });
-      return;
-    }
-
-    // Trigger re-verification if email changed
-    if (event.data.email !== user.email) {
-      await ctx.scheduler.runAfter(
-        0,
-        internal.auth.actions.resendVerificationEmailOnEmailChange,
-        { authId: event.data.id }
-      );
-    }
-
-    // Update user data (don't overwrite custom profile picture)
-    await ctx.db.patch(user._id, {
-      email: event.data.email,
-      profilePictureUrl: event.data.profilePictureUrl ?? undefined,
-    });
-  },
+const otpEmailSchema = z.object({
+  otp_code: z.string().min(1),
 });
+
+function getPrimaryEmail(user: UserJSON): string | undefined {
+  const primary = user.email_addresses.find(
+    (emailAddress) => emailAddress.id === user.primary_email_address_id
+  );
+
+  return primary?.email_address ?? user.email_addresses[0]?.email_address;
+}
+
+function getFullName(user: UserJSON): string {
+  const fullName = [user.first_name, user.last_name]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  return fullName || (user.username ?? "");
+}
+
+async function syncUser(ctx: ActionCtx, user: UserJSON) {
+  const email = getPrimaryEmail(user);
+
+  if (!email) {
+    console.error(`[clerk] User ${user.id} has no email address`);
+    return;
+  }
+
+  await ctx.runMutation(internal.users.mutations.syncUserFromAuth, {
+    authId: user.id,
+    email,
+    name: getFullName(user),
+    profilePictureUrl: user.image_url,
+  });
+}
+
+/**
+ * Clerk webhook handler
+ *
+ * Keeps the `users` table in sync with Clerk and, when custom email delivery is
+ * enabled in the Clerk dashboard, sends one-time codes through Resend. Clerk
+ * retries on non-2xx responses, so every branch has to stay idempotent.
+ */
+export async function handleClerkEventWebhook(
+  ctx: ActionCtx,
+  request: Request
+): Promise<Response> {
+  const { data: event, error } = await tryCatch(verifyWebhook(request));
+
+  if (error) {
+    console.error("[clerk] Webhook verification failed:", error.message);
+    return new Response("Webhook verification failed", { status: 400 });
+  }
+
+  switch (event.type) {
+    case "user.created":
+    case "user.updated": {
+      await syncUser(ctx, event.data);
+      break;
+    }
+
+    case "user.deleted": {
+      // Clerk omits the id when the user was already purged from its side.
+      if (event.data.id) {
+        await ctx.runAction(internal.users.actions.deleteUserWithSubscription, {
+          authId: event.data.id,
+        });
+      }
+      break;
+    }
+
+    case "email.created": {
+      const { slug, to_email_address: email } = event.data;
+
+      if (!email) {
+        break;
+      }
+
+      const isOtpEmail =
+        slug === "verification_code" || slug === "reset_password_code";
+
+      if (!isOtpEmail) {
+        break;
+      }
+
+      const otp = otpEmailSchema.safeParse(event.data.data);
+
+      if (!otp.success) {
+        console.error(`[clerk] ${slug} email arrived without an otp_code`);
+        break;
+      }
+
+      const emailArgs = { code: otp.data.otp_code, email };
+
+      if (slug === "verification_code") {
+        await ctx.runAction(
+          internal.emails.actions.sendEmailVerificationEmail,
+          emailArgs
+        );
+      } else {
+        await ctx.runAction(
+          internal.emails.actions.sendPasswordResetEmail,
+          emailArgs
+        );
+      }
+      break;
+    }
+
+    default:
+      break;
+  }
+
+  return new Response("OK", { status: 200 });
+}

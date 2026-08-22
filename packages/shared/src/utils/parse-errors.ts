@@ -4,25 +4,31 @@ import type { AppError } from "../errors/types";
 
 const CONVEX_ERROR_PATTERN = /ConvexError: ({.*})/;
 
-/** WorkOS error structure */
-interface WorkOSErrorShape {
+/**
+ * Clerk error structure
+ *
+ * Duck-typed rather than imported so this package stays dependency-free and
+ * works for both `@clerk/backend` and browser SDK errors.
+ */
+interface ClerkErrorShape {
+  clerkError?: true;
   code?: string;
-  errors?: Array<{ code: string; message: string }>;
+  errors?: Array<{ code: string; longMessage?: string; message: string }>;
+  longMessage?: string;
   message?: string;
 }
 
-/** Check if error looks like a WorkOS API error */
-function isWorkOSError(error: unknown): error is WorkOSErrorShape {
+function isClerkError(error: unknown): error is ClerkErrorShape {
   if (!error || typeof error !== "object") {
     return false;
   }
-  const err = error as WorkOSErrorShape;
-  return Array.isArray(err.errors) || typeof err.message === "string";
+  const err = error as ClerkErrorShape;
+  return err.clerkError === true || Array.isArray(err.errors);
 }
 
 /**
  * Parse any error into a typed AppError
- * Handles: ConvexError, WorkOS errors, HTTP client errors, standard Error, unknown
+ * Handles: ConvexError, Clerk errors, HTTP client errors, standard Error, unknown
  */
 export function parseAppError(error: unknown): AppError {
   // 1. ConvexError from Convex SDK (has .data property)
@@ -36,7 +42,8 @@ export function parseAppError(error: unknown): AppError {
 
   // 2. ConvexError relayed by the HTTP client, which flattens it into a plain
   // Error whose message embeds the original payload. This has to be tried
-  // before the WorkOS shape check, which matches any object with a message.
+  // before the standard-Error branch below, which would otherwise surface the
+  // flattened message.
   if (error instanceof Error) {
     const match = error.message.match(CONVEX_ERROR_PATTERN);
     if (match?.[1]) {
@@ -55,21 +62,21 @@ export function parseAppError(error: unknown): AppError {
     }
   }
 
-  // 3. WorkOS API errors (have errors[] array or message property)
-  if (isWorkOSError(error)) {
-    // Check nested errors array first (more specific)
-    const [nestedError] = error.errors ?? [];
-    if (nestedError) {
+  // 3. Clerk errors. `longMessage` is the user-facing copy; `message` is aimed
+  // at developers and is not guaranteed to be stable.
+  if (isClerkError(error)) {
+    const [apiError] = error.errors ?? [];
+    if (apiError) {
       return {
-        code: nestedError.code,
-        message: nestedError.message,
+        code: apiError.code,
+        message: apiError.longMessage ?? apiError.message,
       };
     }
-    // Fall back to top-level message
-    if (error.message) {
+    const message = error.longMessage ?? error.message;
+    if (message) {
       return {
         code: error.code ?? UNKNOWN_ERROR.code,
-        message: error.message,
+        message,
       };
     }
   }

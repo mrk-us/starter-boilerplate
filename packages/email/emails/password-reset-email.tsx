@@ -4,18 +4,17 @@ import {
   Head,
   Heading,
   Html,
-  Link,
   Preview,
   Section,
   Tailwind,
   Text,
 } from "@react-email/components";
 
-export default function PasswordResetEmail({ url }: { url: string }) {
+export default function PasswordResetEmail({ code }: { code: string }) {
   return (
     <Html>
       <Head />
-      <Preview>Reset your password</Preview>
+      <Preview>Your password reset code is {code}</Preview>
       <Tailwind
         config={{
           darkMode: "class",
@@ -42,23 +41,20 @@ export default function PasswordResetEmail({ url }: { url: string }) {
                 Reset your password
               </Heading>
               <Text className="text-[16px] text-secondary">
-                We received a request to reset your password. Click the link
-                below to choose a new password.
+                We received a request to reset your password. Enter the
+                following code to choose a new one.
               </Text>
             </Section>
 
-            <Section className="mt-4">
-              <Link
-                className="inline-block rounded-lg bg-primary px-6 py-3 font-medium text-[16px] text-white no-underline"
-                href={url}
-              >
-                Reset Password
-              </Link>
+            <Section className="mt-4 rounded-2xl border border-border bg-card p-4 text-center">
+              <Text className="font-medium font-mono text-[24px] text-primary tracking-widest">
+                {code}
+              </Text>
             </Section>
 
             <Section className="mt-6">
               <Text className="m-0 text-[16px] text-secondary">
-                This link will expire in 24 hours.
+                This code will expire in 10 minutes.
               </Text>
               <Text className="mt-4 text-[14px] text-secondary/70">
                 If you didn't request a password reset, you can safely ignore

@@ -2,7 +2,7 @@ import { registerRoutes } from "@convex-dev/stripe";
 import { httpRouter } from "convex/server";
 import { components } from "./_generated/api";
 import { httpAction } from "./_generated/server";
-import { authKit } from "./auth/index";
+import { handleClerkEventWebhook } from "./auth/events";
 import { STRIPE_API_VERSION } from "./billing/constants";
 import { onStripeEvent, stripeEventHandlers } from "./billing/events";
 import { resend } from "./emails/index";
@@ -10,10 +10,16 @@ import { resend } from "./emails/index";
 const http = httpRouter();
 
 /**
- * Register WorkOS webhook endpoint
- * Webhook endpoint: https://<your-convex-site>.convex.site/workos/webhook
+ * Register Clerk webhook
+ * Webhook endpoint: https://<your-convex-site>.convex.site/clerk/webhooks
  */
-authKit.registerRoutes(http);
+http.route({
+  handler: httpAction(
+    async (ctx, req) => await handleClerkEventWebhook(ctx, req)
+  ),
+  method: "POST",
+  path: "/clerk/webhooks",
+});
 
 /**
  * Register Resend webhook

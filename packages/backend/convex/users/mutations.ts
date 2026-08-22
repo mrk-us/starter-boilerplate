@@ -2,41 +2,39 @@ import { tryCatch } from "@repo/shared";
 import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation, mutation } from "../_generated/server";
-import { requireUser } from "../auth/helpers";
+import { requireAuthId, requireUser } from "../auth/helpers";
 import { ERROR_CODE } from "../errors/constants";
 import { r2 } from "../r2";
 import { PROFILE_PICTURE_VALIDATION } from "./constants";
 
 /**
- * Upsert user - create if doesn't exist, update if exists
- * Called from auth callback to ensure user exists immediately after sign-in/up
- * Public mutation (called from Next.js server action after WorkOS auth)
+ * Ensure a user row exists for the signed-in Clerk user
+ *
+ * Called by the client right after sign-in/sign-up so the app is usable before
+ * the `user.created` webhook lands. Clerk's Convex session token only carries
+ * the `aud` claim by default, so the profile fields come from the client and
+ * the webhook stays authoritative for them.
  */
 export const upsertUser = mutation({
   args: {
-    authId: v.string(),
     email: v.string(),
     name: v.optional(v.string()),
     profilePictureUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const authId = await requireAuthId(ctx);
+
     const existingUser = await ctx.db
       .query("users")
-      .withIndex("authId", (q) => q.eq("authId", args.authId))
+      .withIndex("authId", (q) => q.eq("authId", authId))
       .unique();
 
     if (existingUser) {
-      // Update existing user (sync from WorkOS)
-      await ctx.db.patch(existingUser._id, {
-        email: args.email,
-        profilePictureUrl: args.profilePictureUrl,
-      });
       return { created: false, userId: existingUser._id };
     }
 
-    // Create new user
     const userId = await ctx.db.insert("users", {
-      authId: args.authId,
+      authId,
       email: args.email,
       name: args.name ?? "",
       profilePictureUrl: args.profilePictureUrl,
@@ -48,34 +46,42 @@ export const upsertUser = mutation({
 });
 
 /**
- * Internal mutation: Update user's email
+ * Internal mutation: Sync a user from a verified Clerk webhook
  */
-export const updateUserEmail = internalMutation({
+export const syncUserFromAuth = internalMutation({
   args: {
     authId: v.string(),
     email: v.string(),
+    name: v.string(),
+    profilePictureUrl: v.string(),
   },
   handler: async (ctx, args) => {
-    // Get the user from the database (direct db query)
     const user = await ctx.db
       .query("users")
       .withIndex("authId", (q) => q.eq("authId", args.authId))
       .unique();
 
-    // If the user is not found, log an error
     if (!user) {
-      console.error("[updateUserEmail] User not found:", args.authId);
-      // Return failure
-      return { success: false };
+      await ctx.db.insert("users", {
+        authId: args.authId,
+        email: args.email,
+        name: args.name,
+        profilePictureUrl: args.profilePictureUrl,
+        setupComplete: false,
+      });
+
+      return { created: true };
     }
 
-    // Update the user's email in the database
     await ctx.db.patch(user._id, {
       email: args.email,
+      profilePictureUrl: args.profilePictureUrl,
+      // Clerk has no name for email/password sign-ups, so the setup flow owns
+      // the name until Clerk actually has one.
+      ...(args.name ? { name: args.name } : {}),
     });
 
-    // Return success
-    return { success: true };
+    return { created: false };
   },
 });
 
@@ -172,7 +178,7 @@ export const updateProfilePicture = mutation({
 
 /**
  * Internal mutation: Complete user setup by authId
- * Called by the completeSetup action after updating WorkOS
+ * Called by the completeSetup action after updating Clerk
  */
 export const completeSetupInternal = internalMutation({
   args: {

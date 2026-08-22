@@ -20,12 +20,12 @@ const APP_ORIGIN = new URL(APP_URL).origin;
 /**
  * Hosts (and their subdomains) the window may navigate to itself. Everything
  * else is handed to the system browser. Beyond the app's own origin this is
- * exactly the hop list of a WorkOS AuthKit sign-in: WorkOS, its hosted AuthKit
+ * exactly the hop list of a Clerk sign-in: Clerk's Frontend API and hosted
  * pages, and the configured OAuth providers.
  */
 const ALLOWED_NAVIGATION_HOSTS = [
-  "workos.com",
-  "authkit.app",
+  "clerk.com",
+  "accounts.dev",
   "accounts.google.com",
   "github.com",
 ];

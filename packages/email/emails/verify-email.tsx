@@ -4,20 +4,13 @@ import {
   Head,
   Heading,
   Html,
-  Link,
   Preview,
   Section,
   Tailwind,
   Text,
 } from "@react-email/components";
 
-export default function VerifyEmail({
-  code,
-  url,
-}: {
-  code: string;
-  url: string;
-}) {
+export default function VerifyEmail({ code }: { code: string }) {
   return (
     <Html>
       <Head />
@@ -52,8 +45,7 @@ export default function VerifyEmail({
                 Your verification code.
               </Heading>
               <Text className="text-[16px] text-secondary">
-                Enter the following code to{" "}
-                <Link href={url}>verify your email address</Link>.
+                Enter the following code to verify your email address.
               </Text>
             </Section>
 
