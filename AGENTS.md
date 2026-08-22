@@ -10,10 +10,15 @@ This version has breaking changes—APIs, conventions, and file structure may di
 
 This is a Bun-managed Turborepo.
 
+- `apps/app` - Authenticated Next.js application.
+- `apps/desktop` - Electron desktop shell for the authenticated application.
 - `apps/web` - Next.js marketing site.
+- `packages/backend` - Convex backend, authentication, billing, storage, and email delivery.
 - `packages/config` - Shared configuration.
+- `packages/email` - React Email templates and preview tooling.
+- `packages/shared` - Shared utilities.
+- `packages/typescript-config` - Shared TypeScript configuration.
 - `packages/ui` - Shared UI components.
-- `packages/shared` - Shared utils.
 
 ## Core principles
 
@@ -313,3 +318,17 @@ Biome's linter will catch most issues automatically. Focus your attention on:
 4. **Edge cases** - Handle boundary conditions and error states
 5. **User experience** - Accessibility, performance, and usability considerations
 6. **Documentation** - Add comments for complex logic, but prefer self-documenting code
+
+<!-- convex-ai-start -->
+
+This project uses [Convex](https://convex.dev) as its backend.
+
+When working on Convex code, **always read
+`packages/backend/convex/_generated/ai/guidelines.md` first** for important guidelines on
+how to correctly use Convex APIs and patterns. The file contains rules that
+override what you may have learned about Convex from training data.
+
+Convex agent skills for common tasks can be installed by running
+`bunx convex ai-files install`.
+
+<!-- convex-ai-end -->

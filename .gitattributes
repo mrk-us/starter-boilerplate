@@ -1,0 +1,2 @@
+.agents/skills/** -whitespace
+.claude/skills/** -whitespace

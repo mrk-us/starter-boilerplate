@@ -7,7 +7,11 @@
     "ultracite/biome/tanstack"
   ],
   "files": {
-    "includes": ["!!packages/backend/convex/_generated"]
+    "includes": [
+      "!!.agents/skills",
+      "!!.claude/skills",
+      "!!packages/backend/convex/_generated"
+    ]
   },
   "linter": {
     "rules": {
