@@ -1,178 +1,71 @@
-# Turborepo starter
+# Starter monorepo with WorkOS and Stripe
 
-This Turborepo starter is maintained by the Turborepo core team.
+A Bun and Turborepo starter for a Next.js product with WorkOS authentication, Convex, Stripe billing, Resend email, shared Base UI components, and an Electron desktop shell.
 
-## Environment Variables
+## Requirements
 
-### Frontend (apps/app/.env.local)
+- Bun 1.3.14
+- Node.js 22.11 or newer
 
-```bash
-# Convex
-NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
+The repository includes an `.nvmrc` pinned to Node 22.
 
-# Clerk Authentication
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-CLERK_SECRET_KEY=sk_test_...
-```
+## Workspace
 
-### Backend (Convex Dashboard Environment Variables)
+- `apps/app`: authenticated Next.js product app on port 3001
+- `apps/web`: public Next.js site on port 3000
+- `apps/desktop`: Electron shell for `apps/app`
+- `packages/backend`: Convex functions, WorkOS integration, Stripe billing, R2 storage, and Resend delivery
+- `packages/email`: React Email templates and local preview server
+- `packages/ui`: shared shadcn components built on Base UI, Tailwind CSS, and Typeset
+- `packages/config`: shared runtime configuration
+- `packages/shared`: shared TypeScript helpers
+- `packages/typescript-config`: shared TypeScript settings
 
-```bash
-# Clerk Authentication
-CLERK_JWT_ISSUER_DOMAIN=https://your-clerk-instance.clerk.accounts.dev
-CLERK_SECRET_KEY=sk_test_...
-CLERK_WEBHOOK_SECRET=whsec_...
+## Setup
 
-# Resend (for welcome emails)
-RESEND_API_KEY=re_...
-RESEND_FROM_EMAIL=noreply@yourdomain.com
-APP_NAME=YourAppName
-APP_URL=https://yourapp.com
-
-# Stripe (billing)
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-```
-
-### Clerk Dashboard Setup
-
-1. Create a new Clerk application at https://dashboard.clerk.com
-2. Navigate to JWT Templates and create a "Convex" template
-3. Copy the Issuer URL for `CLERK_JWT_ISSUER_DOMAIN`
-4. Setup Webhooks:
-   - Endpoint: `https://<your-convex-site>.convex.site/clerk/webhooks`
-   - Events: `user.created`, `user.updated`, `user.deleted`
-5. Enable Email + Password authentication
-6. Configure OAuth providers (Google, GitHub) as needed
-
-## Using this example
-
-Run the following command:
+Install the workspace dependencies:
 
 ```sh
-npx create-turbo@latest
+bun install --frozen-lockfile
 ```
 
-## What's inside?
+Copy the app environment example and fill in the WorkOS and Convex values:
 
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/biome-config`: `biome` configurations
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [Biome](https://biomejs.dev/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+```sh
+cp apps/app/.env.local.example apps/app/.env.local
 ```
 
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+Use `packages/backend/.env.example` as the list of backend values. Set secret values in the Convex deployment environment. The WorkOS webhook endpoint is:
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+```text
+https://<your-convex-site>.convex.site/workos/webhook
 ```
 
-### Develop
+Configure the Stripe webhook endpoint with API version
+`2026-07-29.dahlia` at:
 
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
+```text
+https://<your-convex-site>.convex.site/stripe/webhooks
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+## Commands
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+```sh
+bun run dev             # Run the web apps and package development tasks
+bun run dev:desktop     # Run apps/app and Electron together
+bun run build           # Build the full workspace
+bun run build:desktop   # Build and package the desktop app
+bun run typecheck       # Typecheck every workspace package
+bun run check           # Check with Ultracite and Biome
+bun run fix             # Apply Ultracite and Biome fixes
+bun run doctor          # Check the linting setup
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+Run the email preview from its package:
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+```sh
+cd packages/email
+bun run dev
 ```
 
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+For a production Electron build, set `DESKTOP_APP_URL` to the deployed URL for `apps/app` before running `bun run build:desktop`.

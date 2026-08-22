@@ -2,8 +2,8 @@ import { v } from "convex/values";
 import { internalQuery, query } from "../_generated/server";
 import { getAuthenticatedUser } from "../auth/helpers";
 import {
-	createSubscriptionHash,
-	getSubscriptionStatusForUser,
+  createSubscriptionHash,
+  getSubscriptionStatusForUser,
 } from "./helpers";
 import { subscriptionSchema } from "./validation";
 
@@ -11,28 +11,28 @@ import { subscriptionSchema } from "./validation";
  * Get current user's subscription status
  */
 export const getCurrentSubscriptionStatus = query({
-	args: {},
-	returns: v.union(subscriptionSchema, v.null()),
-	handler: async (ctx) => {
-		const user = await getAuthenticatedUser(ctx);
+  args: {},
+  handler: async (ctx) => {
+    const user = await getAuthenticatedUser(ctx);
 
-		if (!user) return null;
+    if (!user) {
+      return null;
+    }
 
-		return getSubscriptionStatusForUser(ctx, user._id);
-	},
+    return getSubscriptionStatusForUser(ctx, user._id);
+  },
+  returns: v.union(subscriptionSchema, v.null()),
 });
 
 /**
  * Get subscription status for a specific user (internal)
  */
 export const getSubscriptionStatusByUserId = internalQuery({
-	args: {
-		userId: v.id("users"),
-	},
-	returns: subscriptionSchema,
-	handler: async (ctx, args) => {
-		return getSubscriptionStatusForUser(ctx, args.userId);
-	},
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => getSubscriptionStatusForUser(ctx, args.userId),
+  returns: subscriptionSchema,
 });
 
 /**
@@ -40,14 +40,16 @@ export const getSubscriptionStatusByUserId = internalQuery({
  * Used to detect if subscription changed between checkout start and completion.
  */
 export const getSubscriptionHash = query({
-	args: {},
-	returns: v.union(v.string(), v.null()),
-	handler: async (ctx) => {
-		const user = await getAuthenticatedUser(ctx);
+  args: {},
+  handler: async (ctx) => {
+    const user = await getAuthenticatedUser(ctx);
 
-		if (!user) return null;
+    if (!user) {
+      return null;
+    }
 
-		const subscription = await getSubscriptionStatusForUser(ctx, user._id);
-		return await createSubscriptionHash(subscription);
-	},
+    const subscription = await getSubscriptionStatusForUser(ctx, user._id);
+    return await createSubscriptionHash(subscription);
+  },
+  returns: v.union(v.string(), v.null()),
 });

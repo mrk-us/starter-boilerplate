@@ -4,14 +4,14 @@ import { Suspense } from "react";
 import { SignUpForm } from "@/features/auth/components";
 
 export const metadata: Metadata = {
-	title: `Create an account | ${APP_NAME}`,
-	description: APP_DESCRIPTION,
+  description: APP_DESCRIPTION,
+  title: `Create an account | ${APP_NAME}`,
 };
 
 export default function SignUpPage() {
-	return (
-		<Suspense>
-			<SignUpForm />
-		</Suspense>
-	);
+  return (
+    <Suspense>
+      <SignUpForm />
+    </Suspense>
+  );
 }

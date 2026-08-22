@@ -115,7 +115,7 @@ Everything is a devDependency — `electron-vite` bundles all imports into `dist
 		"build": "electron-vite build",
 		"package": "electron-vite build && electron-builder --dir",
 		"make": "electron-vite build && electron-builder",
-		"check-types": "tsc --noEmit"
+		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
 		"@electron/fuses": "^2.0.0",
@@ -483,7 +483,7 @@ export function ElectronWindow({ children }: { children: ReactNode }) {
    ```
    The listing must contain **only** `package.json`, `dist-electron/main.cjs`, `dist-electron/preload.cjs` (+ sourcemaps if emitted — prefer disabling them for release). It must contain **no** `node_modules`, **no** `.env*`, **no** `.next`. Expected: asar well under 1 MB; DMG ≈ 110–130 MB (Electron framework floor).
 6. **Fuses:** `npx @electron/fuses read --app out/mac-arm64/Starter.app` shows RunAsNode disabled, OnlyLoadAppFromAsar + asar integrity enabled.
-7. `bun x ultracite check` and `check-types` pass in all touched workspaces.
+7. `bun x ultracite check` and `typecheck` pass in all touched workspaces.
 
 ## Invariants (hold these regardless of implementation details)
 

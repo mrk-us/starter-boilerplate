@@ -7,62 +7,62 @@ import { profilePictureUploadSchema } from "@repo/backend/convex/users/validatio
 import { useMutation } from "@tanstack/react-query";
 
 export function useUploadAvatar() {
-	// R2 upload hook - handles generate URL → upload → sync metadata
-	const uploadFile = useUploadFile(api.r2);
+  // R2 upload hook - handles generate URL → upload → sync metadata
+  const uploadFile = useUploadFile(api.r2);
 
-	// Mutations for profile picture management
-	const updateProfilePicture = useConvexMutation(
-		api.users.mutations.updateProfilePicture,
-	);
-	const removeProfilePicture = useConvexMutation(
-		api.users.mutations.removeProfilePicture,
-	);
+  // Mutations for profile picture management
+  const updateProfilePicture = useConvexMutation(
+    api.users.mutations.updateProfilePicture
+  );
+  const removeProfilePicture = useConvexMutation(
+    api.users.mutations.removeProfilePicture
+  );
 
-	// Upload avatar: validate → upload to R2 → save key to profile
-	const {
-		mutateAsync: upload,
-		isPending: isUploading,
-		error: uploadError,
-	} = useMutation({
-		mutationFn: async (file: File) => {
-			// Validate file
-			const validation = profilePictureUploadSchema.safeParse({
-				type: file.type,
-				size: file.size,
-			});
+  // Upload avatar: validate → upload to R2 → save key to profile
+  const {
+    mutateAsync: upload,
+    isPending: isUploading,
+    error: uploadError,
+  } = useMutation({
+    mutationFn: async (file: File) => {
+      // Validate file
+      const validation = profilePictureUploadSchema.safeParse({
+        size: file.size,
+        type: file.type,
+      });
 
-			if (!validation.success) {
-				throw new Error(validation.error.issues[0]?.message);
-			}
+      if (!validation.success) {
+        throw new Error(validation.error.issues[0]?.message);
+      }
 
-			// Upload to R2 (returns the object key)
-			const key = await uploadFile(file);
+      // Upload to R2 (returns the object key)
+      const key = await uploadFile(file);
 
-			// Save the key to user's profile (handles deleting old picture)
-			await updateProfilePicture({ key });
+      // Save the key to user's profile (handles deleting old picture)
+      await updateProfilePicture({ key });
 
-			return { success: true, key };
-		},
-	});
+      return { key, success: true };
+    },
+  });
 
-	// Remove avatar
-	const {
-		mutateAsync: remove,
-		isPending: isRemoving,
-		error: removeError,
-	} = useMutation({
-		mutationFn: async () => {
-			await removeProfilePicture({});
-			return { success: true };
-		},
-	});
+  // Remove avatar
+  const {
+    mutateAsync: remove,
+    isPending: isRemoving,
+    error: removeError,
+  } = useMutation({
+    mutationFn: async () => {
+      await removeProfilePicture({});
+      return { success: true };
+    },
+  });
 
-	return {
-		upload,
-		remove,
-		isUploading,
-		isRemoving,
-		isPending: isUploading || isRemoving,
-		error: uploadError || removeError,
-	};
+  return {
+    error: uploadError || removeError,
+    isPending: isUploading || isRemoving,
+    isRemoving,
+    isUploading,
+    remove,
+    upload,
+  };
 }

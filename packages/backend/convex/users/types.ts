@@ -11,6 +11,6 @@ export type User = z.infer<typeof userSchema>;
  * User with subscription status (returned by getCurrentUser query)
  */
 export type UserWithSubscription = User & {
-	profilePictureUrl?: string;
-	subscription: UserSubscription;
+  profilePictureUrl?: string;
+  subscription: UserSubscription;
 };

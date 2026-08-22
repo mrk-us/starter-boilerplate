@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import { AccountForm } from "@/features/shared/components";
 
 export const metadata: Metadata = {
-	title: "Account",
-	description: "Account settings",
+  description: "Account settings",
+  title: "Account",
 };
 
 export default function Account() {
-	return <AccountForm />;
+  return <AccountForm />;
 }

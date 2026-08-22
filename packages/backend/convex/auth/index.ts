@@ -3,8 +3,8 @@ import { components, internal } from "../_generated/api";
 import type { DataModel } from "../_generated/dataModel";
 
 const authFunctions: AuthFunctions = {
-	authKitAction: internal.auth.actions.authKitAction,
-	authKitEvent: internal.auth.events.authKitEvent,
+  authKitAction: internal.auth.actions.authKitAction,
+  authKitEvent: internal.auth.events.authKitEvent,
 };
 
 /**
@@ -21,11 +21,11 @@ const authFunctions: AuthFunctions = {
  * Initialize AuthKit component
  */
 export const authKit = new AuthKit<DataModel>(components.workOSAuthKit, {
-	authFunctions,
-	additionalEventTypes: [
-		"session.created",
-		"invitation.created",
-		"password_reset.created",
-		"email_verification.created",
-	],
+  additionalEventTypes: [
+    "session.created",
+    "invitation.created",
+    "password_reset.created",
+    "email_verification.created",
+  ],
+  authFunctions,
 });
