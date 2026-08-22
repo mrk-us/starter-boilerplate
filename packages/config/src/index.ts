@@ -11,6 +11,6 @@ export const APP_DESCRIPTION = "Unremarkable is the best way to do nothing.";
 // Important for emails: if this is empty, links become relative ("/verify-email?..."),
 // and some clients (e.g. Apple Mail) rewrite them to internal schemes like `x-webdoc://`.
 export const APP_URL =
-	IS_PRODUCTION && normalizedEnvAppUrl
-		? normalizedEnvAppUrl
-		: DEFAULT_APP_URL_DEV;
+  IS_PRODUCTION && normalizedEnvAppUrl
+    ? normalizedEnvAppUrl
+    : DEFAULT_APP_URL_DEV;

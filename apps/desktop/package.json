@@ -1,32 +1,29 @@
 {
-	"name": "desktop",
-	"productName": "Starter",
-	"version": "0.1.0",
-	"description": "Thin Electron shell that renders the web app",
-	"author": "Starter",
-	"type": "module",
-	"private": true,
-	"main": "dist-electron/main.cjs",
-	"scripts": {
-		"clean": "node -e \"require('node:fs').rmSync('dist-electron',{recursive:true,force:true})\"",
-		"electron:ensure": "node -e \"require('electron/install.js')\"",
-		"dev:electron": "bun run electron:ensure && ELECTRON_RUN_AS_NODE= ELECTRON_APP_URL=http://localhost:3001 electron-vite dev",
-		"build": "bun run clean && electron-vite build",
-		"package": "bun run build && electron-builder --dir",
-		"build:desktop": "bun run build && electron-builder",
-		"check": "ultracite check",
-		"fix": "ultracite fix",
-		"check-types": "tsc --noEmit"
-	},
-	"devDependencies": {
-		"@repo/biome-config": "*",
-		"@repo/shared": "*",
-		"@repo/typescript-config": "*",
-		"@types/node": "^22.15.3",
-		"electron": "43.4.1",
-		"electron-builder": "^26.15.7",
-		"electron-vite": "^5.0.0",
-		"typescript": "5.9.2",
-		"vite": "^7.3.6"
-	}
+  "name": "desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Thin Electron shell that renders the web app",
+  "author": "Starter",
+  "type": "module",
+  "main": "dist-electron/main.cjs",
+  "scripts": {
+    "build": "bun run clean && electron-vite build",
+    "build:desktop": "bun run build && electron-builder",
+    "clean": "node -e \"require('node:fs').rmSync('dist-electron',{recursive:true,force:true})\"",
+    "dev:electron": "bun run electron:ensure && ELECTRON_RUN_AS_NODE= ELECTRON_APP_URL=http://localhost:3001 electron-vite dev",
+    "electron:ensure": "node -e \"require('electron/install.js')\"",
+    "package": "bun run build && electron-builder --dir",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@repo/shared": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^26.2.0",
+    "electron": "43.4.1",
+    "electron-builder": "^26.15.7",
+    "electron-vite": "^5.0.0",
+    "typescript": "^7.0.2",
+    "vite": "^7.3.6"
+  },
+  "productName": "Starter"
 }

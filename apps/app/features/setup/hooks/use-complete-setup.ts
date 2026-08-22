@@ -6,21 +6,21 @@ import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
 export function useCompleteSetup() {
-	const router = useRouter();
-	const convexAction = useConvexAction(api.users.actions.completeSetup);
+  const router = useRouter();
+  const convexAction = useConvexAction(api.users.actions.completeSetup);
 
-	const { mutateAsync, isPending, isError, error, isSuccess } = useMutation({
-		mutationFn: (name: string) => convexAction({ name }),
-		onSuccess: () => {
-			router.push("/");
-		},
-	});
+  const { mutateAsync, isPending, isError, error, isSuccess } = useMutation({
+    mutationFn: (name: string) => convexAction({ name }),
+    onSuccess: () => {
+      router.push("/");
+    },
+  });
 
-	return {
-		completeSetup: mutateAsync,
-		isPending,
-		isError,
-		error: error instanceof Error ? error.message : null,
-		isSuccess,
-	};
+  return {
+    completeSetup: mutateAsync,
+    error: error instanceof Error ? error.message : null,
+    isError,
+    isPending,
+    isSuccess,
+  };
 }

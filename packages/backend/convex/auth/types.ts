@@ -1,28 +1,29 @@
 export type { AUTH_ERROR_CODE } from "../errors/constants";
 
-export type WorkOSUser = {
-	object: "user";
-	id: string;
-	email: string;
-	emailVerified: boolean;
-	profilePictureUrl: string | null;
-	firstName: string | null;
-	lastName: string | null;
-	lastSignInAt: string | null;
-	createdAt: string;
-	updatedAt: string;
-	externalId: string | null;
-	metadata: Record<string, string>;
-	locale: string | null;
-};
+export interface WorkOSUser {
+  createdAt: string;
+  email: string;
+  emailVerified: boolean;
+  externalId: string | null;
+  firstName: string | null;
+  id: string;
+  lastName: string | null;
+  lastSignInAt: string | null;
+  locale: string | null;
+  metadata: Record<string, string>;
+  name: string | null;
+  object: "user";
+  profilePictureUrl: string | null;
+  updatedAt: string;
+}
 
-export type AuthenticateResult = {
-	accessToken: string;
-	refreshToken: string;
-	user: WorkOSUser;
-};
+export interface AuthenticateResult {
+  accessToken: string;
+  refreshToken: string;
+  user: WorkOSUser;
+}
 
-export type CheckEmailResult = {
-	exists: boolean;
-	oauthProviders: string[];
-};
+export interface CheckEmailResult {
+  exists: boolean;
+  oauthProviders: string[];
+}

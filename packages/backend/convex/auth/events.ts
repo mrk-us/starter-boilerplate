@@ -1,6 +1,5 @@
-import { tryCatch } from "@repo/shared";
 import { ConvexError } from "convex/values";
-import { components, internal } from "../_generated/api";
+import { internal } from "../_generated/api";
 import { ERROR_CODE } from "../errors/constants";
 import { authKit } from "./index";
 
@@ -9,138 +8,137 @@ import { authKit } from "./index";
  * These are backup/sync handlers - primary user creation happens in auth callback
  */
 export const { authKitEvent } = authKit.events({
-	/**
-	 * User created - backup sync to local db
-	 * User should already exist from auth callback, but create if not (idempotent)
-	 */
-	"user.created": async (ctx, event) => {
-		const existingUser = await ctx.db
-			.query("users")
-			.withIndex("authId", (q) => q.eq("authId", event.data.id))
-			.unique();
+  /**
+   * Email verification requested - send verification email
+   */
+  "email_verification.created": async (ctx, event) => {
+    if (!event) {
+      console.warn("No event data for email_verification.created webhook");
+      return;
+    }
 
-		// User already exists (created by callback) - nothing to do
-		if (existingUser) {
-			return;
-		}
+    await ctx.scheduler.runAfter(
+      0,
+      internal.emails.actions.sendEmailVerificationEmail,
+      { emailVerificationId: event.data.id }
+    );
+  },
 
-		// Create user if callback didn't
-		await ctx.db.insert("users", {
-			authId: event.data.id,
-			email: event.data.email,
-			name: event.data.firstName ?? "",
-			profilePictureUrl: event.data.profilePictureUrl ?? "",
-			setupComplete: false,
-		});
-	},
+  /**
+   * Invitation created (placeholder for future implementation)
+   */
+  "invitation.created": async (_ctx, _event) => {
+    // TODO: Implement invitation email
+  },
 
-	/**
-	 * User updated - sync changes to local db
-	 * Creates user if not exists (handles edge cases)
-	 */
-	"user.updated": async (ctx, event) => {
-		const user = await ctx.db
-			.query("users")
-			.withIndex("authId", (q) => q.eq("authId", event.data.id))
-			.unique();
+  /**
+   * Password reset requested - send reset email
+   */
+  "password_reset.created": async (ctx, event) => {
+    if (!event) {
+      console.warn("No event data for password_reset.created webhook");
+      return;
+    }
 
-		// User doesn't exist - create them (shouldn't ever run, but just in case)
-		if (!user) {
-			await ctx.db.insert("users", {
-				authId: event.data.id,
-				email: event.data.email,
-				name: event.data.firstName ?? "",
-				profilePictureUrl: event.data.profilePictureUrl ?? "",
-				setupComplete: false,
-			});
-			return;
-		}
+    await ctx.scheduler.runAfter(
+      0,
+      internal.emails.actions.sendPasswordResetEmail,
+      { passwordResetId: event.data.id }
+    );
+  },
 
-		// Trigger re-verification if email changed
-		if (event.data.email !== user.email) {
-			await ctx.scheduler.runAfter(
-				0,
-				internal.auth.actions.resendVerificationEmailOnEmailChange,
-				{ authId: event.data.id },
-			);
-		}
+  /**
+   * Session created
+   */
+  "session.created": async (_ctx, _event) => {
+    // TODO: Implement session creation
+  },
+  /**
+   * User created - backup sync to local db
+   * User should already exist from auth callback, but create if not (idempotent)
+   */
+  "user.created": async (ctx, event) => {
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("authId", (q) => q.eq("authId", event.data.id))
+      .unique();
 
-		// Update user data (don't overwrite custom profile picture)
-		await ctx.db.patch(user._id, {
-			email: event.data.email,
-			profilePictureUrl: event.data.profilePictureUrl ?? undefined,
-		});
-	},
+    // User already exists (created by callback) - nothing to do
+    if (existingUser) {
+      return;
+    }
 
-	/**
-	 * User deleted - remove from local db
-	 */
-	"user.deleted": async (ctx, event) => {
-		if (!event) {
-			console.error("No event data for user.deleted webhook");
-			throw new ConvexError({
-				code: ERROR_CODE.UNKNOWN,
-				message: "Invalid webhook event",
-			});
-		}
+    // Create user if callback didn't
+    await ctx.db.insert("users", {
+      authId: event.data.id,
+      email: event.data.email,
+      name: event.data.firstName ?? "",
+      profilePictureUrl: event.data.profilePictureUrl ?? "",
+      setupComplete: false,
+    });
+  },
 
-		const user = await ctx.db
-			.query("users")
-			.withIndex("authId", (q) => q.eq("authId", event.data.id))
-			.unique();
+  /**
+   * User deleted - remove from local db
+   */
+  "user.deleted": async (ctx, event) => {
+    if (!event) {
+      console.error("No event data for user.deleted webhook");
+      throw new ConvexError({
+        code: ERROR_CODE.UNKNOWN,
+        message: "Invalid webhook event",
+      });
+    }
 
-		// User may already be deleted or never synced
-		if (!user) {
-			console.warn("User not found for deletion:", event.data.id);
-			return;
-		}
+    const user = await ctx.db
+      .query("users")
+      .withIndex("authId", (q) => q.eq("authId", event.data.id))
+      .unique();
 
-		await ctx.db.delete(user._id);
-	},
+    // User may already be deleted or never synced
+    if (!user) {
+      console.warn("User not found for deletion:", event.data.id);
+      return;
+    }
 
-	/**
-	 * Session created
-	 */
-	"session.created": async (_ctx, _event) => {
-		// TODO: Implement session creation
-	},
+    await ctx.db.delete(user._id);
+  },
 
-	/**
-	 * Invitation created (placeholder for future implementation)
-	 */
-	"invitation.created": async (_ctx, _event) => {
-		// TODO: Implement invitation email
-	},
+  /**
+   * User updated - sync changes to local db
+   * Creates user if not exists (handles edge cases)
+   */
+  "user.updated": async (ctx, event) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("authId", (q) => q.eq("authId", event.data.id))
+      .unique();
 
-	/**
-	 * Password reset requested - send reset email
-	 */
-	"password_reset.created": async (ctx, event) => {
-		if (!event) {
-			console.warn("No event data for password_reset.created webhook");
-			return;
-		}
+    // User doesn't exist - create them (shouldn't ever run, but just in case)
+    if (!user) {
+      await ctx.db.insert("users", {
+        authId: event.data.id,
+        email: event.data.email,
+        name: event.data.firstName ?? "",
+        profilePictureUrl: event.data.profilePictureUrl ?? "",
+        setupComplete: false,
+      });
+      return;
+    }
 
-		await ctx.scheduler.runAfter(
-			0,
-			internal.emails.actions.sendPasswordResetEmail,
-			{ passwordResetId: event.data.id },
-		);
-	},
+    // Trigger re-verification if email changed
+    if (event.data.email !== user.email) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.auth.actions.resendVerificationEmailOnEmailChange,
+        { authId: event.data.id }
+      );
+    }
 
-	/**
-	 * Email verification requested - send verification email
-	 */
-	"email_verification.created": async (ctx, event) => {
-		if (!event) {
-			console.warn("No event data for email_verification.created webhook");
-			return;
-		}
-
-		await ctx.scheduler.runAfter(
-			0,
-			internal.emails.actions.sendEmailVerificationEmail,
-			{ emailVerificationId: event.data.id },
-		);
-	},
+    // Update user data (don't overwrite custom profile picture)
+    await ctx.db.patch(user._id, {
+      email: event.data.email,
+      profilePictureUrl: event.data.profilePictureUrl ?? undefined,
+    });
+  },
 });
