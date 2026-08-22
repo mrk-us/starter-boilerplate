@@ -1,0 +1,27 @@
+@import "@repo/ui/globals.css";
+
+/*
+ * The design system reads both families through `--font-inter` and
+ * `--font-geist-mono` (see `@theme inline` in the shared globals), so the app
+ * only has to load the files and point those variables at them.
+ */
+@font-face {
+  font-family: "Inter Variable";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/InterVariable.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/GeistMonoVF.woff") format("woff");
+}
+
+:root {
+  --font-inter: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-geist-mono: "Geist Mono", ui-monospace, SFMono-Regular, monospace;
+}

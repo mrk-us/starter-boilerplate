@@ -13,6 +13,11 @@ coverage
 .next/
 out/
 
+# tanstack start
+.output/
+.nitro/
+.tanstack/
+
 # production
 build
 dist
