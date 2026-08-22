@@ -17,7 +17,7 @@ export function UserMenu() {
 	if (!user) return null;
 
 	return (
-		<div className="flex items-center gap-2 w-full justify-between p-4 [app-region:drag] [&_a,&_button]:[app-region:no-drag]">
+		<div className="flex items-center gap-2 w-full justify-between p-4 electron:[app-region:drag] electron:[&_a,&_button]:[app-region:no-drag]">
 			<div className="flex items-center gap-2 text-sm">
 				<Link href="/">Dashboard</Link>
 				<Link href="/account">Account</Link>

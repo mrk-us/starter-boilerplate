@@ -30,6 +30,7 @@ export function FormInput(props: FormInputProps) {
 				onBlur={field.handleBlur}
 				onChange={(e) => field.handleChange(e.target.value)}
 				aria-invalid={isInvalid}
+				aria-describedby={`${field.name}-error`}
 			/>
 		</FormBase>
 	);

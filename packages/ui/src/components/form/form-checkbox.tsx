@@ -15,6 +15,7 @@ export function FormCheckbox(props: FormControlProps) {
 				onBlur={field.handleBlur}
 				onCheckedChange={(e) => field.handleChange(e === true)}
 				aria-invalid={isInvalid}
+				aria-describedby={`${field.name}-error`}
 			/>
 		</FormBase>
 	);

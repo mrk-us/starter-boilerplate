@@ -20,10 +20,6 @@
       "cache": false,
       "persistent": true
     },
-    "dev:desktop": {
-      "cache": false,
-      "persistent": true
-    },
     "dev:next": {
       "cache": false,
       "persistent": true
@@ -33,7 +29,8 @@
       "persistent": true
     },
     "build:desktop": {
-      "cache": false
+      "cache": false,
+      "env": ["DESKTOP_APP_URL"]
     }
   }
 }

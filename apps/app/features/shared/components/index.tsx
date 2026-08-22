@@ -2,6 +2,7 @@ export { AccountForm } from "./account-form";
 export { AvatarUpload } from "./avatar-upload";
 export { ComponentExample } from "./component-example";
 export { ConditionalUserMenu } from "./conditional-user-menu";
+export { DesktopClassSync } from "./desktop-class-sync";
 export { ElectronWindow } from "./electron-window";
 export { Example } from "./example";
 export { SectionSpinner } from "./section-spinner";

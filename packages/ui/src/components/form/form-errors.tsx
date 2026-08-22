@@ -77,6 +77,7 @@ function FormErrorContent({
 				"relative flex flex-row gap-3 rounded-lg bg-destructive/7.5 pr-3 pl-2 py-2 font-medium text-xs text-destructive",
 				className,
 			)}
+			aria-describedby=""
 		>
 			<div className="w-1 shrink-0 self-stretch rounded-full bg-destructive" />
 			{content}

@@ -8,6 +8,10 @@
 			"types": "./src/index.ts",
 			"default": "./src/index.ts"
 		},
+		"./desktop": {
+			"types": "./src/desktop/index.ts",
+			"default": "./src/desktop/index.ts"
+		},
 		"./errors": {
 			"types": "./src/errors/index.ts",
 			"default": "./src/errors/index.ts"

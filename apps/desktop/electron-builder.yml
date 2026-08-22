@@ -1,0 +1,60 @@
+appId: com.starter.app
+productName: Starter
+directories:
+  output: out
+  buildResources: build
+
+# The shell is two bundled CJS files. This allowlist is what keeps node_modules,
+# .env*, source, and framework output out of the asar, where they would be
+# readable by anyone with the shipped DMG.
+files:
+  - dist-electron/**
+  - package.json
+asar: true
+
+# Nothing is bundled from node_modules, so there is nothing to rebuild.
+npmRebuild: false
+
+# Strips ~50 locale packs from the Electron framework.
+electronLanguages:
+  - en-US
+
+# Flipped after packaging and before signing by electron-builder itself.
+electronFuses:
+  runAsNode: false
+  enableCookieEncryption: true
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+  grantFileProtocolExtraPrivileges: false
+  # Flipping fuses invalidates the ad-hoc signature Electron ships with. Signed
+  # releases get re-signed anyway, but unsigned local builds are SIGKILLed by
+  # Apple Silicon without this.
+  resetAdHocDarwinSignature: true
+
+mac:
+  category: public.app-category.productivity
+  darkModeSupport: true
+  # Per-arch artifacts: a universal binary roughly doubles the download.
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+    - target: zip
+      arch:
+        - arm64
+        - x64
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+        - arm64
+
+linux:
+  category: Utility
+  target:
+    - AppImage

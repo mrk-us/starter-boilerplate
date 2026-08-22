@@ -20,6 +20,7 @@ export function FormSelect({
 			<Select
 				onValueChange={(e) => field.handleChange(e ?? "")}
 				value={field.state.value}
+				aria-describedby={`${field.name}-error`}
 			>
 				<SelectTrigger
 					aria-invalid={isInvalid}

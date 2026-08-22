@@ -6,6 +6,7 @@ import { Separator } from "@repo/ui/components/separator";
 import { cn } from "@repo/ui/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 import { useMemo } from "react";
+import { useFieldContext } from "./form/hooks";
 
 function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
 	return (
@@ -179,6 +180,8 @@ function FieldError({
 }: React.ComponentProps<"div"> & {
 	errors?: Array<{ message?: string } | undefined>;
 }) {
+	const field = useFieldContext<string>();
+
 	const content = useMemo(() => {
 		if (children) {
 			return children;
@@ -213,6 +216,8 @@ function FieldError({
 		<div
 			role="alert"
 			data-slot="field-error"
+			id={`${field.name}-error`}
+			aria-live="polite"
 			className={cn(
 				"mt-2 relative flex flex-row gap-3 rounded-lg bg-destructive/7.5 pr-3 pl-2 py-2 font-medium text-xs text-destructive",
 				className,

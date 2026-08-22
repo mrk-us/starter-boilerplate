@@ -9,6 +9,19 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Desktop targeting. The Electron shell has no UI of its own — the web app is
+ * the renderer — so it announces itself with root classes set before hydration
+ * (`electron`, `electron-<platform>`, and `wco` while the Window Controls
+ * Overlay is visible). Style with these variants and the `--titlebar-*`
+ * variables below; never branch on a runtime check in a component.
+ */
+@custom-variant electron (&:is(.electron, .electron *));
+@custom-variant electron-mac (&:is(.electron-darwin, .electron-darwin *));
+@custom-variant electron-win (&:is(.electron-win32, .electron-win32 *));
+@custom-variant electron-linux (&:is(.electron-linux, .electron-linux *));
+@custom-variant wco (&:is(.wco, .wco *));
+
 @custom-variant supports-corner-shape {
 	@supports (corner-shape: initial) {
 		@slot;
@@ -89,6 +102,14 @@
 }
 
 :root {
+	/*
+	 * Titlebar geometry. Zero on the web so every `--titlebar-*` consumer is
+	 * inert in a browser; the desktop root classes below fill them in.
+	 */
+	--titlebar-height: 0px;
+	--titlebar-inset-left: 0px;
+	--titlebar-inset-right: 0px;
+
 	--base-0: oklch(0.1675 0 0);
 	--base-5: oklch(0.2 0 0);
 	--base-10: oklch(0.2393 0 0);
@@ -177,6 +198,27 @@
 	--sidebar-accent-foreground: oklch(0.985 0 0);
 	--sidebar-border: oklch(1 0 0 / 10%);
 	--sidebar-ring: oklch(0.556 0 0);
+}
+
+/* Keep in sync with TITLEBAR_HEIGHT in apps/desktop/src/main.ts. */
+.electron {
+	--titlebar-height: 36px;
+}
+
+/*
+ * When the Window Controls Overlay is active the platform reports the exact
+ * rectangle it reserves — including the room macOS needs for its traffic
+ * lights — so prefer it over the static height above. Declared last: same
+ * specificity, so source order decides.
+ */
+.wco {
+	--titlebar-height: env(titlebar-area-height, 36px);
+	--titlebar-inset-left: env(titlebar-area-x, 0px);
+	--titlebar-inset-right: calc(
+		100vw -
+		env(titlebar-area-width, 100vw) -
+		env(titlebar-area-x, 0px)
+	);
 }
 
 @layer base {
