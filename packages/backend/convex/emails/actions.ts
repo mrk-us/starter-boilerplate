@@ -1,7 +1,7 @@
 "use node";
 
 import { render } from "@react-email/render";
-import { APP_NAME, APP_URL } from "@repo/config";
+import { APP_NAME } from "@repo/config";
 import PasswordResetEmail from "@repo/email/emails/password-reset-email";
 import VerifyEmailEmail from "@repo/email/emails/verify-email";
 import WelcomeEmail from "@repo/email/emails/welcome-email";
@@ -9,74 +9,35 @@ import WelcomeToProEmail from "@repo/email/emails/welcome-to-pro-email";
 import { tryCatch } from "@repo/shared";
 import { v } from "convex/values";
 import { internalAction } from "../_generated/server";
-import { authKit } from "../auth";
 import { rateLimiter } from "../rateLimiter";
 import { resend } from "./index";
 
 /**
- * Send email verification email (triggered by webhook)
+ * Send the sign-up verification code (triggered by the Clerk `email.created`
+ * webhook when custom email delivery is enabled)
  */
 export const sendEmailVerificationEmail = internalAction({
   args: {
-    emailVerificationId: v.string(),
+    code: v.string(),
+    email: v.string(),
   },
   handler: async (ctx, args) => {
-    // Rate limit
     const { ok } = await rateLimiter.limit(ctx, "resendEmailVerification", {
-      key: args.emailVerificationId,
+      key: args.email,
     });
 
     if (!ok) {
-      console.warn(
-        "Rate limited: sendEmailVerificationEmail",
-        args.emailVerificationId
-      );
+      console.warn("Rate limited: sendEmailVerificationEmail");
       return;
     }
 
-    // Validate input
-    if (!args.emailVerificationId) {
-      console.warn("Invalid emailVerificationId:", args.emailVerificationId);
-      return;
-    }
-
-    // Fetch email verification from WorkOS
-    const { data: emailVerificationData, error: emailVerificationError } =
-      await tryCatch(
-        authKit.workos.userManagement.getEmailVerification(
-          args.emailVerificationId
-        )
-      );
-
-    if (emailVerificationError) {
-      console.error(
-        "Failed to get email verification:",
-        emailVerificationError.message
-      );
-      return;
-    }
-
-    if (!emailVerificationData) {
-      console.warn("Email verification not found:", args.emailVerificationId);
-      return;
-    }
-
-    // Build verification URL
-    const verificationUrl = `${APP_URL}/verify-email?authId=${emailVerificationData.userId}`;
-
-    // Send email
     const { error: sendEmailError } = await tryCatch(
       resend.sendEmail(ctx, {
-        from: `${process.env.APP_NAME} <${process.env.RESEND_FROM_EMAIL}>`,
+        from: `${APP_NAME} <${process.env.RESEND_FROM_EMAIL}>`,
         headers: [{ name: "X-Email-Category", value: "email_verification" }],
-        html: await render(
-          VerifyEmailEmail({
-            code: emailVerificationData.code,
-            url: verificationUrl,
-          })
-        ),
+        html: await render(VerifyEmailEmail({ code: args.code })),
         subject: "Verify your email",
-        to: emailVerificationData.email,
+        to: args.email,
       })
     );
 
@@ -90,62 +51,31 @@ export const sendEmailVerificationEmail = internalAction({
 });
 
 /**
- * Send password reset email (triggered by webhook)
+ * Send the password reset code (triggered by the Clerk `email.created` webhook
+ * when custom email delivery is enabled)
  */
 export const sendPasswordResetEmail = internalAction({
   args: {
-    passwordResetId: v.string(),
+    code: v.string(),
+    email: v.string(),
   },
   handler: async (ctx, args) => {
-    // Rate limit
     const { ok } = await rateLimiter.limit(ctx, "passwordReset", {
-      key: args.passwordResetId,
+      key: args.email,
     });
 
     if (!ok) {
-      console.warn(
-        "Rate limited: sendPasswordResetEmail",
-        args.passwordResetId
-      );
+      console.warn("Rate limited: sendPasswordResetEmail");
       return;
     }
 
-    if (!args.passwordResetId) {
-      // Validate input
-      console.warn("Invalid passwordResetId:", args.passwordResetId);
-      return;
-    }
-
-    // Fetch password reset from WorkOS
-    const { data: passwordResetData, error: passwordResetError } =
-      await tryCatch(
-        authKit.workos.userManagement.getPasswordReset(args.passwordResetId)
-      );
-
-    if (passwordResetError) {
-      console.error(
-        "Failed to get password reset:",
-        passwordResetError.message
-      );
-      return;
-    }
-
-    if (!passwordResetData) {
-      console.warn("Password reset not found:", args.passwordResetId);
-      return;
-    }
-
-    // Build reset URL
-    const resetUrl = `${process.env.APP_URL}/reset-password?token=${passwordResetData.passwordResetToken}`;
-
-    // Send email
     const { error: sendEmailError } = await tryCatch(
       resend.sendEmail(ctx, {
-        from: `${process.env.APP_NAME} <${process.env.RESEND_FROM_EMAIL}>`,
+        from: `${APP_NAME} <${process.env.RESEND_FROM_EMAIL}>`,
         headers: [{ name: "X-Email-Category", value: "password_reset" }],
-        html: await render(PasswordResetEmail({ url: resetUrl })),
+        html: await render(PasswordResetEmail({ code: args.code })),
         subject: "Reset your password",
-        to: passwordResetData.email,
+        to: args.email,
       })
     );
 

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { authSchema, createPasswordSchema } from "../auth/validation";
+import { authSchema } from "../auth/validation";
 import { PROFILE_PICTURE_VALIDATION } from "./constants";
 
 /**
@@ -7,7 +7,7 @@ import { PROFILE_PICTURE_VALIDATION } from "./constants";
  */
 export const userSchema = z.object({
   _id: z.string(),
-  authId: authSchema.shape.authId,
+  authId: z.string().min(1),
   email: authSchema.shape.email,
   name: z
     .string()
@@ -30,14 +30,6 @@ export const updateUserNameSchema = z.object({
  */
 export const changeEmailSchema = z.object({
   email: authSchema.shape.email,
-});
-
-/**
- * Update password schema
- */
-export const updatePasswordSchema = z.object({
-  authId: userSchema.shape.authId,
-  password: createPasswordSchema.shape.password,
 });
 
 /**

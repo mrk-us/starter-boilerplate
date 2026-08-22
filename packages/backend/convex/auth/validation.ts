@@ -4,7 +4,6 @@ import { z } from "zod";
  * Base auth schemas
  */
 export const authSchema = z.object({
-  authId: z.string("authId is required"),
   email: z.email("Invalid email address").min(1, "Email is required"),
   verificationCode: z.string().length(6, "Code must be 6 digits"),
 });
@@ -35,7 +34,6 @@ export const signUpSchema = z.object({
  * Verify email schema
  */
 export const verifyEmailSchema = z.object({
-  authId: authSchema.shape.authId,
   code: authSchema.shape.verificationCode,
 });
 
@@ -63,8 +61,11 @@ export const forgotPasswordSchema = z.object({
 
 /**
  * Reset password schema
+ *
+ * Clerk verifies a password reset with a one-time code sent by email rather
+ * than a link-borne token.
  */
 export const resetPasswordSchema = z.object({
+  code: authSchema.shape.verificationCode,
   password: createPasswordSchema.shape.password,
-  token: z.string().min(1, "Token is required"),
 });

@@ -1,16 +1,9 @@
-import type { User } from "@workos-inc/node";
 import { ConvexError } from "convex/values";
 import type { ActionCtx, MutationCtx, QueryCtx } from "../_generated/server";
 import { AUTH_ERROR_CODE, ERROR_MESSAGE } from "../errors/constants";
-import { authKit } from "./index";
 
 /**
- * WorkOS user data type
- */
-export type WorkOSUser = User;
-
-/**
- * Get the authenticated user's WorkOS ID from the Convex identity
+ * Get the authenticated user's Clerk ID from the Convex identity
  * Returns null if not authenticated
  */
 export async function getAuthId(
@@ -22,12 +15,13 @@ export async function getAuthId(
     return null;
   }
 
+  // Clerk puts the user id in the `sub` claim of the session token.
   return identity.subject;
 }
 
 /**
  * Require authentication - throws NOT_AUTHENTICATED if not signed in
- * Returns the WorkOS user ID
+ * Returns the Clerk user ID
  */
 export async function requireAuthId(
   ctx: QueryCtx | MutationCtx | ActionCtx
@@ -49,15 +43,15 @@ export async function requireAuthId(
  * Returns null if not authenticated or user not found
  */
 export async function getAuthenticatedUser(ctx: QueryCtx | MutationCtx) {
-  const authUser = await authKit.getAuthUser(ctx);
+  const authId = await getAuthId(ctx);
 
-  if (!authUser) {
+  if (!authId) {
     return null;
   }
 
   return ctx.db
     .query("users")
-    .withIndex("authId", (q) => q.eq("authId", authUser.id))
+    .withIndex("authId", (q) => q.eq("authId", authId))
     .unique();
 }
 
@@ -76,19 +70,4 @@ export async function requireUser(ctx: QueryCtx | MutationCtx) {
   }
 
   return user;
-}
-
-/**
- * Get email from WorkOS user data
- */
-export function getPrimaryEmail(user: WorkOSUser): string {
-  return user.email;
-}
-
-/**
- * Get full name from WorkOS user data
- */
-export function getFullName(user: WorkOSUser): string {
-  const parts = [user.firstName, user.lastName].filter(Boolean);
-  return parts.join(" ").trim();
 }

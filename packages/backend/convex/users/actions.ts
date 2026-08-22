@@ -4,8 +4,8 @@ import { tryCatch } from "@repo/shared";
 import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import { action, internalAction } from "../_generated/server";
+import { clerk } from "../auth/clerk";
 import { requireAuthId } from "../auth/helpers";
-import { authKit } from "../auth/index";
 import {
   AUTH_ERROR_CODE,
   ERROR_CODE,
@@ -15,8 +15,42 @@ import { rateLimiter } from "../rateLimiter";
 import { cancelUserSubscription } from "./helpers";
 import { userSchema } from "./validation";
 
+function parseName(name: string): string {
+  const result = userSchema.pick({ name: true }).safeParse({
+    name: name.trim(),
+  });
+
+  if (!result.success) {
+    throw new ConvexError({
+      code: ERROR_CODE.INVALID_INPUT,
+      message: result.error.issues[0]?.message ?? "Invalid name",
+    });
+  }
+
+  return result.data.name;
+}
+
 /**
- * Update user's name (updates both WorkOS and Convex DB)
+ * The app stores a single display name while Clerk splits first and last, so
+ * the whole name goes into `firstName` and `lastName` is cleared to keep the
+ * two representations from drifting apart.
+ */
+async function setClerkName(authId: string, name: string) {
+  const { error } = await tryCatch(
+    clerk.users.updateUser(authId, { firstName: name, lastName: "" })
+  );
+
+  if (error) {
+    console.error("[setClerkName] Failed to update Clerk user:", error.message);
+    throw new ConvexError({
+      code: AUTH_ERROR_CODE.UPDATE_USER_FAILED,
+      message: ERROR_MESSAGE.UNKNOWN,
+    });
+  }
+}
+
+/**
+ * Update user's name (updates both Clerk and Convex DB)
  */
 export const updateName = action({
   args: {
@@ -24,39 +58,10 @@ export const updateName = action({
   },
   handler: async (ctx, args) => {
     const authId = await requireAuthId(ctx);
+    const name = parseName(args.name);
 
-    // Validate input
-    const validationResult = userSchema.pick({ name: true }).safeParse({
-      name: args.name.trim(),
-    });
+    await setClerkName(authId, name);
 
-    if (!validationResult.success) {
-      throw new ConvexError({
-        code: ERROR_CODE.INVALID_INPUT,
-        message: validationResult.error.issues[0]?.message ?? "Invalid name",
-      });
-    }
-
-    const { name } = validationResult.data;
-
-    // Update WorkOS user
-    const { error: workosError } = await tryCatch(
-      authKit.workos.userManagement.updateUser({
-        firstName: name,
-        lastName: "",
-        userId: authId,
-      })
-    );
-
-    if (workosError) {
-      console.error("Failed to update WorkOS user:", workosError.message);
-      throw new ConvexError({
-        code: AUTH_ERROR_CODE.UPDATE_USER_FAILED,
-        message: ERROR_MESSAGE.UNKNOWN,
-      });
-    }
-
-    // Update Convex DB
     await ctx.runMutation(internal.users.mutations.updateUserName, {
       authId,
       name,
@@ -67,8 +72,8 @@ export const updateName = action({
 });
 
 /**
- * Complete user setup (updates WorkOS with name, marks setupComplete in DB)
- * User should already exist from auth callback - this just completes their profile
+ * Complete user setup (updates Clerk with name, marks setupComplete in DB)
+ * User should already exist from sign-up - this just completes their profile
  */
 export const completeSetup = action({
   args: {
@@ -76,36 +81,9 @@ export const completeSetup = action({
   },
   handler: async (ctx, args) => {
     const authId = await requireAuthId(ctx);
+    const name = parseName(args.name);
 
-    // Validate input
-    const validationResult = userSchema.pick({ name: true }).safeParse({
-      name: args.name.trim(),
-    });
-
-    if (!validationResult.success) {
-      throw new ConvexError({
-        code: ERROR_CODE.INVALID_INPUT,
-        message: validationResult.error.issues[0]?.message ?? "Invalid name",
-      });
-    }
-
-    const { name } = validationResult.data;
-
-    // Update WorkOS user with name
-    const { error: workosError } = await tryCatch(
-      authKit.workos.userManagement.updateUser({
-        firstName: name,
-        userId: authId,
-      })
-    );
-
-    if (workosError) {
-      console.error("Failed to update WorkOS user:", workosError.message);
-      throw new ConvexError({
-        code: AUTH_ERROR_CODE.UPDATE_USER_FAILED,
-        message: ERROR_MESSAGE.UNKNOWN,
-      });
-    }
+    await setClerkName(authId, name);
 
     // Update Convex DB and send welcome email
     await ctx.runMutation(internal.users.mutations.completeSetupInternal, {
@@ -118,7 +96,7 @@ export const completeSetup = action({
 });
 
 /**
- * Public action: Delete user account (cancels subscription, deletes from WorkOS and db)
+ * Public action: Delete user account (cancels subscription, deletes from Clerk and db)
  */
 export const deleteUser = action({
   args: {},
@@ -142,20 +120,19 @@ export const deleteUser = action({
       authId,
     });
 
-    // Cancel subscription before WorkOS deletion (non-blocking)
+    // Cancel subscription before Clerk deletion (non-blocking)
     if (user) {
       await cancelUserSubscription(ctx, user._id);
     }
 
-    // Delete from WorkOS
-    const { error: deleteWorkosUserError } = await tryCatch(
-      authKit.workos.userManagement.deleteUser(authId)
+    const { error: deleteClerkUserError } = await tryCatch(
+      clerk.users.deleteUser(authId)
     );
 
-    if (deleteWorkosUserError) {
+    if (deleteClerkUserError) {
       console.error(
         "Failed to delete user from auth provider:",
-        deleteWorkosUserError.message
+        deleteClerkUserError.message
       );
       throw new ConvexError({
         code: AUTH_ERROR_CODE.DELETE_USER_FAILED,
@@ -163,7 +140,8 @@ export const deleteUser = action({
       });
     }
 
-    // Delete from DB (don't throw - WorkOS deletion succeeded, webhook will clean up if needed)
+    // Delete from DB (don't throw - Clerk deletion succeeded, the user.deleted
+    // webhook cleans up if this fails)
     if (user) {
       const { error: deleteDbUserError } = await tryCatch(
         ctx.runMutation(internal.users.mutations.deleteUser, { authId })
@@ -183,7 +161,7 @@ export const deleteUser = action({
 
 /**
  * Internal action: Delete user and cancel subscription
- * Called by webhook handler when user is deleted from WorkOS
+ * Called by the webhook handler when a user is deleted from Clerk
  */
 export const deleteUserWithSubscription = internalAction({
   args: {

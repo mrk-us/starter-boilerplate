@@ -1,4 +1,8 @@
-export type OAuthProvider = "GoogleOAuth" | "GitHubOAuth";
+/**
+ * Clerk OAuth strategy identifiers. Matches both `signIn.sso({ strategy })` and
+ * the raw `provider` value Clerk reports on an external account.
+ */
+export type OAuthProvider = "oauth_google" | "oauth_github";
 
 export interface OAuthProviderConfig {
   message: string;
@@ -8,11 +12,11 @@ export interface OAuthProviderConfig {
 export const OAUTH_PROVIDERS: OAuthProviderConfig[] = [
   {
     message: "You previously signed in with Google.",
-    provider: "GoogleOAuth",
+    provider: "oauth_google",
   },
   {
     message: "You previously signed in with GitHub.",
-    provider: "GitHubOAuth",
+    provider: "oauth_github",
   },
 ];
 

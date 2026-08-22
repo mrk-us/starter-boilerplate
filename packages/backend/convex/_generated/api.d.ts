@@ -9,10 +9,9 @@
  */
 
 import type * as auth_actions from "../auth/actions.js";
-import type * as auth_constants from "../auth/constants.js";
+import type * as auth_clerk from "../auth/clerk.js";
 import type * as auth_events from "../auth/events.js";
 import type * as auth_helpers from "../auth/helpers.js";
-import type * as auth_index from "../auth/index.js";
 import type * as auth_types from "../auth/types.js";
 import type * as auth_validation from "../auth/validation.js";
 import type * as billing_actions from "../billing/actions.js";
@@ -51,10 +50,9 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "auth/actions": typeof auth_actions;
-  "auth/constants": typeof auth_constants;
+  "auth/clerk": typeof auth_clerk;
   "auth/events": typeof auth_events;
   "auth/helpers": typeof auth_helpers;
-  "auth/index": typeof auth_index;
   "auth/types": typeof auth_types;
   "auth/validation": typeof auth_validation;
   "billing/actions": typeof billing_actions;
@@ -113,7 +111,6 @@ export declare const internal: FilterApi<
 >;
 
 export declare const components: {
-  workOSAuthKit: import("@convex-dev/workos-authkit/_generated/component.js").ComponentApi<"workOSAuthKit">;
   resend: import("@convex-dev/resend/_generated/component.js").ComponentApi<"resend">;
   r2: import("@convex-dev/r2/_generated/component.js").ComponentApi<"r2">;
   rateLimiter: import("@convex-dev/rate-limiter/_generated/component.js").ComponentApi<"rateLimiter">;
