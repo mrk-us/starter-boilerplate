@@ -1,6 +1,6 @@
 # Starter monorepo with WorkOS and Stripe
 
-A Bun and Turborepo starter for a Next.js product with WorkOS authentication, Convex, Stripe billing, Resend email, shared Base UI components, and an Electron desktop shell.
+A Bun and Turborepo starter for a TanStack Start product with WorkOS authentication, Convex, Stripe billing, Resend email, shared Base UI components, and an Electron desktop shell.
 
 ## Requirements
 
@@ -11,7 +11,7 @@ The repository includes an `.nvmrc` pinned to Node 22.
 
 ## Workspace
 
-- `apps/app`: authenticated Next.js product app on port 3001
+- `apps/app`: authenticated TanStack Start product app on port 3001
 - `apps/web`: public Next.js site on port 3000
 - `apps/desktop`: Electron shell for `apps/app`
 - `packages/backend`: Convex functions, WorkOS integration, Stripe billing, R2 storage, and Resend delivery

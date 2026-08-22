@@ -10,7 +10,8 @@
     "includes": [
       "!!.agents/skills",
       "!!.claude/skills",
-      "!!packages/backend/convex/_generated"
+      "!!packages/backend/convex/_generated",
+      "!apps/app/src/routeTree.gen.ts"
     ]
   },
   "linter": {
@@ -28,6 +29,22 @@
     }
   },
   "overrides": [
+    {
+      // apps/app runs on TanStack Start, so the Next.js rules the shared preset
+      // turns on repository-wide do not apply to it: it renders a real document
+      // and has no next/image.
+      "includes": ["apps/app/**"],
+      "linter": {
+        "rules": {
+          "performance": {
+            "noImgElement": "off"
+          },
+          "style": {
+            "noHeadElement": "off"
+          }
+        }
+      }
+    },
     {
       "includes": ["packages/ui/**/*.css"],
       "css": {

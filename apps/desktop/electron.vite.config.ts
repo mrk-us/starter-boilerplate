@@ -3,7 +3,7 @@ import { defineConfig } from "electron-vite";
 /**
  * The deployed `apps/app` URL the packaged shell renders. Override per release
  * with `DESKTOP_APP_URL=https://app.example.com bun run build:desktop`; the dev
- * script points `ELECTRON_APP_URL` at the local Next server instead.
+ * script points `ELECTRON_APP_URL` at the local app dev server instead.
  */
 const PLACEHOLDER_APP_URL = "https://app.example.com";
 const prodAppUrl = process.env.DESKTOP_APP_URL ?? PLACEHOLDER_APP_URL;
