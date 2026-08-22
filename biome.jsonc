@@ -1,0 +1,94 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "extends": [
+    "ultracite/biome/core",
+    "ultracite/biome/react",
+    "ultracite/biome/next",
+    "ultracite/biome/tanstack"
+  ],
+  "files": {
+    "includes": [
+      "!!.agents/skills",
+      "!!.claude/skills",
+      "!!packages/backend/convex/_generated"
+    ]
+  },
+  "linter": {
+    "rules": {
+      "performance": {
+        // Workspace and feature entry points intentionally expose public modules.
+        "noBarrelFile": "off",
+        // React Compiler and render-prop APIs already handle inline callbacks.
+        "noJsxPropsBind": "off"
+      },
+      "suspicious": {
+        // This rejects valid ReactNode branches and upstream shadcn conditions.
+        "noLeakedRender": "off"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["packages/ui/**/*.css"],
+      "css": {
+        "parser": {
+          "tailwindDirectives": true
+        }
+      },
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noUnknownAtRules": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/backend/convex/**/*"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useFilenamingConvention": {
+              "level": "error",
+              "options": {
+                "filenameCases": ["camelCase"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/ui/src/components/label.tsx"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "noLabelWithoutControl": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/ui/src/components/field.tsx"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "useSemanticElements": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/ui/src/components/input-group.tsx"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "noNoninteractiveElementInteractions": "off",
+            "useKeyWithClickEvents": "off",
+            "useSemanticElements": "off"
+          }
+        }
+      }
+    }
+  ]
+}

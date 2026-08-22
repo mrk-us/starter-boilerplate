@@ -7,26 +7,26 @@ const crons = cronJobs();
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 crons.interval(
-	"Cleanup old Resend emails",
-	{ hours: 1 },
-	internal.crons.cleanupResend,
+  "Cleanup old Resend emails",
+  { hours: 1 },
+  internal.crons.cleanupResend
 );
 
 /**
  * Cleanup old Resend emails
  */
 export const cleanupResend = internalMutation({
-	args: {},
-	handler: async (ctx) => {
-		await ctx.scheduler.runAfter(0, components.resend.lib.cleanupOldEmails, {
-			olderThan: ONE_WEEK_MS,
-		});
-		await ctx.scheduler.runAfter(
-			0,
-			components.resend.lib.cleanupAbandonedEmails,
-			{ olderThan: ONE_WEEK_MS },
-		);
-	},
+  args: {},
+  handler: async (ctx) => {
+    await ctx.scheduler.runAfter(0, components.resend.lib.cleanupOldEmails, {
+      olderThan: ONE_WEEK_MS,
+    });
+    await ctx.scheduler.runAfter(
+      0,
+      components.resend.lib.cleanupAbandonedEmails,
+      { olderThan: ONE_WEEK_MS }
+    );
+  },
 });
 
 export default crons;

@@ -11,15 +11,15 @@ import { PROFILE_PICTURE_URL_EXPIRY } from "./constants";
  * Public query used by auth callback to skip sync for returning users
  */
 export const userExistsByAuthId = query({
-	args: { authId: v.string() },
-	returns: v.boolean(),
-	handler: async (ctx, args) => {
-		const user = await ctx.db
-			.query("users")
-			.withIndex("authId", (q) => q.eq("authId", args.authId))
-			.first();
-		return user !== null;
-	},
+  args: { authId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("authId", (q) => q.eq("authId", args.authId))
+      .first();
+    return user !== null;
+  },
+  returns: v.boolean(),
 });
 
 /**
@@ -28,18 +28,20 @@ export const userExistsByAuthId = query({
  * without fetching subscription data (which would create a circular reference)
  */
 export const getCurrentUserForBilling = internalQuery({
-	args: {},
-	handler: async (ctx, _args) => {
-		const user = await getAuthenticatedUser(ctx);
+  args: {},
+  handler: async (ctx, _args) => {
+    const user = await getAuthenticatedUser(ctx);
 
-		if (!user) return null;
+    if (!user) {
+      return null;
+    }
 
-		return {
-			_id: user._id,
-			email: user.email,
-			stripeCustomerId: user.stripeCustomerId,
-		};
-	},
+    return {
+      _id: user._id,
+      email: user.email,
+      stripeCustomerId: user.stripeCustomerId,
+    };
+  },
 });
 
 /**
@@ -47,77 +49,81 @@ export const getCurrentUserForBilling = internalQuery({
  * Use this in actions where authentication is required
  */
 export const requireCurrentUserForBilling = internalQuery({
-	args: {},
-	handler: async (ctx, _args) => {
-		const user = await requireUser(ctx);
+  args: {},
+  handler: async (ctx, _args) => {
+    const user = await requireUser(ctx);
 
-		return {
-			_id: user._id,
-			email: user.email,
-			stripeCustomerId: user.stripeCustomerId,
-		};
-	},
+    return {
+      _id: user._id,
+      email: user.email,
+      stripeCustomerId: user.stripeCustomerId,
+    };
+  },
 });
 
 /**
  * Get user by ID (internal)
  */
 export const getUserById = internalQuery({
-	args: {
-		userId: v.id("users"),
-	},
-	handler: async (ctx, args) => {
-		return await ctx.db.get(args.userId);
-	},
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => await ctx.db.get(args.userId),
 });
 
 /**
  * Get user by email
  */
 export const getUserByEmail = internalQuery({
-	args: {
-		email: v.union(v.string(), v.array(v.string()), v.null()),
-	},
-	handler: async (ctx, args) => {
-		if (!args.email) return null;
+  args: {
+    email: v.union(v.string(), v.array(v.string()), v.null()),
+  },
+  handler: async (ctx, args) => {
+    if (!args.email) {
+      return null;
+    }
 
-		const emailToSearch = Array.isArray(args.email)
-			? args.email[0]
-			: args.email;
+    const emailToSearch = Array.isArray(args.email)
+      ? args.email[0]
+      : args.email;
 
-		if (!emailToSearch || typeof emailToSearch !== "string") {
-			return null;
-		}
+    if (!emailToSearch || typeof emailToSearch !== "string") {
+      return null;
+    }
 
-		return await ctx.db
-			.query("users")
-			.withIndex("email", (q) => q.eq("email", emailToSearch))
-			.unique();
-	},
+    return await ctx.db
+      .query("users")
+      .withIndex("email", (q) => q.eq("email", emailToSearch))
+      .unique();
+  },
 });
 
 /**
  * Get user by authId
  */
 export const getUserByAuthId = internalQuery({
-	args: {
-		authId: v.string(),
-	},
-	handler: async (ctx, args) => {
-		if (!args.authId) return null;
+  args: {
+    authId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    if (!args.authId) {
+      return null;
+    }
 
-		// TODO: Can we use a helper here?
-		const user = await ctx.db
-			.query("users")
-			.withIndex("authId", (q) => q.eq("authId", args.authId))
-			.unique();
+    // TODO: Can we use a helper here?
+    const user = await ctx.db
+      .query("users")
+      .withIndex("authId", (q) => q.eq("authId", args.authId))
+      .unique();
 
-		if (!user) return null;
+    if (!user) {
+      return null;
+    }
 
-		return {
-			...user,
-		};
-	},
+    return {
+      ...user,
+    };
+  },
 });
 
 /**
@@ -125,33 +131,32 @@ export const getUserByAuthId = internalQuery({
  * Uses runtime query call to billing module (decoupled from import dependency)
  */
 export const getUserWithSubscription = query({
-	args: {},
-	handler: async (ctx, _args) => {
-		const user = await getAuthenticatedUser(ctx);
+  args: {},
+  handler: async (ctx, _args) => {
+    const user = await getAuthenticatedUser(ctx);
 
-		if (!user) return null;
+    if (!user) {
+      return null;
+    }
 
-		// Get subscription status via runtime query (decoupled from billing module)
-		const subscription: UserSubscription = await ctx.runQuery(
-			internal.billing.queries.getSubscriptionStatusByUserId,
-			{ userId: user._id },
-		);
+    // Get subscription status via runtime query (decoupled from billing module)
+    const subscription: UserSubscription = await ctx.runQuery(
+      internal.billing.queries.getSubscriptionStatusByUserId,
+      { userId: user._id }
+    );
 
-		// Generate profile picture URL
-		// Priority: custom R2 upload > OAuth profile picture
-		let profilePictureUrl: string | undefined;
-		if (user.profilePictureKey) {
-			profilePictureUrl = await r2.getUrl(user.profilePictureKey, {
-				expiresIn: PROFILE_PICTURE_URL_EXPIRY,
-			});
-		} else if (user.profilePictureUrl) {
-			profilePictureUrl = user.profilePictureUrl;
-		}
+    // Generate profile picture URL
+    // Priority: custom R2 upload > OAuth profile picture
+    const profilePictureUrl = user.profilePictureKey
+      ? await r2.getUrl(user.profilePictureKey, {
+          expiresIn: PROFILE_PICTURE_URL_EXPIRY,
+        })
+      : (user.profilePictureUrl ?? undefined);
 
-		return {
-			...user,
-			profilePictureUrl,
-			subscription,
-		};
-	},
+    return {
+      ...user,
+      profilePictureUrl,
+      subscription,
+    };
+  },
 });

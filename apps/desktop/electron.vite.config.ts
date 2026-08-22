@@ -9,17 +9,17 @@ const PLACEHOLDER_APP_URL = "https://app.example.com";
 const prodAppUrl = process.env.DESKTOP_APP_URL ?? PLACEHOLDER_APP_URL;
 
 if (prodAppUrl === PLACEHOLDER_APP_URL) {
-	process.emitWarning(
-		`DESKTOP_APP_URL is unset — building against the placeholder ${PLACEHOLDER_APP_URL}. Set it before cutting a release.`,
-	);
+  process.emitWarning(
+    `DESKTOP_APP_URL is unset — building against the placeholder ${PLACEHOLDER_APP_URL}. Set it before cutting a release.`
+  );
 }
 
 const sharedBuild = {
-	outDir: "dist-electron",
-	// main and preload write to the same directory; the `clean` script empties it.
-	emptyOutDir: false,
-	minify: true,
-	sourcemap: false,
+  // main and preload write to the same directory; the `clean` script empties it.
+  emptyOutDir: false,
+  minify: true,
+  outDir: "dist-electron",
+  sourcemap: false,
 } as const;
 
 /**
@@ -29,19 +29,19 @@ const sharedBuild = {
  * `node_modules`. `electron` and Node built-ins stay external either way.
  */
 export default defineConfig({
-	main: {
-		define: { __PROD_APP_URL__: JSON.stringify(prodAppUrl) },
-		build: {
-			...sharedBuild,
-			lib: { entry: "src/main.ts", formats: ["cjs"] },
-			rollupOptions: { output: { entryFileNames: "main.cjs" } },
-		},
-	},
-	preload: {
-		build: {
-			...sharedBuild,
-			lib: { entry: "src/preload.ts", formats: ["cjs"] },
-			rollupOptions: { output: { entryFileNames: "preload.cjs" } },
-		},
-	},
+  main: {
+    build: {
+      ...sharedBuild,
+      lib: { entry: "src/main.ts", formats: ["cjs"] },
+      rollupOptions: { output: { entryFileNames: "main.cjs" } },
+    },
+    define: { __PROD_APP_URL__: JSON.stringify(prodAppUrl) },
+  },
+  preload: {
+    build: {
+      ...sharedBuild,
+      lib: { entry: "src/preload.ts", formats: ["cjs"] },
+      rollupOptions: { output: { entryFileNames: "preload.cjs" } },
+    },
+  },
 });

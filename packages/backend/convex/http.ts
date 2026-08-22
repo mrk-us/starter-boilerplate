@@ -3,6 +3,7 @@ import { httpRouter } from "convex/server";
 import { components } from "./_generated/api";
 import { httpAction } from "./_generated/server";
 import { authKit } from "./auth/index";
+import { STRIPE_API_VERSION } from "./billing/constants";
 import { onStripeEvent, stripeEventHandlers } from "./billing/events";
 import { resend } from "./emails/index";
 
@@ -10,7 +11,7 @@ const http = httpRouter();
 
 /**
  * Register WorkOS webhook endpoint
- * Webhook endpoint: https://<your-convex-site>.convex.site/workos/webhooks
+ * Webhook endpoint: https://<your-convex-site>.convex.site/workos/webhook
  */
 authKit.registerRoutes(http);
 
@@ -19,21 +20,22 @@ authKit.registerRoutes(http);
  * Webhook endpoint: https://<your-convex-site>.convex.site/resend/webhooks
  */
 http.route({
-	path: "/resend/webhooks",
-	method: "POST",
-	handler: httpAction(
-		async (ctx, req) => await resend.handleResendEventWebhook(ctx, req),
-	),
+  handler: httpAction(
+    async (ctx, req) => await resend.handleResendEventWebhook(ctx, req)
+  ),
+  method: "POST",
+  path: "/resend/webhooks",
 });
 
 /**
  * Register Stripe webhook routes
- * Webhook endpoint: https://<your-convex-site>.convex.site/stripe/webhook
+ * Webhook endpoint: https://<your-convex-site>.convex.site/stripe/webhooks
  */
 registerRoutes(http, components.stripe, {
-	webhookPath: "/stripe/webhooks",
-	events: stripeEventHandlers,
-	onEvent: onStripeEvent,
+  apiVersion: STRIPE_API_VERSION,
+  events: stripeEventHandlers,
+  onEvent: onStripeEvent,
+  webhookPath: "/stripe/webhooks",
 });
 
 export default http;
