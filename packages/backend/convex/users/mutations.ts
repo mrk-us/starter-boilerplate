@@ -3,7 +3,7 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation, mutation } from "../_generated/server";
 import { requireUser } from "../auth/helpers";
-import { ERROR_CODE } from "../errors/constants";
+import { ERROR_CODE, USER_ERROR_CODE } from "../errors/constants";
 import { r2 } from "../r2";
 import { PROFILE_PICTURE_VALIDATION } from "./constants";
 
@@ -158,8 +158,13 @@ export const completeSetupInternal = internalMutation({
       .unique();
 
     if (!user) {
-      console.error("[completeSetupInternal] User not found:", args.authId);
-      return { success: false };
+      // Clerk's `user.created` webhook writes this row, so a submission can
+      // land before it does. Reporting success here would send the user back
+      // to a dashboard that bounces them straight into onboarding again.
+      throw new ConvexError({
+        code: USER_ERROR_CODE.USER_NOT_FOUND,
+        message: "Your account is still being set up. Please try again.",
+      });
     }
 
     const wasAlreadyComplete = user.setupComplete === true;
@@ -181,8 +186,6 @@ export const completeSetupInternal = internalMutation({
         }
       );
     }
-
-    return { success: true };
   },
 });
 
