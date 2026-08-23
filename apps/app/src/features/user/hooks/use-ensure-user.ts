@@ -1,5 +1,4 @@
-import { useUser } from "@clerk/tanstack-react-start";
-import { useConvexMutation } from "@convex-dev/react-query";
+import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
 import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
@@ -12,20 +11,22 @@ const PROVISION_RETRIES = 2;
  * Provision the Convex `users` row for the signed-in Clerk user
  *
  * Clerk's `user.created` webhook is authoritative, but it can land after the
- * browser has already navigated into the app. Writing the row as soon as Convex
- * accepts the session keeps the dashboard and the setup flow from waiting on it.
+ * browser has already navigated into the app. Asking for the row as soon as
+ * Convex accepts the session keeps the dashboard and the setup flow from
+ * waiting on it.
  */
 export function useEnsureUser() {
-  const { user: clerkUser } = useUser();
   const { user, isAuthenticated, isLoading } = useCurrentUser();
 
-  const upsertUser = useConvexMutation(api.users.mutations.upsertUser);
+  const ensureUser = useConvexAction(api.users.actions.ensureUser);
 
   const { mutate, status } = useMutation({
-    mutationFn: upsertUser,
+    mutationFn: ensureUser,
     onError: (error) => {
       console.error(getErrorMessage(error));
     },
+    // The token can be a moment older than the Convex session; anything that
+    // survives a bounded backoff is left to the webhook.
     retry: PROVISION_RETRIES,
   });
 
@@ -36,17 +37,7 @@ export function useEnsureUser() {
    */
   const hasSeenUserRow = useRef(false);
 
-  const email = clerkUser?.primaryEmailAddress?.emailAddress;
-  const name = clerkUser?.fullName ?? undefined;
-  const profilePictureUrl = clerkUser?.hasImage
-    ? clerkUser.imageUrl
-    : undefined;
-
   useEffect(() => {
-    if (isLoading || !isAuthenticated) {
-      return;
-    }
-
     if (user) {
       hasSeenUserRow.current = true;
       return;
@@ -55,19 +46,15 @@ export function useEnsureUser() {
     // Only ever fired from `idle`: none of the inputs change when the mutation
     // fails, so anything else would retry forever. React Query's own bounded
     // policy owns the retries.
-    if (status !== "idle" || hasSeenUserRow.current || !email) {
+    if (
+      isLoading ||
+      !isAuthenticated ||
+      hasSeenUserRow.current ||
+      status !== "idle"
+    ) {
       return;
     }
 
-    mutate({ email, name, profilePictureUrl });
-  }, [
-    email,
-    isAuthenticated,
-    isLoading,
-    mutate,
-    name,
-    profilePictureUrl,
-    status,
-    user,
-  ]);
+    mutate({});
+  }, [user, isAuthenticated, isLoading, status, mutate]);
 }
