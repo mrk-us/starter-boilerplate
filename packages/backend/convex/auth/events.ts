@@ -13,12 +13,21 @@ const otpEmailSchema = z.object({
   otp_code: z.string().min(1),
 });
 
-function getPrimaryEmail(user: UserJSON): string | undefined {
+/**
+ * The address Clerk has marked as primary, and only once it is verified
+ *
+ * `users.email` is what the Stripe customer lookup matches on, so an address
+ * nobody has proven ownership of must never reach the table. This mirrors
+ * `users.actions.getVerifiedPrimaryEmail`, which reads the camelCase shape.
+ */
+function getVerifiedPrimaryEmail(user: UserJSON): string | undefined {
   const primary = user.email_addresses.find(
     (emailAddress) => emailAddress.id === user.primary_email_address_id
   );
 
-  return primary?.email_address ?? user.email_addresses[0]?.email_address;
+  return primary?.verification?.status === "verified"
+    ? primary.email_address
+    : undefined;
 }
 
 function getFullName(user: UserJSON): string {
@@ -31,10 +40,10 @@ function getFullName(user: UserJSON): string {
 }
 
 async function syncUser(ctx: ActionCtx, user: UserJSON) {
-  const email = getPrimaryEmail(user);
+  const email = getVerifiedPrimaryEmail(user);
 
   if (!email) {
-    console.error(`[clerk] User ${user.id} has no email address`);
+    console.error(`[clerk] User ${user.id} has no verified primary email`);
     return;
   }
 
