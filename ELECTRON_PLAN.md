@@ -1,14 +1,15 @@
 # Plan: Migrate Electron to a t3code-style thin shell
 
 **Repo:** `starter-monorepo-workos-stripe` (Bun workspaces + Turborepo)
+**Status:** shipped. `apps/desktop` is the implementation, and where it and this plan disagree the code wins — read `apps/desktop/src/main.ts` for the navigation policy that actually runs. The repo has since moved from WorkOS AuthKit to Clerk; the "Current state" section below is the repo as it stood when the plan was written, not as it is now.
 **Scope:** Replace the current Electron setup (a full Next.js server embedded in the Electron main process, packaged from inside `apps/app`) with a thin-shell architecture modeled on [pingdotgg/t3code](https://github.com/pingdotgg/t3code): a renderer-less `apps/desktop` whose window renders the `apps/app` Next.js app, a typed `window.desktop` bridge, root-class + CSS-variable styling targeting, and a minimal asar.
 
 **Explicit non-goals (do not build these):**
-- No local server process and no custom privileged protocol scheme (t3code needs those because it ships an on-device backend; this repo's backend is Convex + WorkOS in the cloud).
+- No local server process and no custom privileged protocol scheme (t3code needs those because it ships an on-device backend; this repo's backend is Convex + Clerk in the cloud).
 - No renderer code, no React, no routing inside `apps/desktop`. If you find yourself adding UI there, stop — the web app IS the UI.
 - No auto-updater in this pass (with a remote renderer the UI updates on every web deploy; shell releases are rare).
 
-**The core adaptation:** t3code's window loads its web SPA through a custom scheme proxying a local origin. We have no local origin, and `apps/app` is a Next.js app with server-side auth (WorkOS) that cannot be statically exported — so the shell loads the **deployed app URL over HTTPS** in production, and `http://localhost:3001` in development. Everything else (typed bridge contract, root classes, CSS variables, bundle-everything packaging) is taken from t3code directly.
+**The core adaptation:** t3code's window loads its web SPA through a custom scheme proxying a local origin. We have no local origin, and `apps/app` is a Next.js app with server-side auth (Clerk) that cannot be statically exported — so the shell loads the **deployed app URL over HTTPS** in production, and `http://localhost:3001` in development. Everything else (typed bridge contract, root classes, CSS variables, bundle-everything packaging) is taken from t3code directly.
 
 ---
 
@@ -190,14 +191,14 @@ const createWindow = () => {
 		},
 	});
 
-	// Same-origin navigation stays in-window (OAuth redirects to WorkOS domains
-	// are the one exception the flow needs); everything else goes to the browser.
+	// Same-origin navigation stays in-window (the auth provider's own hops are
+	// the one exception the flow needs); everything else goes to the browser.
 	win.webContents.on("will-navigate", (event, url) => {
 		const origin = new URL(url).origin;
 		const allowed =
 			origin === appOrigin ||
-			origin.endsWith(".workos.com") || // AuthKit hosted pages
-			origin.endsWith(".authkit.app");
+			origin.endsWith(".clerk.com") || // Clerk Frontend API
+			origin.endsWith(".accounts.dev"); // Clerk hosted pages
 		if (!allowed) {
 			event.preventDefault();
 			void shell.openExternal(url);
@@ -473,7 +474,7 @@ export function ElectronWindow({ children }: { children: ReactNode }) {
 ## Phase 6 — Verification (do all of these before calling it done)
 
 1. **Dev loop:** `apps/app` dev running on 3001 → `bun run dev` in `apps/desktop` opens a window showing the app. In devtools console: `document.documentElement.className` contains `electron` and `electron-darwin`; `window.desktop.bridgeVersion === 1`; on a WCO-capable config the `wco` class appears.
-2. **Auth:** complete a WorkOS sign-in inside the desktop window with the standard web flow (no `starter://` involvement). Session persists across app relaunch (cookie encryption fuse is on).
+2. **Auth:** complete a Clerk sign-in inside the desktop window with the standard web flow (no `starter://` involvement). Session persists across app relaunch (cookie encryption fuse is on).
 3. **Navigation policy:** an `<a target="_blank">` and `openExternal()` both land in the default browser; the desktop window never navigates to a third-party origin.
 4. **Web regression:** `bun run build` in `apps/app` succeeds and the browser app is visually unchanged (all `electron:`/`wco:` styles inert without the root classes). Verify no `electron` module ends up in the web bundle (the contract import is types + string constants only).
 5. **Package audit (the size/security acceptance test):**
