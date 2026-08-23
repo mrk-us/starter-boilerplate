@@ -102,7 +102,13 @@ export async function handleClerkEventWebhook(
         break;
       }
 
-      const emailArgs = { code: otp.data.otp_code, email };
+      // Clerk retries webhooks, so the email id is what makes the delivery
+      // idempotent; a resend arrives as a new email with a new id.
+      const emailArgs = {
+        code: otp.data.otp_code,
+        email,
+        emailId: event.data.id,
+      };
 
       if (slug === "verification_code") {
         await ctx.runAction(
