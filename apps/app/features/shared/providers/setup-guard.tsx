@@ -9,7 +9,8 @@ import { isPublicPath, isSetupPath } from "@/lib/routes";
 /**
  * Client-side guard for setup redirect + loading state
  * Provisions the Convex user row, shows a full-page spinner while it resolves,
- * and redirects to /setup until onboarding is complete
+ * and keeps /setup and the rest of the app mutually exclusive: unfinished
+ * onboarding goes to /setup, finished onboarding is sent back out of it
  */
 export function SetupGuard({ children }: { children: ReactNode }) {
   const { user, isLoading, isAuthenticated } = useCurrentUser();
@@ -42,8 +43,11 @@ export function SetupGuard({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Already on setup page
+    // Onboarding already ran - a bookmark or the back button must not re-run it
     if (isSetupPage) {
+      if (user?.setupComplete) {
+        router.replace("/");
+      }
       return;
     }
 
@@ -51,7 +55,15 @@ export function SetupGuard({ children }: { children: ReactNode }) {
     if (needsSetup) {
       router.replace("/setup");
     }
-  }, [isLoading, isAuthenticated, needsSetup, router, isAuthPage, isSetupPage]);
+  }, [
+    isLoading,
+    isAuthenticated,
+    needsSetup,
+    router,
+    isAuthPage,
+    isSetupPage,
+    user?.setupComplete,
+  ]);
 
   // Show spinner while loading (except on auth pages)
   if (isLoading && !isAuthPage) {
@@ -60,6 +72,12 @@ export function SetupGuard({ children }: { children: ReactNode }) {
 
   // Show spinner if authenticated but waiting for user data and not on setup/auth pages
   if (isAuthenticated && !user && !isAuthPage && !isSetupPage) {
+    return <SectionSpinner />;
+  }
+
+  // Don't render onboarding for a user who has finished it while the redirect
+  // above is in flight
+  if (isSetupPage && user?.setupComplete) {
     return <SectionSpinner />;
   }
 

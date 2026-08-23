@@ -1,45 +1,57 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
-import { useConvexMutation } from "@convex-dev/react-query";
+import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
 import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useCurrentUser } from "./use-current-user";
+
+const PROVISION_RETRIES = 2;
 
 /**
  * Provision the Convex `users` row for the signed-in Clerk user
  *
  * Clerk's `user.created` webhook is authoritative, but it can land after the
- * browser has already navigated into the app. Writing the row as soon as Convex
- * accepts the session keeps the dashboard and the setup flow from waiting on it.
+ * browser has already navigated into the app. Asking for the row as soon as
+ * Convex accepts the session keeps the dashboard and the setup flow from
+ * waiting on it.
  */
 export function useEnsureUser() {
-  const { user: clerkUser } = useUser();
   const { user, isAuthenticated, isLoading } = useCurrentUser();
 
-  const upsertUser = useConvexMutation(api.users.mutations.upsertUser);
+  const ensureUser = useConvexAction(api.users.actions.ensureUser);
 
-  const { mutate, isPending, isSuccess } = useMutation({
-    mutationFn: upsertUser,
+  const { mutate, status } = useMutation({
+    mutationFn: ensureUser,
     onError: (error) => {
       console.error(getErrorMessage(error));
     },
+    // The token can be a moment older than the Convex session; anything that
+    // survives a bounded backoff is left to the webhook.
+    retry: PROVISION_RETRIES,
   });
 
-  const email = clerkUser?.primaryEmailAddress?.emailAddress;
-  const isMissing = isAuthenticated && !isLoading && user === null;
-  const name = clerkUser?.fullName ?? undefined;
-  const profilePictureUrl = clerkUser?.hasImage
-    ? clerkUser.imageUrl
-    : undefined;
+  // A row that once existed must never be re-created. Deleting the account
+  // removes the row while the session is still valid, and the query pushes that
+  // `null` to this still-mounted hook before `signOut()` completes.
+  const hasObservedUser = useRef(false);
 
   useEffect(() => {
-    if (!(isMissing && email) || isPending || isSuccess) {
+    if (user) {
+      hasObservedUser.current = true;
       return;
     }
 
-    mutate({ email, name, profilePictureUrl });
-  }, [email, isMissing, isPending, isSuccess, mutate, name, profilePictureUrl]);
+    if (
+      !isAuthenticated ||
+      isLoading ||
+      hasObservedUser.current ||
+      status !== "idle"
+    ) {
+      return;
+    }
+
+    mutate({});
+  }, [user, isAuthenticated, isLoading, status, mutate]);
 }
