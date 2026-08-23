@@ -23,8 +23,7 @@ const buttonVariants = cva(
         xs: "h-5 gap-1 rounded-sm px-2 text-[0.625rem] has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-2.5",
       },
       variant: {
-        default:
-          "rounded-full bg-[white]/[7.5%] text-foreground shadow-glass-secondary hover:bg-[white]/10",
+        default: "bg-primary text-primary-foreground hover:bg-primary/80",
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 dark:hover:bg-destructive/30",
         ghost:
@@ -32,8 +31,6 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         outline:
           "border-border hover:bg-input/50 hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:bg-input/30",
-        primary:
-          "rounded-full bg-gradient-to-b from-white/90 to-white/80 text-background shadow-glass-primary *:stroke-background hover:bg-[white]/90",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
       },
@@ -46,24 +43,30 @@ function Button({
   variant = "default",
   size = "default",
   pending = false,
+  disabled,
+  children,
   ...props
 }: ButtonPrimitive.Props &
-  VariantProps<typeof buttonVariants> & { pending?: boolean }) {
+  VariantProps<typeof buttonVariants> & {
+    pending?: boolean;
+  }) {
   return (
     <ButtonPrimitive
-      className={cn(buttonVariants({ size, variant }), className)}
-      data-slot="button"
       {...props}
+      aria-busy={pending || undefined}
+      className={cn(buttonVariants({ className, size, variant }))}
+      data-slot="button"
+      disabled={disabled || pending}
     >
       {pending ? (
         <>
-          <Spinner className="absolute top-1/2 left-1/2 m-auto -translate-x-1/2 -translate-y-1/2" />
-          <span className="opacity-0" style={{ letterSpacing: "inherit" }}>
-            {props.children}
+          <Spinner className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-current" />
+          <span className="invisible" style={{ letterSpacing: "inherit" }}>
+            {children}
           </span>
         </>
       ) : (
-        props.children
+        children
       )}
     </ButtonPrimitive>
   );
