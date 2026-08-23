@@ -39,7 +39,7 @@
     },
     "build:desktop": {
       "cache": false,
-      "env": ["DESKTOP_APP_URL"]
+      "env": ["DESKTOP_APP_URL", "DESKTOP_CLERK_FRONTEND_API"]
     }
   }
 }

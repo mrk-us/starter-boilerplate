@@ -91,4 +91,4 @@ cd packages/email
 bun run dev
 ```
 
-For a production Electron build, set `DESKTOP_APP_URL` to the deployed URL for `apps/app` before running `bun run build:desktop`.
+For a production Electron build, set `DESKTOP_APP_URL` to the deployed URL for `apps/app` and `DESKTOP_CLERK_FRONTEND_API` to the Clerk Frontend API host for that instance (e.g. `clerk.example.com`) before running `bun run build:desktop`.

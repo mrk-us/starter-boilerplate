@@ -13,6 +13,8 @@ import {
 
 /** Replaced at build time by `electron.vite.config.ts`. */
 declare const __PROD_APP_URL__: string;
+/** Replaced at build time by `electron.vite.config.ts`; empty when unset. */
+declare const __CLERK_FRONTEND_API_HOST__: string;
 
 const APP_URL = process.env.ELECTRON_APP_URL ?? __PROD_APP_URL__;
 const APP_ORIGIN = new URL(APP_URL).origin;
@@ -20,14 +22,16 @@ const APP_ORIGIN = new URL(APP_URL).origin;
 /**
  * Hosts (and their subdomains) the window may navigate to itself. Everything
  * else is handed to the system browser. Beyond the app's own origin this is
- * exactly the hop list of a Clerk sign-in: Clerk's Frontend API and hosted
- * pages, and the configured OAuth providers.
+ * exactly the hop list of a Clerk sign-in: Clerk's Frontend API and the
+ * configured OAuth providers. A development instance serves that API from
+ * `*.accounts.dev`; a production one gets a per-deployment host, which the
+ * build injects.
  */
 const ALLOWED_NAVIGATION_HOSTS = [
-  "clerk.com",
   "accounts.dev",
   "accounts.google.com",
   "github.com",
+  ...(__CLERK_FRONTEND_API_HOST__ ? [__CLERK_FRONTEND_API_HOST__] : []),
 ];
 
 const EXTERNAL_PROTOCOLS = new Set(["http:", "https:", "mailto:"]);

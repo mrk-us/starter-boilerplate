@@ -14,6 +14,21 @@ if (prodAppUrl === PLACEHOLDER_APP_URL) {
   );
 }
 
+/**
+ * Clerk's Frontend API host for the deployed instance — the "Frontend API URL"
+ * shown in the Clerk dashboard, e.g. `clerk.example.com`. OAuth sign-in
+ * redirects through it, so the shell has to be allowed to navigate there.
+ * Development instances are served from `*.accounts.dev`, which the shell
+ * already allows, so this is only needed for a release build.
+ */
+const clerkFrontendApiHost = process.env.DESKTOP_CLERK_FRONTEND_API ?? "";
+
+if (!clerkFrontendApiHost) {
+  process.emitWarning(
+    "DESKTOP_CLERK_FRONTEND_API is unset — production Clerk sign-in will open in the system browser instead of the app window. Set it before cutting a release."
+  );
+}
+
 const sharedBuild = {
   // main and preload write to the same directory; the `clean` script empties it.
   emptyOutDir: false,
@@ -35,7 +50,10 @@ export default defineConfig({
       lib: { entry: "src/main.ts", formats: ["cjs"] },
       rollupOptions: { output: { entryFileNames: "main.cjs" } },
     },
-    define: { __PROD_APP_URL__: JSON.stringify(prodAppUrl) },
+    define: {
+      __CLERK_FRONTEND_API_HOST__: JSON.stringify(clerkFrontendApiHost),
+      __PROD_APP_URL__: JSON.stringify(prodAppUrl),
+    },
   },
   preload: {
     build: {
