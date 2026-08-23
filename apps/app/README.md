@@ -11,8 +11,6 @@ bun run dev                 # from this directory
 
 The dev server listens on [http://localhost:3001](http://localhost:3001). Copy `.env.local.example` to `.env.local` first — the app fails to boot without `VITE_CONVEX_URL`, and Clerk reads `VITE_CLERK_PUBLISHABLE_KEY` in the browser and `CLERK_SECRET_KEY` on the server.
 
-`VITE_CLERK_SIGN_IN_URL` and `VITE_CLERK_SIGN_UP_URL` keep Clerk pointing at the custom auth UI in `features/auth` instead of its hosted Account Portal.
-
 ## Structure
 
 ```text
