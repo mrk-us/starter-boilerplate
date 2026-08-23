@@ -67,8 +67,8 @@ export const checkEmailExists = action({
       return { exists: false, oauthProviders: [] };
     }
 
-    // Clerk reports these as OAuth strategies (`oauth_google`), the same
-    // identifiers the sign-in buttons pass to `signIn.sso()`.
+    // These are Clerk's bare provider slugs (`google`), not the `oauth_`-
+    // prefixed strategies the sign-in buttons pass to `signIn.sso()`.
     return {
       exists: true,
       oauthProviders: user.externalAccounts.map((account) => account.provider),

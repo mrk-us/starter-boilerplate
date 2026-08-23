@@ -1,5 +1,5 @@
 import { useSignIn } from "@clerk/tanstack-react-start";
-import type { OAuthProvider } from "@repo/shared";
+import type { OAuthStrategy } from "@repo/shared";
 import { useAuthRedirect } from "./use-auth-redirect";
 
 export function useOAuthSignIn() {
@@ -10,7 +10,7 @@ export function useOAuthSignIn() {
    * Starts a top-level redirect, so nothing after this runs on success.
    * Unknown accounts are converted into a sign-up on `/sso-callback`.
    */
-  const signInWithOAuth = async (strategy: OAuthProvider) => {
+  const signInWithOAuth = async (strategy: OAuthStrategy) => {
     const { error } = await signIn.sso({
       redirectCallbackUrl: "/sso-callback",
       redirectUrl: destination,

@@ -1,8 +1,9 @@
 /**
- * Clerk OAuth strategy identifiers. Matches both `signIn.sso({ strategy })` and
- * the raw `provider` value Clerk reports on an external account.
+ * Clerk names the same provider two ways: `provider` on an external account is
+ * the bare slug, while `signIn.sso()` takes the `oauth_`-prefixed strategy.
  */
-export type OAuthProvider = "oauth_google" | "oauth_github";
+export type OAuthProvider = "google" | "github";
+export type OAuthStrategy = `oauth_${OAuthProvider}`;
 
 export interface OAuthProviderConfig {
   message: string;
@@ -12,19 +13,26 @@ export interface OAuthProviderConfig {
 export const OAUTH_PROVIDERS: OAuthProviderConfig[] = [
   {
     message: "You previously signed in with Google.",
-    provider: "oauth_google",
+    provider: "google",
   },
   {
     message: "You previously signed in with GitHub.",
-    provider: "oauth_github",
+    provider: "github",
   },
 ];
 
+const OAUTH_STRATEGY_PREFIX = /^oauth_/;
+
 /**
  * Get OAuth provider message by provider name
+ *
+ * Accepts either naming: the backend SDK types `ExternalAccount.provider` as a
+ * bare `string`, so the prefixed strategy can reach this too.
  */
 export function getOAuthProviderMessage(provider: string): string | undefined {
-  return OAUTH_PROVIDERS.find((p) => p.provider === provider)?.message;
+  const slug = provider.replace(OAUTH_STRATEGY_PREFIX, "");
+
+  return OAUTH_PROVIDERS.find((p) => p.provider === slug)?.message;
 }
 
 /**
