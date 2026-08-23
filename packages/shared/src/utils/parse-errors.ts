@@ -27,6 +27,29 @@ function isClerkError(error: unknown): error is ClerkErrorShape {
 }
 
 /**
+ * A ConvexError relayed by the HTTP client arrives as a plain `Error` whose
+ * message embeds the original payload rather than as a `ConvexError`.
+ */
+function parseRelayedConvexError(error: Error): AppError | null {
+  const match = error.message.match(CONVEX_ERROR_PATTERN);
+
+  if (!match?.[1]) {
+    return null;
+  }
+
+  try {
+    const relayed = JSON.parse(match[1]) as { code?: string; message?: string };
+
+    return {
+      code: relayed.code ?? UNKNOWN_ERROR.code,
+      message: relayed.message ?? UNKNOWN_ERROR.message,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Parse any error into a typed AppError
  * Handles: ConvexError, Clerk errors, HTTP client errors, standard Error, unknown
  */
@@ -40,25 +63,14 @@ export function parseAppError(error: unknown): AppError {
     };
   }
 
-  // 2. ConvexError relayed by the HTTP client, which flattens it into a plain
-  // Error whose message embeds the original payload. This has to be tried
-  // before the standard-Error branch below, which would otherwise surface the
-  // flattened message.
+  // 2. ConvexError relayed by the HTTP client. This has to be tried before the
+  // standard-Error branch below, which would otherwise surface the flattened
+  // message.
   if (error instanceof Error) {
-    const match = error.message.match(CONVEX_ERROR_PATTERN);
-    if (match?.[1]) {
-      try {
-        const parsed = JSON.parse(match[1]) as {
-          code?: string;
-          message?: string;
-        };
-        return {
-          code: parsed.code ?? UNKNOWN_ERROR.code,
-          message: parsed.message ?? UNKNOWN_ERROR.message,
-        };
-      } catch {
-        // JSON parse failed, fall through
-      }
+    const relayed = parseRelayedConvexError(error);
+
+    if (relayed) {
+      return relayed;
     }
   }
 
