@@ -71,11 +71,18 @@ function useAuthFromAuthKit() {
         return null;
       }
 
-      if (forceRefreshToken) {
-        return (await refresh()) ?? null;
-      }
+      // AuthKit rethrows when a refresh fails, and Convex awaits this fetcher
+      // inside a floating promise that leaves the websocket paused on
+      // rejection. Reporting "no token" lets Convex fail auth and resume.
+      try {
+        if (forceRefreshToken) {
+          return (await refresh()) ?? null;
+        }
 
-      return (await getAccessToken()) ?? null;
+        return (await getAccessToken()) ?? null;
+      } catch {
+        return null;
+      }
     },
     [user, refresh, getAccessToken]
   );

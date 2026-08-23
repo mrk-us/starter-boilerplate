@@ -13,9 +13,11 @@ export const Route = createFileRoute("/_authenticated/_setup-complete")({
  * after the user document has loaded, rather than in `beforeLoad`.
  */
 function SetupCompleteLayout() {
-  const { isLoading, user } = useCurrentUser();
+  const { isAuthenticated, isLoading, user } = useCurrentUser();
   const navigate = useNavigate();
-  const needsSetup = !(isLoading || user?.setupComplete);
+  // A failed auth bootstrap resolves to "not authenticated" rather than
+  // "loading", which must not push an onboarded user onto the setup form.
+  const needsSetup = !isLoading && isAuthenticated && !user?.setupComplete;
 
   useEffect(() => {
     if (needsSetup) {
