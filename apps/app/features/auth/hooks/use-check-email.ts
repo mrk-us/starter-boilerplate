@@ -35,11 +35,12 @@ export function useCheckEmail() {
 
       // Check for OAuth providers - throw as error so form.Errors displays it
       if (checkEmailExistsData.oauthProviders.length > 0) {
-        const message = getOAuthProvidersMessage(
-          checkEmailExistsData.oauthProviders
+        // Clerk supports far more providers than this app offers buttons for,
+        // so an unrecognised one still has to say something useful.
+        throw new Error(
+          getOAuthProvidersMessage(checkEmailExistsData.oauthProviders) ??
+            "You previously signed in with a social account."
         );
-
-        throw new Error(message);
       }
 
       return { canProceed: true };
