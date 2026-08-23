@@ -1,45 +1,53 @@
+import { useClerk, useSignIn } from "@clerk/tanstack-react-start";
 import { resetPasswordSchema } from "@repo/backend/convex/auth/validation";
-import { getErrorMessage } from "@repo/shared/utils";
+import { tryCatch } from "@repo/shared/utils";
 import { FieldGroup, Form, FormSubmit, useAppForm } from "@repo/ui/components";
-import { Link, useSearch } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import type { z } from "zod";
-import { AuthCard } from "@/features/auth/components";
+import { AuthCard, ResendCodeButton } from "@/features/auth/components";
 import { useResetPassword } from "@/features/auth/hooks";
+import { SectionSpinner } from "@/features/shared/components";
 
 type FormData = z.infer<typeof resetPasswordSchema>;
 
 export function ResetPasswordForm() {
-  const { token } = useSearch({ from: "/_auth/reset-password" });
-
-  const { resetPassword } = useResetPassword();
+  const { loaded } = useClerk();
+  const { signIn } = useSignIn();
+  const { resendCode, resetPassword } = useResetPassword();
 
   const form = useAppForm({
     defaultValues: {
+      code: "",
       password: "",
-      token: token ?? "",
     } satisfies FormData as FormData,
     validators: {
       onSubmit: resetPasswordSchema,
       onSubmitAsync: async ({ value }) => {
-        try {
-          await resetPassword(value);
-        } catch (error) {
-          throw getErrorMessage(error);
+        const { error } = await tryCatch(resetPassword(value));
+
+        if (error) {
+          throw error.message;
         }
       },
     },
   });
 
-  if (!token) {
+  if (!loaded) {
+    return <SectionSpinner />;
+  }
+
+  // The sign-in attempt holding the reset lives on the Clerk client, so it is
+  // lost if the browser reaches this page without asking for a code first.
+  if (!signIn.identifier) {
     return (
-      <AuthCard title="Invalid reset link">
-        <p className="text-muted-foreground text-xs">
-          This password reset link is invalid or has expired. Please{" "}
+      <AuthCard title="Reset request expired">
+        <p className="text-center text-muted-foreground text-xs">
+          Please{" "}
           <Link
             className="text-foreground underline underline-offset-4 hover:text-primary"
             to="/forgot-password"
           >
-            request a new one
+            request a new code
           </Link>
           .
         </p>
@@ -49,18 +57,29 @@ export function ResetPasswordForm() {
 
   return (
     <AuthCard
-      description="Enter your new password below"
+      description={`Enter the 6-digit code sent to ${signIn.identifier} and choose a new password`}
       title="Set new password"
     >
       <Form form={form}>
         <FieldGroup>
+          <form.AppField name="code">
+            {(field) => (
+              <field.Input
+                autoComplete="one-time-code"
+                autoFocus
+                inputMode="numeric"
+                label="Code"
+                placeholder="123456"
+              />
+            )}
+          </form.AppField>
+
           <form.AppField name="password">
             {(field) => (
               <field.Input
                 autoCapitalize="off"
                 autoComplete="new-password"
-                autoFocus
-                label="New Password"
+                label="New password"
                 placeholder="••••••••"
                 type="password"
               />
@@ -70,12 +89,16 @@ export function ResetPasswordForm() {
           <form.Errors />
 
           <FormSubmit
-            hasChanged={(values) => values.password !== ""}
+            hasChanged={(values) =>
+              values.code !== "" && values.password !== ""
+            }
             isPending={form.state.isSubmitting}
             label="Reset password"
           />
         </FieldGroup>
       </Form>
+
+      <ResendCodeButton resend={resendCode} />
     </AuthCard>
   );
 }

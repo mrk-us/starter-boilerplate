@@ -1,5 +1,5 @@
 import { forgotPasswordSchema } from "@repo/backend/convex/auth/validation";
-import { getErrorMessage } from "@repo/shared/utils";
+import { tryCatch } from "@repo/shared/utils";
 import { FieldGroup, Form, FormSubmit, useAppForm } from "@repo/ui/components";
 import { Link } from "@tanstack/react-router";
 import type { z } from "zod";
@@ -9,7 +9,7 @@ import { useForgotPassword } from "@/features/auth/hooks";
 type FormData = z.infer<typeof forgotPasswordSchema>;
 
 export function ForgotPasswordForm() {
-  const { forgotPassword, isSuccess } = useForgotPassword();
+  const { forgotPassword } = useForgotPassword();
 
   const form = useAppForm({
     defaultValues: {
@@ -18,10 +18,10 @@ export function ForgotPasswordForm() {
     validators: {
       onSubmit: forgotPasswordSchema,
       onSubmitAsync: async ({ value }) => {
-        try {
-          await forgotPassword(value);
-        } catch (error) {
-          throw getErrorMessage(error);
+        const { error } = await tryCatch(forgotPassword(value));
+
+        if (error) {
+          throw error.message;
         }
       },
     },
@@ -29,7 +29,7 @@ export function ForgotPasswordForm() {
 
   return (
     <AuthCard
-      description="Enter your email address and we'll send you a link to reset your password"
+      description="Enter your email address and we'll send you a code to reset your password"
       footer={
         <p className="w-full text-center text-muted-foreground text-xs">
           Remember your password?{" "}
@@ -45,13 +45,6 @@ export function ForgotPasswordForm() {
     >
       <Form form={form}>
         <FieldGroup>
-          {isSuccess && (
-            <div className="relative flex flex-row gap-3 rounded-lg bg-positive/7.5 py-2 pr-3 pl-2 font-medium text-positive text-xs">
-              <div className="w-1 shrink-0 self-stretch rounded-full bg-positive" />
-              Check your email for a password reset link.
-            </div>
-          )}
-
           <form.AppField name="email">
             {(field) => (
               <field.Input
@@ -70,7 +63,7 @@ export function ForgotPasswordForm() {
           <FormSubmit
             hasChanged={(values) => values.email !== ""}
             isPending={form.state.isSubmitting}
-            label="Send reset link"
+            label="Send reset code"
           />
         </FieldGroup>
       </Form>

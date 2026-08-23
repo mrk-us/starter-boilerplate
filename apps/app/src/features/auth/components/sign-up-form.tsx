@@ -1,5 +1,5 @@
 import { signUpSchema } from "@repo/backend/convex/auth/validation";
-import { getErrorMessage } from "@repo/shared/utils";
+import { tryCatch } from "@repo/shared/utils";
 import {
   FieldGroup,
   FieldSeparator,
@@ -10,12 +10,12 @@ import {
 import { Link } from "@tanstack/react-router";
 import type { z } from "zod";
 import { AuthCard, OAuthButtons } from "@/features/auth/components";
-import { useSignUp } from "@/features/auth/hooks";
+import { useSignUpWithPassword } from "@/features/auth/hooks";
 
 type FormData = z.infer<typeof signUpSchema>;
 
 export function SignUpForm() {
-  const { signUp } = useSignUp();
+  const { signUpWithPassword } = useSignUpWithPassword();
 
   const form = useAppForm({
     defaultValues: {
@@ -25,10 +25,10 @@ export function SignUpForm() {
     validators: {
       onSubmit: signUpSchema,
       onSubmitAsync: async ({ value }) => {
-        try {
-          await signUp(value);
-        } catch (error) {
-          throw getErrorMessage(error);
+        const { error } = await tryCatch(signUpWithPassword(value));
+
+        if (error) {
+          throw error.message;
         }
       },
     },
@@ -80,6 +80,10 @@ export function SignUpForm() {
         </FieldGroup>
 
         <form.Errors />
+
+        {/* Clerk renders its bot-protection challenge here; without this node it
+            falls back to a modal that steals focus from the form. */}
+        <div id="clerk-captcha" />
 
         <FormSubmit
           className="w-full"

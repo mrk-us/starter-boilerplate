@@ -1,26 +1,28 @@
-import { useConvexAction } from "@convex-dev/react-query";
-import { api } from "@repo/backend/convex/_generated/api";
-import { getErrorMessage } from "@repo/shared";
-import { useMutation } from "@tanstack/react-query";
-
-interface ForgotPasswordData {
-  email: string;
-}
+import { useSignIn } from "@clerk/tanstack-react-start";
+import { useNavigate } from "@tanstack/react-router";
 
 export function useForgotPassword() {
-  const requestPasswordReset = useConvexAction(
-    api.auth.actions.requestPasswordReset
-  );
+  const { signIn } = useSignIn();
+  const navigate = useNavigate();
 
-  const { mutateAsync, isPending, error, isSuccess } = useMutation({
-    mutationFn: (data: ForgotPasswordData) =>
-      requestPasswordReset({ email: data.email }),
-  });
+  const forgotPassword = async ({ email }: { email: string }) => {
+    const { error } = await signIn.create({ identifier: email });
 
-  return {
-    error: error ? new Error(getErrorMessage(error)) : undefined,
-    forgotPassword: mutateAsync,
-    isPending,
-    isSuccess,
+    if (error) {
+      throw error;
+    }
+
+    const { error: sendCodeError } =
+      await signIn.resetPasswordEmailCode.sendCode();
+
+    if (sendCodeError) {
+      throw sendCodeError;
+    }
+
+    // The sign-in attempt lives on the Clerk client, so /reset-password picks
+    // up where this left off.
+    await navigate({ to: "/reset-password" });
   };
+
+  return { forgotPassword };
 }

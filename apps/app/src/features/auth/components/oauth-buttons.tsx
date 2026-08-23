@@ -1,19 +1,26 @@
+import { tryCatch } from "@repo/shared/utils";
 import { Button } from "@repo/ui/components";
 import { IconBrandGoogle } from "@tabler/icons-react";
-import { useTransition } from "react";
-import { getGoogleOAuthAuthorizationUrl } from "@/features/auth/server/oauth";
+import { useState, useTransition } from "react";
+import { useOAuthSignIn } from "@/features/auth/hooks";
 
 export function OAuthButtons() {
+  const { signInWithOAuth } = useOAuthSignIn();
   const [isPending, startTransition] = useTransition();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleOAuth = () => {
-    startTransition(async () => {
-      const authorizationUrl = await getGoogleOAuthAuthorizationUrl();
+    setErrorMessage(null);
 
+    startTransition(async () => {
       // A top-level redirect rather than a popup. Popups are blocked by
       // browsers, and the Electron shell hands `window.open` to the system
       // browser, which would strand the session cookie there.
-      window.location.assign(authorizationUrl);
+      const { error } = await tryCatch(signInWithOAuth("oauth_google"));
+
+      if (error) {
+        setErrorMessage(error.message);
+      }
     });
   };
 
@@ -28,6 +35,10 @@ export function OAuthButtons() {
         <IconBrandGoogle className="size-4 fill-white/35 stroke-none" />
         Continue with Google
       </Button>
+
+      {errorMessage && (
+        <p className="text-destructive text-xs">{errorMessage}</p>
+      )}
     </div>
   );
 }

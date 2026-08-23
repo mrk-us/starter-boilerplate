@@ -1,35 +1,48 @@
-import { useConvexAction } from "@convex-dev/react-query";
-import { api } from "@repo/backend/convex/_generated/api";
-import { getErrorMessage } from "@repo/shared";
-import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { useSignIn } from "@clerk/tanstack-react-start";
+import { useAuthRedirect } from "./use-auth-redirect";
 
-interface ResetPasswordData {
+interface ResetPasswordInput {
+  code: string;
   password: string;
-  token: string;
 }
 
 export function useResetPassword() {
-  const navigate = useNavigate();
+  const { signIn } = useSignIn();
+  const { navigate } = useAuthRedirect();
 
-  const resetPasswordWithToken = useConvexAction(
-    api.auth.actions.resetPasswordWithToken
-  );
+  const resetPassword = async ({ code, password }: ResetPasswordInput) => {
+    const { error } = await signIn.resetPasswordEmailCode.verifyCode({ code });
 
-  const { mutateAsync, isPending, error } = useMutation({
-    mutationFn: (data: ResetPasswordData) =>
-      resetPasswordWithToken({
-        newPassword: data.password,
-        token: data.token,
-      }),
-    onSuccess: () => {
-      navigate({ to: "/sign-in" });
-    },
-  });
+    if (error) {
+      throw error;
+    }
 
-  return {
-    error: error ? new Error(getErrorMessage(error)) : undefined,
-    isPending,
-    resetPassword: mutateAsync,
+    const { error: submitError } =
+      await signIn.resetPasswordEmailCode.submitPassword({
+        password,
+        // A reset usually follows a lost or stolen password, so every other
+        // session is dropped.
+        signOutOfOtherSessions: true,
+      });
+
+    if (submitError) {
+      throw submitError;
+    }
+
+    if (signIn.status !== "complete") {
+      throw new Error(`Sign-in requires an unsupported step: ${signIn.status}`);
+    }
+
+    await signIn.finalize({ navigate });
   };
+
+  const resendCode = async () => {
+    const { error } = await signIn.resetPasswordEmailCode.sendCode();
+
+    if (error) {
+      throw error;
+    }
+  };
+
+  return { resendCode, resetPassword };
 }

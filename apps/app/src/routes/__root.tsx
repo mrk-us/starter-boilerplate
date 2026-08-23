@@ -1,3 +1,5 @@
+import { ClerkProvider, useAuth } from "@clerk/tanstack-react-start";
+import { auth } from "@clerk/tanstack-react-start/server";
 import type { ConvexQueryClient } from "@convex-dev/react-query";
 import { APP_DESCRIPTION, APP_NAME } from "@repo/config";
 import type { QueryClient } from "@tanstack/react-query";
@@ -6,9 +8,11 @@ import {
   HeadContent,
   Outlet,
   Scripts,
+  useRouteContext,
 } from "@tanstack/react-router";
-import { getAuth } from "@workos/authkit-tanstack-react-start";
+import { createServerFn } from "@tanstack/react-start";
 import type { ConvexReactClient } from "convex/react";
+import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { DesktopClassSync, ElectronWindow } from "@/features/shared/components";
 import { ThemeProvider } from "@/features/shared/providers/theme";
 import appCssUrl from "@/styles/app.css?url";
@@ -24,24 +28,35 @@ import appCssUrl from "@/styles/app.css?url";
  */
 const DESKTOP_ROOT_CLASS_SCRIPT = `(function(){var d=window.desktop;if(!d)return;var c=document.documentElement.classList;c.add("electron","electron-"+d.platform);var o=navigator.windowControlsOverlay;if(o&&o.visible)c.add("wco");})();`;
 
+/**
+ * Clerk's session lives in an httpOnly cookie, so the signed-in state is only
+ * readable on the server. Every navigation re-runs `beforeLoad`, which keeps
+ * the route guards in step with the session.
+ */
+const fetchClerkAuth = createServerFn({ method: "GET" }).handler(async () => {
+  const { getToken, userId } = await auth();
+
+  return { token: await getToken(), userId };
+});
+
 export const Route = createRootRouteWithContext<{
   convexClient: ConvexReactClient;
   convexQueryClient: ConvexQueryClient;
   queryClient: QueryClient;
 }>()({
   beforeLoad: async ({ context }) => {
-    const auth = await getAuth();
+    const { token, userId } = await fetchClerkAuth();
 
-    // `serverHttpClient` only exists during SSR; handing it the access token is
-    // what lets Convex queries resolve on the server instead of falling back to
-    // an unauthenticated read.
-    if (auth.user) {
-      context.convexQueryClient.serverHttpClient?.setAuth(auth.accessToken);
+    // `serverHttpClient` only exists during SSR; handing it the session token
+    // is what lets Convex queries resolve on the server instead of falling back
+    // to an unauthenticated read.
+    if (token) {
+      context.convexQueryClient.serverHttpClient?.setAuth(token);
     }
 
-    // Deliberately only the user: `beforeLoad` return values are dehydrated
-    // into the SSR payload, so the access token must not travel with it.
-    return { user: auth.user };
+    // Deliberately only the user id: `beforeLoad` return values are dehydrated
+    // into the SSR payload, so the token must not travel with it.
+    return { userId };
   },
   component: RootComponent,
   head: () => ({
@@ -59,6 +74,8 @@ export const Route = createRootRouteWithContext<{
 });
 
 function RootComponent() {
+  const { convexClient } = useRouteContext({ from: Route.id });
+
   return (
     <html className="font-sans antialiased" lang="en" suppressHydrationWarning>
       <head>
@@ -70,11 +87,17 @@ function RootComponent() {
           dangerouslySetInnerHTML={{ __html: DESKTOP_ROOT_CLASS_SCRIPT }}
         />
         <DesktopClassSync />
-        <ElectronWindow>
-          <ThemeProvider>
-            <Outlet />
-          </ThemeProvider>
-        </ElectronWindow>
+        {/* Inside `<body>`: `ClerkProvider` emits a script tag alongside its
+            children, which the browser would otherwise hoist out of `<html>`. */}
+        <ClerkProvider>
+          <ConvexProviderWithClerk client={convexClient} useAuth={useAuth}>
+            <ElectronWindow>
+              <ThemeProvider>
+                <Outlet />
+              </ThemeProvider>
+            </ElectronWindow>
+          </ConvexProviderWithClerk>
+        </ClerkProvider>
         <Scripts />
       </body>
     </html>

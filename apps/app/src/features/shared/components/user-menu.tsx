@@ -1,3 +1,4 @@
+import { useClerk } from "@clerk/tanstack-react-start";
 import {
   Avatar,
   AvatarFallback,
@@ -5,11 +6,10 @@ import {
 } from "@repo/ui/components/avatar";
 import { Button } from "@repo/ui/components/button";
 import { Link } from "@tanstack/react-router";
-import { useAuth } from "@workos/authkit-tanstack-react-start/client";
 import { useCurrentUser } from "@/features/user/hooks";
 
 export function UserMenu() {
-  const { signOut } = useAuth();
+  const { signOut } = useClerk();
   const { user } = useCurrentUser();
 
   if (!user) {
@@ -35,7 +35,9 @@ export function UserMenu() {
           <AvatarFallback />
         </Avatar>
         <span className="text-sm">{user.email}</span>
-        <Button onClick={() => signOut()}>Sign out</Button>
+        <Button onClick={() => signOut({ redirectUrl: "/sign-in" })}>
+          Sign out
+        </Button>
       </div>
     </div>
   );

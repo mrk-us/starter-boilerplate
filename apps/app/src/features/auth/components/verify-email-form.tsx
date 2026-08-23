@@ -1,54 +1,54 @@
+import { useClerk, useSignUp } from "@clerk/tanstack-react-start";
 import { verifyEmailSchema } from "@repo/backend/convex/auth/validation";
-import { getErrorMessage } from "@repo/shared/utils";
+import { tryCatch } from "@repo/shared/utils";
 import { FieldGroup, Form, FormSubmit, useAppForm } from "@repo/ui/components";
-import { useSearch } from "@tanstack/react-router";
-import { AuthCard } from "@/features/auth/components";
-import {
-  useResendVerificationEmail,
-  useVerifyEmail,
-} from "@/features/auth/hooks";
+import { Link } from "@tanstack/react-router";
+import type { z } from "zod";
+import { AuthCard, ResendCodeButton } from "@/features/auth/components";
+import { useVerifyEmail } from "@/features/auth/hooks";
+import { SectionSpinner } from "@/features/shared/components";
+
+type FormData = z.infer<typeof verifyEmailSchema>;
 
 export function VerifyEmailForm() {
-  const { authId } = useSearch({ from: "/_auth/verify-email" });
-
-  const { verifyEmail } = useVerifyEmail();
-  const { resendVerificationEmail } = useResendVerificationEmail();
+  const { loaded } = useClerk();
+  const { signUp } = useSignUp();
+  const { resendCode, verifyEmail } = useVerifyEmail();
 
   const form = useAppForm({
     defaultValues: {
-      authId: authId ?? "",
       code: "",
-    },
+    } satisfies FormData as FormData,
     validators: {
       onSubmit: verifyEmailSchema,
       onSubmitAsync: async ({ value }) => {
-        try {
-          await verifyEmail(value);
-        } catch (error) {
-          throw getErrorMessage(error);
+        const { error } = await tryCatch(verifyEmail(value));
+
+        if (error) {
+          throw error.message;
         }
       },
     },
   });
 
-  async function handleResendVerificationEmail() {
-    if (!authId) {
-      return;
-    }
-
-    try {
-      await resendVerificationEmail({ authId });
-    } catch (error) {
-      console.error(getErrorMessage(error));
-    }
+  if (!loaded) {
+    return <SectionSpinner />;
   }
 
-  if (!authId) {
+  // The sign-up attempt lives on the Clerk client, so it is lost if the browser
+  // reaches this page without having started one.
+  if (!signUp.emailAddress) {
     return (
-      <AuthCard title="Invalid verification link">
-        <p className="text-muted-foreground text-xs">
-          This verification link is missing its account reference. Sign up again
-          to receive a new one.
+      <AuthCard title="Nothing to verify">
+        <p className="text-center text-muted-foreground text-xs">
+          This verification step has expired. Please{" "}
+          <Link
+            className="text-foreground underline underline-offset-4 hover:text-primary"
+            to="/sign-up"
+          >
+            create your account again
+          </Link>
+          .
         </p>
       </AuthCard>
     );
@@ -56,28 +56,36 @@ export function VerifyEmailForm() {
 
   return (
     <AuthCard
-      description="Enter the 6-digit code sent to your email address"
+      description={`Enter the 6-digit code sent to ${signUp.emailAddress}`}
       title="Verify your email"
     >
       <Form form={form}>
         <FieldGroup>
           <form.AppField name="code">
-            {(field) => <field.Input label="Code" />}
+            {(field) => (
+              <field.Input
+                autoComplete="one-time-code"
+                autoFocus
+                hideLabel
+                inputMode="numeric"
+                label="Code"
+                placeholder="123456"
+              />
+            )}
           </form.AppField>
-
-          <form.Errors />
-
-          <FormSubmit
-            hasChanged={(values) => values.code !== ""}
-            isPending={form.state.isSubmitting}
-            label="Verify email"
-          />
         </FieldGroup>
+
+        <form.Errors />
+
+        <FormSubmit
+          className="w-full"
+          hasChanged={(values) => values.code !== ""}
+          isPending={form.state.isSubmitting}
+          label="Verify email"
+        />
       </Form>
 
-      <button onClick={handleResendVerificationEmail} type="button">
-        Resend verification email
-      </button>
+      <ResendCodeButton resend={resendCode} />
     </AuthCard>
   );
 }

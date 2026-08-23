@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_authenticated/_setup-complete")({
 });
 
 /**
- * A WorkOS session carries no application metadata, so whether onboarding is
+ * A Clerk session carries no application metadata, so whether onboarding is
  * finished is only knowable from Convex. That puts this gate on the client,
  * after the user document has loaded, rather than in `beforeLoad`.
  */

@@ -1,9 +1,10 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { UserMenu } from "@/features/shared/components";
+import { useEnsureUser } from "@/features/user/hooks";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: ({ context, location }) => {
-    if (!context.user) {
+    if (!context.userId) {
       throw redirect({ search: { redirect: location.href }, to: "/sign-in" });
     }
   },
@@ -11,6 +12,8 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
+  useEnsureUser();
+
   return (
     <>
       <UserMenu />

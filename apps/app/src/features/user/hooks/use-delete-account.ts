@@ -1,20 +1,20 @@
+import { useClerk } from "@clerk/tanstack-react-start";
 import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
 import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
-import { useAuth } from "@workos/authkit-tanstack-react-start/client";
 
 export function useDeleteAccount() {
-  const { signOut } = useAuth();
+  const { signOut } = useClerk();
 
   const deleteUser = useConvexAction(api.users.actions.deleteUser);
 
   const { mutateAsync, isPending, isError, error, isSuccess } = useMutation({
     mutationFn: async () => {
+      // The action deletes the Clerk user too, so the local session has to go
+      // before anything else tries to use it.
       await deleteUser();
-      // signOut ends the WorkOS session and navigates the document, so it also
-      // stands in for the post-delete redirect.
-      await signOut({ returnTo: "/sign-in" });
+      await signOut({ redirectUrl: "/sign-in" });
     },
     onError: (mutationError) => {
       console.error(getErrorMessage(mutationError));
