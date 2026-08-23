@@ -162,16 +162,25 @@ export const completeSetupInternal = internalMutation({
       return { success: false };
     }
 
+    const wasAlreadyComplete = user.setupComplete === true;
+
     await ctx.db.patch(user._id, {
       name: args.name,
       setupComplete: true,
     });
 
-    // Send welcome email
-    await ctx.scheduler.runAfter(0, internal.emails.actions.sendWelcomeEmail, {
-      email: user.email,
-      name: args.name,
-    });
+    // Onboarding is reachable again from a bookmark or the back button, so the
+    // welcome email belongs to the first completion only.
+    if (!wasAlreadyComplete) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.emails.actions.sendWelcomeEmail,
+        {
+          email: user.email,
+          name: args.name,
+        }
+      );
+    }
 
     return { success: true };
   },
