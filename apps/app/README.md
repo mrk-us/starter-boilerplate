@@ -1,6 +1,6 @@
 # app
 
-The authenticated product app: [TanStack Start](https://tanstack.com/start) on Vite, with WorkOS AuthKit for authentication, Convex for data, Stripe for billing, and the shared design system from `@repo/ui`.
+The authenticated product app: [TanStack Start](https://tanstack.com/start) on Vite, with Clerk for authentication, Convex for data, Stripe for billing, and the shared design system from `@repo/ui`.
 
 ## Development
 
@@ -9,28 +9,26 @@ bun run dev --filter=app    # from the repository root
 bun run dev                 # from this directory
 ```
 
-The dev server listens on [http://localhost:3001](http://localhost:3001). Copy `.env.local.example` to `.env.local` first — the app fails to boot without `VITE_CONVEX_URL`, and AuthKit reads its `WORKOS_*` values on the first request.
+The dev server listens on [http://localhost:3001](http://localhost:3001). Copy `.env.local.example` to `.env.local` first — the app fails to boot without `VITE_CONVEX_URL`, and Clerk reads `VITE_CLERK_PUBLISHABLE_KEY` in the browser and `CLERK_SECRET_KEY` on the server.
 
-`WORKOS_REDIRECT_URI` must match a redirect URI registered in the WorkOS dashboard, and `WORKOS_COOKIE_PASSWORD` must be at least 32 characters.
+`VITE_CLERK_SIGN_IN_URL` and `VITE_CLERK_SIGN_UP_URL` keep Clerk pointing at the custom auth UI in `features/auth` instead of its hosted Account Portal.
 
 ## Structure
 
 ```text
 src/
   routes/          file-based routes; routeTree.gen.ts is generated
-  features/        feature-owned components, hooks, and server functions
-  router.tsx       router, React Query, Convex, and AuthKit providers
-  start.ts         request middleware (CSRF, AuthKit)
+  features/        feature-owned components, hooks, and utilities
+  router.tsx       router, React Query, and Convex query client
+  start.ts         request middleware (CSRF, Clerk)
 ```
 
 Routing conventions:
 
-- `_auth` — signed-out pages; redirects to `/` when a session exists.
+- `_auth` — signed-out pages; redirects to `/` when a session exists, and validates the `redirect` search param the guards attach.
 - `_authenticated` — requires a session; redirects to `/sign-in` otherwise.
 - `_authenticated/_setup-complete` — additionally requires a finished onboarding record in Convex.
-- `callback.tsx` — the WorkOS OAuth callback; a server-only route, so it never enters the client bundle.
-
-Anything under `features/*/server/` runs on the server only. Files named `*.server.ts` are hard-blocked from the client bundle by the Start plugin.
+- `_auth/sso-callback.tsx` — where Clerk finishes an OAuth redirect, including turning an unknown account into a sign-up.
 
 ## Build
 
