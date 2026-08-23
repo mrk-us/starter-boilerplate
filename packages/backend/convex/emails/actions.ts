@@ -20,14 +20,18 @@ export const sendEmailVerificationEmail = internalAction({
   args: {
     code: v.string(),
     email: v.string(),
+    emailId: v.string(),
   },
   handler: async (ctx, args) => {
-    const { ok } = await rateLimiter.limit(ctx, "resendEmailVerification", {
-      key: args.email,
+    const { ok } = await rateLimiter.limit(ctx, "verificationEmailDelivery", {
+      key: args.emailId,
     });
 
     if (!ok) {
-      console.warn("Rate limited: sendEmailVerificationEmail");
+      console.warn(
+        "[clerk] Verification email already delivered:",
+        args.emailId
+      );
       return;
     }
 
@@ -58,14 +62,18 @@ export const sendPasswordResetEmail = internalAction({
   args: {
     code: v.string(),
     email: v.string(),
+    emailId: v.string(),
   },
   handler: async (ctx, args) => {
-    const { ok } = await rateLimiter.limit(ctx, "passwordReset", {
-      key: args.email,
+    const { ok } = await rateLimiter.limit(ctx, "passwordResetEmailDelivery", {
+      key: args.emailId,
     });
 
     if (!ok) {
-      console.warn("Rate limited: sendPasswordResetEmail");
+      console.warn(
+        "[clerk] Password reset email already delivered:",
+        args.emailId
+      );
       return;
     }
 
