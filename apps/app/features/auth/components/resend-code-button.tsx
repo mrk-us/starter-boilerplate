@@ -44,7 +44,11 @@ export function ResendCodeButton({ resend }: { resend: () => Promise<void> }) {
       </button>
 
       {feedback && (
-        <p className={feedback.isError ? "text-destructive" : "text-positive"}>
+        <p
+          aria-live="polite"
+          className={feedback.isError ? "text-destructive" : "text-positive"}
+          role="status"
+        >
           {feedback.message}
         </p>
       )}
