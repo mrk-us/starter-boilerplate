@@ -37,7 +37,9 @@ export function OAuthButtons() {
       </Button>
 
       {errorMessage && (
-        <p className="text-destructive text-xs">{errorMessage}</p>
+        <p aria-live="polite" className="text-destructive text-xs" role="alert">
+          {errorMessage}
+        </p>
       )}
     </div>
   );
