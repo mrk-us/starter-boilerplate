@@ -2,51 +2,17 @@ import { tryCatch } from "@repo/shared";
 import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation, mutation } from "../_generated/server";
-import { requireAuthId, requireUser } from "../auth/helpers";
+import { requireUser } from "../auth/helpers";
 import { ERROR_CODE } from "../errors/constants";
 import { r2 } from "../r2";
 import { PROFILE_PICTURE_VALIDATION } from "./constants";
 
 /**
- * Ensure a user row exists for the signed-in Clerk user
+ * Internal mutation: Sync a user from Clerk
  *
- * Called by the client right after sign-in/sign-up so the app is usable before
- * the `user.created` webhook lands. Clerk's Convex session token only carries
- * the `aud` claim by default, so the profile fields come from the client and
- * the webhook stays authoritative for them.
- */
-export const upsertUser = mutation({
-  args: {
-    email: v.string(),
-    name: v.optional(v.string()),
-    profilePictureUrl: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const authId = await requireAuthId(ctx);
-
-    const existingUser = await ctx.db
-      .query("users")
-      .withIndex("authId", (q) => q.eq("authId", authId))
-      .unique();
-
-    if (existingUser) {
-      return { created: false, userId: existingUser._id };
-    }
-
-    const userId = await ctx.db.insert("users", {
-      authId,
-      email: args.email,
-      name: args.name ?? "",
-      profilePictureUrl: args.profilePictureUrl,
-      setupComplete: false,
-    });
-
-    return { created: true, userId };
-  },
-});
-
-/**
- * Internal mutation: Sync a user from a verified Clerk webhook
+ * The profile always comes from Clerk itself — either a signed `user.*` webhook
+ * or a Backend API read in `users.actions.ensureUser` — because `users.email`
+ * is what the Stripe customer lookup matches on.
  */
 export const syncUserFromAuth = internalMutation({
   args: {

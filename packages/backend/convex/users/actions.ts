@@ -1,5 +1,6 @@
 "use node";
 
+import type { User } from "@clerk/backend";
 import { tryCatch } from "@repo/shared";
 import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
@@ -10,10 +11,40 @@ import {
   AUTH_ERROR_CODE,
   ERROR_CODE,
   ERROR_MESSAGE,
+  USER_ERROR_CODE,
 } from "../errors/constants";
 import { rateLimiter } from "../rateLimiter";
 import { cancelUserSubscription } from "./helpers";
 import { userSchema } from "./validation";
+
+/**
+ * The address Clerk has marked as primary, and only once it is verified
+ *
+ * `users.email` is what the Stripe customer lookup matches on, so an address
+ * nobody has proven ownership of must never reach the table.
+ */
+function getVerifiedPrimaryEmail(user: User): string | undefined {
+  const primary = user.emailAddresses.find(
+    (emailAddress) => emailAddress.id === user.primaryEmailAddressId
+  );
+
+  return primary?.verification?.status === "verified"
+    ? primary.emailAddress
+    : undefined;
+}
+
+/**
+ * Clerk keeps first and last name apart; the app stores one display name.
+ * Email/password sign-ups have neither, in which case the setup flow asks.
+ */
+function getDisplayName(user: User): string {
+  const fullName = [user.firstName, user.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  return fullName || (user.username ?? "");
+}
 
 function parseName(name: string): string {
   const result = userSchema.pick({ name: true }).safeParse({
@@ -48,6 +79,51 @@ async function setClerkName(authId: string, name: string) {
     });
   }
 }
+
+/**
+ * Provision the `users` row for the signed-in Clerk user
+ *
+ * Clerk's `user.created` webhook is authoritative but can land after the
+ * browser has already navigated into the app, so the client asks for the row on
+ * first load. The profile is read back from Clerk rather than accepted from the
+ * caller: both paths then write the same verified data and cannot disagree.
+ */
+export const ensureUser = action({
+  args: {},
+  // Annotated because the handler reaches back into the generated `internal`
+  // api, which TypeScript would otherwise have to infer from this file.
+  handler: async (ctx): Promise<{ created: boolean }> => {
+    const authId = await requireAuthId(ctx);
+
+    const { data: clerkUser, error: getUserError } = await tryCatch(
+      clerk.users.getUser(authId)
+    );
+
+    if (getUserError) {
+      console.error("[ensureUser] Clerk lookup failed:", getUserError.message);
+      throw new ConvexError({
+        code: AUTH_ERROR_CODE.GET_USER_FAILED,
+        message: ERROR_MESSAGE.UNKNOWN,
+      });
+    }
+
+    const email = getVerifiedPrimaryEmail(clerkUser);
+
+    if (!email) {
+      throw new ConvexError({
+        code: USER_ERROR_CODE.USER_CREATE_FAILED,
+        message: "Verify your email address to continue",
+      });
+    }
+
+    return await ctx.runMutation(internal.users.mutations.syncUserFromAuth, {
+      authId,
+      email,
+      name: getDisplayName(clerkUser),
+      profilePictureUrl: clerkUser.imageUrl,
+    });
+  },
+});
 
 /**
  * Update user's name (updates both Clerk and Convex DB)
