@@ -6,7 +6,10 @@ export type FormSubmitProps = {
   submittingLabel?: string;
   isPending?: boolean;
   hasChanged?: (values: Record<string, unknown>) => boolean;
-} & Omit<React.ComponentProps<typeof Button>, "type" | "disabled" | "children">;
+} & Omit<
+  React.ComponentProps<typeof Button>,
+  "type" | "disabled" | "children" | "pending"
+>;
 
 export function FormSubmit({
   label,
@@ -62,10 +65,10 @@ export function FormSubmit({
 
         return (
           <Button
-            disabled={disabled}
-            pending={isSubmitting}
-            type="submit"
             {...buttonProps}
+            disabled={disabled}
+            pending={isPending || isSubmitting}
+            type="submit"
           >
             {label}
           </Button>

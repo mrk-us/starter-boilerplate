@@ -16,7 +16,7 @@ function AuthLayout() {
         <Outlet />
       </div>
 
-      <div className="corner-superellipse/1.2 hidden self-stretch rounded-3xl bg-page shadow-glass-secondary-elevated lg:block" />
+      <div className="corner-superellipse/1.2 hidden self-stretch rounded-3xl bg-page lg:block" />
     </div>
   );
 }

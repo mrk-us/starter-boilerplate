@@ -137,7 +137,7 @@ export function AvatarUpload({
                 <Button
                   disabled={isPending}
                   onClick={handleClick}
-                  variant="primary"
+                  variant="default"
                 >
                   {currentAvatarUrl ? "Change" : "Upload"}
                 </Button>
@@ -189,7 +189,7 @@ export function AvatarUpload({
                 <Button
                   disabled={isPending}
                   onClick={handleRemove}
-                  variant="primary"
+                  variant="default"
                 >
                   Remove
                 </Button>
