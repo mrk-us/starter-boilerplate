@@ -34,7 +34,7 @@ export function OAuthButtons() {
         onClick={handleOAuth}
         type="button"
       >
-        <IconBrandGoogle className="size-4 fill-white/35 stroke-none" />
+        <IconBrandGoogle className="size-4 fill-primary-foreground/25 stroke-none" />
         Continue with Google
       </Button>
 

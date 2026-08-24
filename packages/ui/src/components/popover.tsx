@@ -20,7 +20,6 @@ function PopoverTrigger({
       data-slot="popover-trigger"
       onClick={(event) => {
         // Allow keyboard activation and onMouseDown-triggered clicks
-        // biome-ignore lint/suspicious/noUnnecessaryConditions: onMouseDown can mutate the ref before this click handler runs.
         if (!triggeredRef.current && event.detail !== 0) {
           event.preventBaseUIHandler();
         }
@@ -68,7 +67,7 @@ function PopoverContent({
       >
         <PopoverPrimitive.Popup
           className={cn(
-            "corner-superellipse/1.2 data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 flex w-72 origin-(--transform-origin) flex-col gap-3 rounded-3xl bg-popover/90 px-4 py-3.5 text-popover-foreground text-xs shadow-glass-secondary-elevated outline-hidden ring-0 ring-foreground/10 duration-100 data-closed:animate-out data-open:animate-in supports-backdrop-filter:backdrop-blur-lg supports-backdrop-filter:backdrop-saturate-250",
+            "data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 z-50 flex w-72 origin-(--transform-origin) flex-col gap-4 rounded-lg bg-popover p-2.5 text-popover-foreground text-xs shadow-md outline-hidden ring-1 ring-foreground/10 duration-100 data-closed:animate-out data-open:animate-in",
             className
           )}
           data-slot="popover-content"

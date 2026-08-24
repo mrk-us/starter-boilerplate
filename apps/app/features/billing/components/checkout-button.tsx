@@ -20,7 +20,7 @@ interface CheckoutButtonProps {
 export function CheckoutButton({
   priceLookupKey,
   children,
-  variant = "primary",
+  variant = "default",
   className,
   successUrl,
 }: CheckoutButtonProps) {

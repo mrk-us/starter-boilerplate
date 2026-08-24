@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "@repo/ui/globals.css";
+import { cn } from "@repo/ui/lib/utils";
 import { Providers } from "@/app/providers/providers";
 
 const inter = localFont({
   src: "./fonts/InterVariable.woff2",
-  variable: "--font-inter",
+  variable: "--font-sans",
 });
 
 const geistMono = localFont({
@@ -25,7 +26,12 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      className={`${inter.variable} ${geistMono.variable} font-sans antialiased`}
+      className={cn(
+        "antialiased",
+        "font-sans",
+        inter.variable,
+        geistMono.variable
+      )}
       lang="en"
       suppressHydrationWarning
     >

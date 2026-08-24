@@ -29,7 +29,7 @@ export function AuthCard({
   return (
     <Card
       className={cn(
-        "corner-superellipse/1.2 mx-auto flex w-full max-w-sm flex-col gap-4 rounded-3xl bg-transparent px-4 py-12 shadow-none",
+        "corner-superellipse/1.2 mx-auto flex w-full max-w-sm flex-col gap-4 rounded-3xl px-4 py-12 shadow-none",
         className
       )}
     >
