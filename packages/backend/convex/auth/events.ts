@@ -66,7 +66,23 @@ export async function handleClerkEventWebhook(
   ctx: ActionCtx,
   request: Request
 ): Promise<Response> {
-  const { data: event, error } = await tryCatch(verifyWebhook(request));
+  // Passed explicitly because Clerk's own env lookup falls back to
+  // `import.meta`, which the Convex runtime rejects — turning a missing secret
+  // into a baffling "import.meta unsupported" error instead of this one.
+  const signingSecret = process.env.CLERK_WEBHOOK_SIGNING_SECRET;
+
+  if (!signingSecret) {
+    console.error(
+      "[clerk] CLERK_WEBHOOK_SIGNING_SECRET is not set in the Convex deployment environment"
+    );
+    return new Response("Webhook signing secret not configured", {
+      status: 500,
+    });
+  }
+
+  const { data: event, error } = await tryCatch(
+    verifyWebhook(request, { signingSecret })
+  );
 
   if (error) {
     console.error("[clerk] Webhook verification failed:", error.message);

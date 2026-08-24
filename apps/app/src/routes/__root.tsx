@@ -73,6 +73,15 @@ export const Route = createRootRouteWithContext<{
   }),
 });
 
+/**
+ * `ConvexProviderWithClerk` receives Clerk's `useAuth` as a prop and calls it
+ * internally in a valid hook position. The module-scope alias keeps the direct
+ * hook reference out of the component body, which the React Compiler would
+ * otherwise flag ("hooks may not be referenced as normal values") and refuse
+ * to optimize.
+ */
+const clerkUseAuth = useAuth;
+
 function RootComponent() {
   const { convexClient } = useRouteContext({ from: Route.id });
 
@@ -90,7 +99,7 @@ function RootComponent() {
         {/* Inside `<body>`: `ClerkProvider` emits a script tag alongside its
             children, which the browser would otherwise hoist out of `<html>`. */}
         <ClerkProvider>
-          <ConvexProviderWithClerk client={convexClient} useAuth={useAuth}>
+          <ConvexProviderWithClerk client={convexClient} useAuth={clerkUseAuth}>
             <ElectronWindow>
               <ThemeProvider>
                 <Outlet />
