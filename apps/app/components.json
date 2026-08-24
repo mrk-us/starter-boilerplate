@@ -19,5 +19,6 @@
   },
   "rtl": false,
   "menuColor": "default-translucent",
-  "menuAccent": "subtle"
+  "menuAccent": "subtle",
+  "registries": {}
 }

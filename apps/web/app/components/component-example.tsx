@@ -159,7 +159,7 @@ function CardExample() {
                 <AlertDialogCancel render={<Button />}>
                   Don&apos;t allow
                 </AlertDialogCancel>
-                <AlertDialogAction render={<Button variant="primary" />}>
+                <AlertDialogAction render={<Button variant="default" />}>
                   Allow
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -167,7 +167,7 @@ function CardExample() {
           </AlertDialog>
 
           <Dialog>
-            <DialogTrigger render={<Button variant="primary" />}>
+            <DialogTrigger render={<Button variant="default" />}>
               Dialog
             </DialogTrigger>
             <DialogContent>
@@ -179,7 +179,7 @@ function CardExample() {
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
-                <Button variant="primary">Allow</Button>
+                <Button variant="default">Allow</Button>
                 <DialogClose render={<Button />}>Don&apos;t allow</DialogClose>
               </DialogFooter>
             </DialogContent>
@@ -198,7 +198,7 @@ function CardExample() {
               </div>
               <div className="flex gap-2 *:flex-1 sm:flex-row sm:justify-stretch">
                 <PopoverClose render={<Button />}>Cancel</PopoverClose>
-                <Button variant="primary">Delete</Button>
+                <Button variant="default">Delete</Button>
               </div>
             </PopoverContent>
           </Popover>
@@ -540,7 +540,7 @@ function FormExample() {
                 />
               </Field>
               <Field orientation="horizontal">
-                <Button type="submit" variant="primary">
+                <Button type="submit" variant="default">
                   Submit
                 </Button>
                 <Button type="button">Cancel</Button>
