@@ -1,10 +1,8 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalQuery, query } from "../_generated/server";
-import { getAuthenticatedUser, requireUser } from "../auth/helpers";
+import { getAuthenticatedUser } from "../auth/helpers";
 import type { UserSubscription } from "../billing/types";
-import { r2 } from "../r2";
-import { PROFILE_PICTURE_URL_EXPIRY } from "./constants";
 
 /**
  * Check if user exists by authId
@@ -20,45 +18,6 @@ export const userExistsByAuthId = query({
     return user !== null;
   },
   returns: v.boolean(),
-});
-
-/**
- * Get current user for billing (internal - avoids circular dependency)
- * This query is used by the Stripe billing module to get user info
- * without fetching subscription data (which would create a circular reference)
- */
-export const getCurrentUserForBilling = internalQuery({
-  args: {},
-  handler: async (ctx, _args) => {
-    const user = await getAuthenticatedUser(ctx);
-
-    if (!user) {
-      return null;
-    }
-
-    return {
-      _id: user._id,
-      email: user.email,
-      stripeCustomerId: user.stripeCustomerId,
-    };
-  },
-});
-
-/**
- * Require current user for billing - throws if not authenticated
- * Use this in actions where authentication is required
- */
-export const requireCurrentUserForBilling = internalQuery({
-  args: {},
-  handler: async (ctx, _args) => {
-    const user = await requireUser(ctx);
-
-    return {
-      _id: user._id,
-      email: user.email,
-      stripeCustomerId: user.stripeCustomerId,
-    };
-  },
 });
 
 /**
@@ -110,19 +69,10 @@ export const getUserByAuthId = internalQuery({
       return null;
     }
 
-    // TODO: Can we use a helper here?
-    const user = await ctx.db
+    return await ctx.db
       .query("users")
       .withIndex("authId", (q) => q.eq("authId", args.authId))
       .unique();
-
-    if (!user) {
-      return null;
-    }
-
-    return {
-      ...user,
-    };
   },
 });
 
@@ -130,7 +80,7 @@ export const getUserByAuthId = internalQuery({
  * Get the current db user with subscription status
  * Uses runtime query call to billing module (decoupled from import dependency)
  */
-export const getUserWithSubscription = query({
+export const getCurrentUser = query({
   args: {},
   handler: async (ctx, _args) => {
     const user = await getAuthenticatedUser(ctx);
@@ -145,17 +95,8 @@ export const getUserWithSubscription = query({
       { userId: user._id }
     );
 
-    // Generate profile picture URL
-    // Priority: custom R2 upload > OAuth profile picture
-    const profilePictureUrl = user.profilePictureKey
-      ? await r2.getUrl(user.profilePictureKey, {
-          expiresIn: PROFILE_PICTURE_URL_EXPIRY,
-        })
-      : (user.profilePictureUrl ?? undefined);
-
     return {
       ...user,
-      profilePictureUrl,
       subscription,
     };
   },

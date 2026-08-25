@@ -13,7 +13,7 @@ function PopoverTrigger({
   onClick,
   ...props
 }: PopoverPrimitive.Trigger.Props) {
-  const triggeredRef = useRef(false);
+  const triggeredRef = useRef<boolean>(false);
 
   return (
     <PopoverPrimitive.Trigger

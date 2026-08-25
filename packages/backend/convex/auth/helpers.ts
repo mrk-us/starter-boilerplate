@@ -1,13 +1,8 @@
-import type { User } from "@workos-inc/node";
 import { ConvexError } from "convex/values";
 import type { ActionCtx, MutationCtx, QueryCtx } from "../_generated/server";
-import { AUTH_ERROR_CODE, ERROR_MESSAGE } from "../errors/constants";
+import { ERROR_MESSAGE } from "../errors/constants";
+import { AUTH_ERROR_CODE } from "./constants";
 import { authKit } from "./index";
-
-/**
- * WorkOS user data type
- */
-export type WorkOSUser = User;
 
 /**
  * Get the authenticated user's WorkOS ID from the Convex identity
@@ -76,19 +71,4 @@ export async function requireUser(ctx: QueryCtx | MutationCtx) {
   }
 
   return user;
-}
-
-/**
- * Get email from WorkOS user data
- */
-export function getPrimaryEmail(user: WorkOSUser): string {
-  return user.email;
-}
-
-/**
- * Get full name from WorkOS user data
- */
-export function getFullName(user: WorkOSUser): string {
-  const parts = [user.firstName, user.lastName].filter(Boolean);
-  return parts.join(" ").trim();
 }

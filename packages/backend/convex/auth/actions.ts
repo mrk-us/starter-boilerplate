@@ -3,12 +3,9 @@ import { ConvexError, v } from "convex/values";
 import { isDisposableEmail } from "disposable-email-domains-js";
 import type { ActionCtx } from "../_generated/server";
 import { action, internalAction } from "../_generated/server";
-import {
-  AUTH_ERROR_CODE,
-  ERROR_CODE,
-  ERROR_MESSAGE,
-} from "../errors/constants";
+import { ERROR_CODE, ERROR_MESSAGE } from "../errors/constants";
 import { rateLimiter } from "../rateLimiter";
+import { AUTH_ERROR_CODE } from "./constants";
 import { authKit } from "./index";
 import type { AuthenticateResult, CheckEmailResult } from "./types";
 import { checkEmailSchema } from "./validation";

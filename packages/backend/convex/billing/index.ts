@@ -8,6 +8,7 @@ import { STRIPE_API_VERSION } from "./constants";
  * Environment variables required:
  * - STRIPE_SECRET_KEY: Your Stripe secret key (sk_test_... or sk_live_...)
  * - STRIPE_WEBHOOK_SECRET: Your Stripe webhook secret (whsec_...)
+ * - STRIPE_PORTAL_CONFIGURATION_ID: Customer portal configuration (bpc_...)
  */
 export const stripe = new StripeSubscriptions(components.stripe, {
   apiVersion: STRIPE_API_VERSION,

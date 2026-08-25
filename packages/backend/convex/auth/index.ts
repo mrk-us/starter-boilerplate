@@ -12,7 +12,8 @@ const authFunctions: AuthFunctions = {
  *
  * Environment variables required:
  * - WORKOS_API_KEY: Your WorkOS API key
- * - WORKOS_CLIENT_SECRET: Your WorkOS client secret
+ * - WORKOS_ACTION_SECRET: WorkOS Action signing secret or setup placeholder
+ * - WORKOS_CLIENT_ID: Your WorkOS client ID
  * - WORKOS_WEBHOOK_SECRET: Your WorkOS webhook secret
  *
  */

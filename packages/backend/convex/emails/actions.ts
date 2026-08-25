@@ -67,7 +67,7 @@ export const sendEmailVerificationEmail = internalAction({
     // Send email
     const { error: sendEmailError } = await tryCatch(
       resend.sendEmail(ctx, {
-        from: `${process.env.APP_NAME} <${process.env.RESEND_FROM_EMAIL}>`,
+        from: `${APP_NAME} <${process.env.RESEND_FROM_EMAIL}>`,
         headers: [{ name: "X-Email-Category", value: "email_verification" }],
         html: await render(
           VerifyEmailEmail({
@@ -136,12 +136,12 @@ export const sendPasswordResetEmail = internalAction({
     }
 
     // Build reset URL
-    const resetUrl = `${process.env.APP_URL}/reset-password?token=${passwordResetData.passwordResetToken}`;
+    const resetUrl = `${APP_URL}/reset-password?token=${passwordResetData.passwordResetToken}`;
 
     // Send email
     const { error: sendEmailError } = await tryCatch(
       resend.sendEmail(ctx, {
-        from: `${process.env.APP_NAME} <${process.env.RESEND_FROM_EMAIL}>`,
+        from: `${APP_NAME} <${process.env.RESEND_FROM_EMAIL}>`,
         headers: [{ name: "X-Email-Category", value: "password_reset" }],
         html: await render(PasswordResetEmail({ url: resetUrl })),
         subject: "Reset your password",

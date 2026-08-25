@@ -1,5 +1,3 @@
-export type { AUTH_ERROR_CODE } from "../errors/constants";
-
 export interface WorkOSUser {
   createdAt: string;
   email: string;

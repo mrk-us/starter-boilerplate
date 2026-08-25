@@ -24,9 +24,6 @@
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "convex": "^1.45.0"
-  },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "typescript": "^7.0.2"

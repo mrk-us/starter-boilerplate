@@ -8,7 +8,6 @@ import { components, internal } from "../_generated/api";
  * - RESEND_API_KEY: Your Resend API key
  * - RESEND_WEBHOOK_SECRET: Your Resend webhook secret
  * - RESEND_FROM_EMAIL: Your Resend from email
- * - RESEND_TO_EMAIL: Your Resend to email
  */
 
 /**

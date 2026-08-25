@@ -10,7 +10,6 @@
     "typecheck": "tsc --noEmit -p convex"
   },
   "dependencies": {
-    "@convex-dev/r2": "^0.10.2",
     "@convex-dev/rate-limiter": "^0.3.2",
     "@convex-dev/resend": "^0.2.7",
     "@convex-dev/stripe": "^0.1.6",
@@ -24,7 +23,6 @@
     "disposable-email-domains-js": "^1.25.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "resend": "^6.22.0",
     "stripe": "^22.5.0",
     "zod": "^4.4.3"
   },

@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { internalQuery, query } from "../_generated/server";
-import { getAuthenticatedUser } from "../auth/helpers";
+import { getAuthenticatedUser, requireUser } from "../auth/helpers";
 import {
   createSubscriptionHash,
   getSubscriptionStatusForUser,
@@ -8,20 +8,20 @@ import {
 import { subscriptionSchema } from "./validation";
 
 /**
- * Get current user's subscription status
+ * Require current user for billing - throws if not authenticated
+ * Use this in actions where authentication is required
  */
-export const getCurrentSubscriptionStatus = query({
+export const requireCurrentUserForBilling = internalQuery({
   args: {},
-  handler: async (ctx) => {
-    const user = await getAuthenticatedUser(ctx);
+  handler: async (ctx, _args) => {
+    const user = await requireUser(ctx);
 
-    if (!user) {
-      return null;
-    }
-
-    return getSubscriptionStatusForUser(ctx, user._id);
+    return {
+      _id: user._id,
+      email: user.email,
+      stripeCustomerId: user.stripeCustomerId,
+    };
   },
-  returns: v.union(subscriptionSchema, v.null()),
 });
 
 /**

@@ -45,7 +45,6 @@ export function CheckoutSuccessHandler() {
 
   const handleCheckoutSuccess = useCallback(async () => {
     // Prevent multiple executions
-    // biome-ignore lint/suspicious/noUnnecessaryConditions: the ref is mutated after the first execution.
     if (hasStartedRef.current) {
       return;
     }

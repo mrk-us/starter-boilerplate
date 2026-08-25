@@ -10,6 +10,7 @@ import {
   Tailwind,
   Text,
 } from "@react-email/components";
+import { APP_NAME } from "@repo/config";
 
 export default function VerifyEmail({
   code,
@@ -71,9 +72,7 @@ export default function VerifyEmail({
 
             <Section className="mt-4">
               <Text className="m-0 text-[16px] text-secondary">Have fun,</Text>
-              <Text className="m-0 text-[16px] text-secondary">
-                Unremarkable
-              </Text>
+              <Text className="m-0 text-[16px] text-secondary">{APP_NAME}</Text>
             </Section>
           </Container>
         </Body>

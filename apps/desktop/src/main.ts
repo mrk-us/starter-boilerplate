@@ -10,25 +10,13 @@ import {
   shell,
   type WebContents,
 } from "electron";
+import { ALLOWED_NAVIGATION_HOSTS } from "./navigation-hosts";
 
 /** Replaced at build time by `electron.vite.config.ts`. */
 declare const __PROD_APP_URL__: string;
 
 const APP_URL = process.env.ELECTRON_APP_URL ?? __PROD_APP_URL__;
 const APP_ORIGIN = new URL(APP_URL).origin;
-
-/**
- * Hosts (and their subdomains) the window may navigate to itself. Everything
- * else is handed to the system browser. Beyond the app's own origin this is
- * exactly the hop list of a WorkOS AuthKit sign-in: WorkOS, its hosted AuthKit
- * pages, and the configured OAuth providers.
- */
-const ALLOWED_NAVIGATION_HOSTS = [
-  "workos.com",
-  "authkit.app",
-  "accounts.google.com",
-  "github.com",
-];
 
 const EXTERNAL_PROTOCOLS = new Set(["http:", "https:", "mailto:"]);
 

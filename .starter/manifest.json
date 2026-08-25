@@ -1,0 +1,749 @@
+{
+  "$schema": "./manifest.schema.json",
+  "schemaVersion": 1,
+  "preset": "composable-v1",
+  "units": {
+    "base": { "requires": [] },
+    "marketing": { "requires": ["base"] },
+    "app-next": { "requires": ["base"], "conflicts": ["app-tanstack"] },
+    "app-tanstack": { "requires": ["base"], "conflicts": ["app-next"] },
+    "convex": { "requiresAny": ["app-next", "app-tanstack"] },
+    "auth": { "requires": ["convex"] },
+    "auth-next": { "requires": ["app-next", "auth"] },
+    "auth-tanstack": { "requires": ["app-tanstack", "auth"] },
+    "stripe": { "requires": ["auth"] },
+    "electron": { "requiresAny": ["app-next", "app-tanstack"] },
+    "template-tooling": { "requires": [], "output": false }
+  },
+  "selectionRules": [
+    "At least one of marketing or app is required.",
+    "Framework is required exactly when app is selected.",
+    "Authentication implies Convex and Resend.",
+    "Stripe requires authentication and Convex.",
+    "Electron requires app."
+  ],
+  "ownership": [
+    {
+      "unit": "template-tooling",
+      "include": [
+        ".starter/**",
+        ".agents/**",
+        ".claude/skills/**",
+        "apps/app/README.md",
+        "bun.lock",
+        "skills-lock.json",
+        "ELECTRON_PLAN.md"
+      ]
+    },
+    {
+      "unit": "stripe",
+      "include": [
+        "apps/app/app/account/billing/**",
+        "apps/app/features/billing/**",
+        "apps/app/src/features/billing/**",
+        "apps/app/src/routes/_authenticated/_setup-complete/account/billing/**",
+        "packages/backend/convex/billing/**",
+        "packages/email/emails/welcome-to-pro-email.tsx"
+      ]
+    },
+    {
+      "unit": "auth-next",
+      "framework": "next",
+      "include": [
+        "apps/app/proxy.ts",
+        "apps/app/lib/routes.ts",
+        "apps/app/app/(auth)/**",
+        "apps/app/app/callback/**",
+        "apps/app/app/setup/**",
+        "apps/app/app/account/page.tsx",
+        "apps/app/features/auth/**",
+        "apps/app/features/setup/**",
+        "apps/app/features/user/**"
+      ]
+    },
+    {
+      "unit": "auth-tanstack",
+      "framework": "tanstack",
+      "include": [
+        "apps/app/src/start.ts",
+        "apps/app/src/routes/_auth.tsx",
+        "apps/app/src/routes/_auth/**",
+        "apps/app/src/routes/_authenticated.tsx",
+        "apps/app/src/routes/_authenticated/**",
+        "apps/app/src/routes/callback.tsx",
+        "apps/app/src/features/auth/**",
+        "apps/app/src/features/setup/**",
+        "apps/app/src/features/user/**"
+      ]
+    },
+    {
+      "unit": "auth",
+      "include": [
+        "packages/backend/convex/auth.config.ts",
+        "packages/backend/convex/auth/**",
+        "packages/backend/convex/crons.ts",
+        "packages/backend/convex/emails/**",
+        "packages/backend/convex/http.ts",
+        "packages/backend/convex/rateLimiter.ts",
+        "packages/backend/convex/users/**",
+        "packages/email/**"
+      ]
+    },
+    {
+      "unit": "convex",
+      "include": [
+        "apps/app/features/shared/components/convex-status.tsx",
+        "apps/app/features/shared/providers/convex.tsx",
+        "apps/app/src/features/shared/components/convex-status.tsx",
+        "convex.json",
+        "packages/backend/**"
+      ]
+    },
+    {
+      "unit": "electron",
+      "include": [
+        "apps/desktop/**",
+        "apps/app/features/shared/components/desktop-class-sync.tsx",
+        "apps/app/features/shared/components/electron-window.tsx",
+        "apps/app/types/globals.d.ts",
+        "apps/app/src/features/shared/components/desktop-class-sync.tsx",
+        "apps/app/src/features/shared/components/electron-window.tsx",
+        "apps/app/src/types/globals.d.ts"
+      ]
+    },
+    { "unit": "marketing", "include": ["apps/web/**"] },
+    { "unit": "app-next", "framework": "next", "include": ["apps/app/**"] },
+    {
+      "unit": "app-tanstack",
+      "framework": "tanstack",
+      "include": ["apps/app/**"]
+    },
+    { "unit": "base", "include": ["**"] }
+  ],
+  "variants": [
+    {
+      "path": "convex.json",
+      "cases": [
+        {
+          "when": { "auth": false },
+          "source": ".starter/variants/backend/neutral/convex.json"
+        }
+      ]
+    },
+    {
+      "path": "apps/app/app/layout.tsx",
+      "cases": [
+        {
+          "when": {
+            "framework": "next",
+            "auth": false,
+            "database": false,
+            "electron": false
+          },
+          "source": ".starter/variants/app-next/plain-no-electron/app/layout.tsx"
+        },
+        {
+          "when": {
+            "framework": "next",
+            "auth": false,
+            "database": true,
+            "electron": false
+          },
+          "source": ".starter/variants/app-next/convex-no-electron/app/layout.tsx"
+        },
+        {
+          "when": {
+            "framework": "next",
+            "auth": true,
+            "electron": false
+          },
+          "source": ".starter/variants/app-next/auth-no-electron/app/layout.tsx"
+        },
+        {
+          "when": {
+            "framework": "next",
+            "auth": false,
+            "database": false,
+            "electron": true
+          },
+          "source": ".starter/variants/app-next/plain/app/layout.tsx"
+        },
+        {
+          "when": {
+            "framework": "next",
+            "auth": false,
+            "database": true,
+            "electron": true
+          },
+          "source": ".starter/variants/app-next/convex/app/layout.tsx"
+        }
+      ]
+    },
+    {
+      "path": "apps/app/app/page.tsx",
+      "cases": [
+        {
+          "when": { "framework": "next", "auth": false, "database": false },
+          "source": ".starter/variants/app-next/plain/app/page.tsx"
+        },
+        {
+          "when": { "framework": "next", "auth": false, "database": true },
+          "source": ".starter/variants/app-next/convex/app/page.tsx"
+        }
+      ]
+    },
+    {
+      "path": "apps/app/features/shared/providers/convex.tsx",
+      "cases": [
+        {
+          "when": { "framework": "next", "auth": false, "database": false },
+          "source": null
+        },
+        {
+          "when": { "framework": "next", "auth": false, "database": true },
+          "source": ".starter/variants/app-next/convex/features/shared/providers/convex.tsx"
+        }
+      ]
+    },
+    {
+      "path": "apps/app/features/user/components/user-menu.tsx",
+      "cases": [
+        {
+          "when": {
+            "framework": "next",
+            "auth": true,
+            "payments": false,
+            "electron": false
+          },
+          "source": ".starter/variants/app-next/auth-no-electron/features/user/components/user-menu.tsx"
+        },
+        {
+          "when": {
+            "framework": "next",
+            "auth": true,
+            "payments": true,
+            "electron": false
+          },
+          "source": ".starter/variants/app-next/stripe-no-electron/features/user/components/user-menu.tsx"
+        },
+        {
+          "when": {
+            "framework": "next",
+            "auth": true,
+            "payments": false,
+            "electron": true
+          },
+          "source": ".starter/variants/app-next/auth/features/user/components/user-menu.tsx"
+        }
+      ]
+    },
+    {
+      "path": "apps/app/src/router.tsx",
+      "cases": [
+        {
+          "when": { "framework": "tanstack", "auth": false, "database": false },
+          "source": ".starter/variants/app-tanstack/plain/src/router.tsx"
+        },
+        {
+          "when": { "framework": "tanstack", "auth": false, "database": true },
+          "source": ".starter/variants/app-tanstack/convex/src/router.tsx"
+        }
+      ]
+    },
+    {
+      "path": "apps/app/src/routes/__root.tsx",
+      "cases": [
+        {
+          "when": {
+            "framework": "tanstack",
+            "auth": false,
+            "database": false,
+            "electron": false
+          },
+          "source": ".starter/variants/app-tanstack/plain-no-electron/src/routes/__root.tsx"
+        },
+        {
+          "when": {
+            "framework": "tanstack",
+            "auth": false,
+            "database": true,
+            "electron": false
+          },
+          "source": ".starter/variants/app-tanstack/convex-no-electron/src/routes/__root.tsx"
+        },
+        {
+          "when": {
+            "framework": "tanstack",
+            "auth": true,
+            "electron": false
+          },
+          "source": ".starter/variants/app-tanstack/auth-no-electron/src/routes/__root.tsx"
+        },
+        {
+          "when": {
+            "framework": "tanstack",
+            "auth": false,
+            "database": false,
+            "electron": true
+          },
+          "source": ".starter/variants/app-tanstack/plain/src/routes/__root.tsx"
+        },
+        {
+          "when": {
+            "framework": "tanstack",
+            "auth": false,
+            "database": true,
+            "electron": true
+          },
+          "source": ".starter/variants/app-tanstack/convex/src/routes/__root.tsx"
+        }
+      ]
+    },
+    {
+      "path": "apps/app/src/routeTree.gen.ts",
+      "cases": [
+        {
+          "when": { "framework": "tanstack", "auth": false, "database": false },
+          "source": ".starter/variants/app-tanstack/plain/src/routeTree.gen.ts"
+        },
+        {
+          "when": { "framework": "tanstack", "auth": false, "database": true },
+          "source": ".starter/variants/app-tanstack/convex/src/routeTree.gen.ts"
+        },
+        {
+          "when": { "framework": "tanstack", "auth": true, "payments": false },
+          "source": ".starter/variants/app-tanstack/auth/src/routeTree.gen.ts"
+        }
+      ]
+    },
+    {
+      "path": "apps/app/src/routes/index.tsx",
+      "default": null,
+      "cases": [
+        {
+          "when": { "framework": "tanstack", "auth": false, "database": false },
+          "source": ".starter/variants/app-tanstack/plain/src/routes/index.tsx"
+        },
+        {
+          "when": { "framework": "tanstack", "auth": false, "database": true },
+          "source": ".starter/variants/app-tanstack/convex/src/routes/index.tsx"
+        }
+      ]
+    },
+    {
+      "path": "apps/app/src/start.ts",
+      "cases": [
+        { "when": { "framework": "tanstack", "auth": false }, "source": null }
+      ]
+    },
+    {
+      "path": "apps/app/src/env.d.ts",
+      "cases": [
+        {
+          "when": { "framework": "tanstack", "auth": false, "database": false },
+          "source": ".starter/variants/app-tanstack/plain/src/env.d.ts"
+        }
+      ]
+    },
+    {
+      "path": "apps/app/src/features/user/components/user-menu.tsx",
+      "cases": [
+        {
+          "when": {
+            "framework": "tanstack",
+            "auth": true,
+            "payments": false,
+            "electron": false
+          },
+          "source": ".starter/variants/app-tanstack/auth-no-electron/src/features/user/components/user-menu.tsx"
+        },
+        {
+          "when": {
+            "framework": "tanstack",
+            "auth": true,
+            "payments": true,
+            "electron": false
+          },
+          "source": ".starter/variants/app-tanstack/stripe-no-electron/src/features/user/components/user-menu.tsx"
+        },
+        {
+          "when": {
+            "framework": "tanstack",
+            "auth": true,
+            "payments": false,
+            "electron": true
+          },
+          "source": ".starter/variants/app-tanstack/auth/src/features/user/components/user-menu.tsx"
+        }
+      ]
+    },
+    {
+      "path": "apps/app/vercel.json",
+      "cases": [
+        { "when": { "auth": false, "database": false }, "source": null }
+      ]
+    },
+    {
+      "path": "packages/backend/convex/schema.ts",
+      "cases": [
+        {
+          "when": { "auth": false },
+          "source": ".starter/variants/backend/neutral/schema.ts"
+        },
+        {
+          "when": { "auth": true, "payments": false },
+          "source": ".starter/variants/backend/auth/schema.ts"
+        }
+      ]
+    },
+    {
+      "path": "packages/backend/convex/convex.config.ts",
+      "cases": [
+        {
+          "when": { "auth": false },
+          "source": ".starter/variants/backend/neutral/convex.config.ts"
+        },
+        {
+          "when": { "auth": true, "payments": false },
+          "source": ".starter/variants/backend/auth/convex.config.ts"
+        }
+      ]
+    },
+    {
+      "path": "packages/backend/convex/http.ts",
+      "cases": [
+        { "when": { "auth": false }, "source": null },
+        {
+          "when": { "auth": true, "payments": false },
+          "source": ".starter/variants/backend/auth/http.ts"
+        }
+      ]
+    },
+    {
+      "path": "packages/backend/convex/users/queries.ts",
+      "cases": [
+        {
+          "when": { "auth": true, "payments": false },
+          "source": ".starter/variants/backend/auth/users/queries.ts"
+        }
+      ]
+    },
+    {
+      "path": "packages/backend/convex/users/actions.ts",
+      "cases": [
+        {
+          "when": { "auth": true, "payments": false },
+          "source": ".starter/variants/backend/auth/users/actions.ts"
+        }
+      ]
+    },
+    {
+      "path": "packages/backend/convex/emails/actions.ts",
+      "cases": [
+        {
+          "when": { "auth": true, "payments": false },
+          "source": ".starter/variants/backend/auth/emails/actions.ts"
+        }
+      ]
+    },
+    {
+      "path": "packages/backend/convex/_generated/api.d.ts",
+      "cases": [
+        {
+          "when": { "auth": false },
+          "source": ".starter/variants/backend/neutral/_generated/api.d.ts"
+        },
+        {
+          "when": { "auth": true, "payments": false },
+          "source": ".starter/variants/backend/auth/_generated/api.d.ts"
+        }
+      ]
+    },
+    {
+      "path": "apps/desktop/src/navigation-hosts.ts",
+      "cases": [
+        {
+          "when": { "auth": false },
+          "source": ".starter/variants/desktop/base/src/navigation-hosts.ts"
+        }
+      ]
+    }
+  ],
+  "packageDependencies": {
+    "root": {
+      "@biomejs/biome": "base",
+      "@repo/typescript-config": "base",
+      "convex": "convex",
+      "husky": "base",
+      "turbo": "base",
+      "typescript": "base",
+      "ultracite": "base"
+    },
+    "apps/app@next": {
+      "@swc/helpers": "app-next",
+      "@convex-dev/react-query": "convex",
+      "@repo/backend": "convex",
+      "@repo/config": "app-next",
+      "@repo/shared": "auth-next",
+      "@repo/typescript-config": "app-next",
+      "@repo/ui": "app-next",
+      "@tabler/icons-react": "auth-next",
+      "@tailwindcss/postcss": "app-next",
+      "@tanstack/react-query": "convex",
+      "@types/node": "app-next",
+      "@types/react": "app-next",
+      "@types/react-dom": "app-next",
+      "@workos-inc/authkit-nextjs": "auth-next",
+      "@workos-inc/node": "auth-next",
+      "babel-plugin-react-compiler": "app-next",
+      "class-variance-authority": "stripe",
+      "convex": "convex",
+      "next": "app-next",
+      "next-themes": "app-next",
+      "react": "app-next",
+      "react-dom": "app-next",
+      "tailwindcss": "app-next",
+      "typescript": "app-next",
+      "zod": "auth-next"
+    },
+    "apps/app@tanstack": {
+      "@convex-dev/react-query": "convex",
+      "@repo/backend": "convex",
+      "@repo/config": "app-tanstack",
+      "@repo/shared": "auth-tanstack",
+      "@repo/typescript-config": "app-tanstack",
+      "@repo/ui": "app-tanstack",
+      "@tabler/icons-react": "auth-tanstack",
+      "@tailwindcss/vite": "app-tanstack",
+      "@tanstack/react-query": "convex",
+      "@tanstack/react-router": "app-tanstack",
+      "@tanstack/react-router-ssr-query": "convex",
+      "@tanstack/react-start": "app-tanstack",
+      "@types/node": "app-tanstack",
+      "@types/react": "app-tanstack",
+      "@types/react-dom": "app-tanstack",
+      "@vitejs/plugin-react": "app-tanstack",
+      "@workos-inc/node": "auth-tanstack",
+      "@workos/authkit-session": "auth-tanstack",
+      "@workos/authkit-tanstack-react-start": "auth-tanstack",
+      "class-variance-authority": "stripe",
+      "convex": "convex",
+      "next-themes": "app-tanstack",
+      "nitro": "app-tanstack",
+      "oxc-transform-react": "app-tanstack",
+      "react": "app-tanstack",
+      "react-dom": "app-tanstack",
+      "tailwindcss": "app-tanstack",
+      "typescript": "app-tanstack",
+      "vite": "app-tanstack",
+      "zod": "auth-tanstack"
+    },
+    "apps/desktop": {
+      "@repo/shared": "electron",
+      "@repo/typescript-config": "electron",
+      "@types/node": "electron",
+      "electron": "electron",
+      "electron-builder": "electron",
+      "electron-vite": "electron",
+      "typescript": "electron",
+      "vite": "electron"
+    },
+    "apps/web": {
+      "@repo/config": "marketing",
+      "@repo/typescript-config": "marketing",
+      "@repo/ui": "marketing",
+      "@swc/helpers": "marketing",
+      "@tailwindcss/postcss": "marketing",
+      "@types/node": "marketing",
+      "@types/react": "marketing",
+      "@types/react-dom": "marketing",
+      "next": "marketing",
+      "next-themes": "marketing",
+      "react": "marketing",
+      "react-dom": "marketing",
+      "tailwindcss": "marketing",
+      "typescript": "marketing"
+    },
+    "packages/backend": {
+      "@convex-dev/rate-limiter": "auth",
+      "@convex-dev/resend": "auth",
+      "@convex-dev/stripe": "stripe",
+      "@convex-dev/workos-authkit": "auth",
+      "@react-email/render": "auth",
+      "@repo/config": "auth",
+      "@repo/email": "auth",
+      "@repo/shared": "auth",
+      "@types/node": "convex",
+      "@workos-inc/node": "auth",
+      "convex": "convex",
+      "disposable-email-domains-js": "auth",
+      "react": "auth",
+      "react-dom": "auth",
+      "stripe": "stripe",
+      "typescript": "convex",
+      "zod": "auth"
+    },
+    "packages/config": {
+      "@repo/typescript-config": "base",
+      "@types/node": "base",
+      "typescript": "base"
+    },
+    "packages/email": {
+      "@react-email/components": "auth",
+      "@react-email/preview-server": "auth",
+      "@react-email/ui": "auth",
+      "@repo/config": "auth",
+      "@repo/typescript-config": "auth",
+      "@tailwindcss/postcss": "auth",
+      "@types/react": "auth",
+      "@types/react-dom": "auth",
+      "react": "auth",
+      "react-dom": "auth",
+      "react-email": "auth",
+      "tailwindcss": "auth",
+      "typescript": "auth"
+    },
+    "packages/shared": {
+      "@repo/typescript-config": "base",
+      "typescript": "base"
+    },
+    "packages/typescript-config": {},
+    "packages/ui": {
+      "@base-ui/react": "base",
+      "@repo/typescript-config": "base",
+      "@tabler/icons-react": "base",
+      "@tailwindcss/postcss": "base",
+      "@tanstack/react-form": "base",
+      "@toolwind/corner-shape": "base",
+      "@turbo/gen": "base",
+      "@types/node": "base",
+      "@types/react": "base",
+      "@types/react-dom": "base",
+      "class-variance-authority": "base",
+      "clsx": "base",
+      "react": "base",
+      "react-dom": "base",
+      "shadcn": "base",
+      "tailwind-merge": "base",
+      "tailwindcss": "base",
+      "tw-animate-css": "base",
+      "typescript": "base"
+    }
+  },
+  "environment": {
+    "app": {
+      "convex": {
+        "next": ["NEXT_PUBLIC_CONVEX_URL="],
+        "tanstack": ["VITE_CONVEX_URL="]
+      },
+      "auth": {
+        "next": [
+          "WORKOS_API_KEY=",
+          "WORKOS_CLIENT_ID=",
+          "WORKOS_COOKIE_PASSWORD=",
+          "NEXT_PUBLIC_WORKOS_REDIRECT_URI=http://localhost:3001/callback"
+        ],
+        "tanstack": [
+          "WORKOS_API_KEY=",
+          "WORKOS_CLIENT_ID=",
+          "WORKOS_COOKIE_PASSWORD=",
+          "WORKOS_REDIRECT_URI=http://localhost:3001/callback"
+        ]
+      }
+    },
+    "backend": {
+      "convex": [
+        "CONVEX_DEPLOYMENT=",
+        "CONVEX_URL=",
+        "CONVEX_SITE_URL=",
+        "APP_URL=http://localhost:3001"
+      ],
+      "auth": [
+        "RESEND_API_KEY=",
+        "RESEND_WEBHOOK_SECRET=",
+        "RESEND_FROM_EMAIL=",
+        "WORKOS_API_KEY=",
+        "WORKOS_ACTION_SECRET=",
+        "WORKOS_CLIENT_ID=",
+        "WORKOS_WEBHOOK_SECRET="
+      ],
+      "stripe": [
+        "STRIPE_SECRET_KEY=",
+        "STRIPE_WEBHOOK_SECRET=",
+        "STRIPE_PORTAL_CONFIGURATION_ID="
+      ]
+    }
+  },
+  "provisioning": {
+    "appUrl": "http://localhost:3001",
+    "workos": {
+      "webhookPath": "/workos/webhook",
+      "events": [
+        "user.created",
+        "user.updated",
+        "user.deleted",
+        "session.created",
+        "invitation.created",
+        "password_reset.created",
+        "email_verification.created"
+      ]
+    },
+    "resend": {
+      "webhookPath": "/resend/webhooks",
+      "events": ["all"]
+    },
+    "stripe": {
+      "apiVersion": "2026-07-29.dahlia",
+      "webhookPath": "/stripe/webhooks",
+      "currency": "usd",
+      "prices": [
+        {
+          "interval": "month",
+          "lookupKey": "pro_monthly",
+          "unitAmount": 800
+        },
+        {
+          "interval": "year",
+          "lookupKey": "pro_yearly",
+          "unitAmount": 8000
+        }
+      ],
+      "events": [
+        "checkout.session.completed",
+        "customer.created",
+        "customer.updated",
+        "customer.deleted",
+        "customer.subscription.created",
+        "customer.subscription.updated",
+        "customer.subscription.deleted",
+        "invoice.created",
+        "invoice.finalized",
+        "invoice.updated",
+        "invoice.paid",
+        "invoice.payment_failed",
+        "payment_intent.succeeded",
+        "payment_intent.payment_failed"
+      ]
+    }
+  },
+  "rootScripts": {
+    "base": ["build", "check", "dev", "doctor", "fix", "prepare", "typecheck"],
+    "electron": ["build:desktop", "dev:desktop"]
+  },
+  "validation": {
+    "allSelections": 33,
+    "installLintTypecheck": [
+      "marketing-only",
+      "next-plain",
+      "next-convex",
+      "next-auth",
+      "next-stripe",
+      "tanstack-plain",
+      "tanstack-convex",
+      "tanstack-auth",
+      "tanstack-stripe"
+    ],
+    "electronBuild": ["next-stripe-electron", "tanstack-stripe-electron"],
+    "completeBuild": ["next-complete", "tanstack-complete"]
+  }
+}

@@ -3,16 +3,13 @@
 import { tryCatch } from "@repo/shared";
 import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
-import { action, internalAction } from "../_generated/server";
+import { action } from "../_generated/server";
+import { AUTH_ERROR_CODE } from "../auth/constants";
 import { requireAuthId } from "../auth/helpers";
 import { authKit } from "../auth/index";
-import {
-  AUTH_ERROR_CODE,
-  ERROR_CODE,
-  ERROR_MESSAGE,
-} from "../errors/constants";
+import { cancelUserSubscription } from "../billing/actions";
+import { ERROR_CODE, ERROR_MESSAGE } from "../errors/constants";
 import { rateLimiter } from "../rateLimiter";
-import { cancelUserSubscription } from "./helpers";
 import { userSchema } from "./validation";
 
 /**
@@ -176,40 +173,6 @@ export const deleteUser = action({
         );
       }
     }
-
-    return { success: true };
-  },
-});
-
-/**
- * Internal action: Delete user and cancel subscription
- * Called by webhook handler when user is deleted from WorkOS
- */
-export const deleteUserWithSubscription = internalAction({
-  args: {
-    authId: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const user = await ctx.runQuery(internal.users.queries.getUserByAuthId, {
-      authId: args.authId,
-    });
-
-    // User already deleted - idempotency
-    if (!user) {
-      console.warn(
-        "[deleteUserWithSubscription] User already deleted:",
-        args.authId
-      );
-      return { success: true };
-    }
-
-    // Cancel subscription if user has one
-    await cancelUserSubscription(ctx, user._id);
-
-    // Delete from DB
-    await ctx.runMutation(internal.users.mutations.deleteUser, {
-      authId: args.authId,
-    });
 
     return { success: true };
   },

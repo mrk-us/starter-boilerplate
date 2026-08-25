@@ -2,7 +2,8 @@ import type { StripeEventHandlers } from "@convex-dev/stripe";
 import { ConvexError } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
-import { ERROR_MESSAGE, USER_ERROR_CODE } from "../errors/constants";
+import { ERROR_MESSAGE } from "../errors/constants";
+import { USER_ERROR_CODE } from "../users/constants";
 import { STRIPE_PRICE_LOOKUP_KEY } from "./constants";
 
 /**

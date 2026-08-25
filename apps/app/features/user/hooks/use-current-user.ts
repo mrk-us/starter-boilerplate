@@ -9,7 +9,7 @@ export function useCurrentUser() {
   const { isLoading: isAuthLoading, isAuthenticated } = useConvexAuth();
 
   const { data: user, isPending } = useQuery({
-    ...convexQuery(api.users.queries.getUserWithSubscription, {}),
+    ...convexQuery(api.users.queries.getCurrentUser, {}),
     enabled: isAuthenticated,
   });
 

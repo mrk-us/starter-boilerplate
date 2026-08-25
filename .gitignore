@@ -13,6 +13,11 @@ coverage
 .next/
 out/
 
+# tanstack start / nitro
+.output/
+.nitro/
+.tanstack/
+
 # production
 build
 dist
@@ -20,12 +25,16 @@ dist
 # turbo
 .turbo
 
+# local starter provisioning progress
+.starter/setup-state.json
+
 # misc
 .DS_Store
 *.pem
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env*example
 
 # vercel
 .vercel

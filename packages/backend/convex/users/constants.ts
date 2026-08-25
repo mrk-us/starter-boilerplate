@@ -1,14 +1,9 @@
-/*
- * Profile picture configuration
+/**
+ * User error codes
  */
-export const PROFILE_PICTURE_VALIDATION = {
-  allowedExtensions: [".jpg", ".jpeg", ".png", ".gif", ".webp"] as const,
-  allowedTypes: ["image/jpeg", "image/png", "image/gif", "image/webp"] as const,
-  maxSizeBytes: 5 * 1024 * 1024, // 5MB
-  maxSizeMB: 5,
+export const USER_ERROR_CODE = {
+  USER_CREATE_FAILED: "USER_CREATE_FAILED",
+  USER_DELETE_FAILED: "USER_DELETE_FAILED",
+  USER_NOT_FOUND: "USER_NOT_FOUND",
+  USER_UPDATE_FAILED: "USER_UPDATE_FAILED",
 } as const;
-
-/*
- * Profile picture URL expiration in seconds
- */
-export const PROFILE_PICTURE_URL_EXPIRY = 12 * 60 * 60; // 12 hours

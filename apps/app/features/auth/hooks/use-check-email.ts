@@ -2,11 +2,8 @@
 
 import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
-import {
-  getErrorMessage,
-  getOAuthProvidersMessage,
-  tryCatch,
-} from "@repo/shared";
+import { getOAuthProvidersMessage } from "@repo/backend/convex/auth/oauth";
+import { getErrorMessage, tryCatch } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
 
 interface CheckEmailData {

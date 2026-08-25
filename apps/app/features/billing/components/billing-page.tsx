@@ -11,7 +11,7 @@ import {
   ProPlanCard,
 } from "@/features/billing/components";
 import { useSubscription } from "@/features/billing/hooks";
-import { SectionSpinner } from "@/features/shared/components";
+import { SectionSpinner } from "@/features/shared/components/section-spinner";
 
 export function BillingPage() {
   const { plan, interval, isLoading } = useSubscription();

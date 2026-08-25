@@ -1,41 +1,76 @@
-import { ConvexError } from "convex/values";
 import { UNKNOWN_ERROR } from "../errors";
 import type { AppError } from "../errors/types";
 
 const CONVEX_ERROR_PATTERN = /ConvexError: ({.*})/;
 
-/** WorkOS error structure */
-interface WorkOSErrorShape {
+/** Structured API error response: a top-level message and/or an errors[] array */
+interface ApiErrorShape {
   code?: string;
   errors?: Array<{ code: string; message: string }>;
   message?: string;
 }
 
-/** Check if error looks like a WorkOS API error */
-function isWorkOSError(error: unknown): error is WorkOSErrorShape {
+interface DataErrorShape {
+  data: {
+    code?: string;
+    message?: string;
+  };
+}
+
+function isDataError(error: unknown): error is DataErrorShape {
+  if (!(error && typeof error === "object" && "data" in error)) {
+    return false;
+  }
+  const { data } = error;
+  return Boolean(data && typeof data === "object");
+}
+
+/** Check if error looks like a structured API error */
+function isApiError(error: unknown): error is ApiErrorShape {
   if (!error || typeof error !== "object") {
     return false;
   }
-  const err = error as WorkOSErrorShape;
+  const err = error as ApiErrorShape;
   return Array.isArray(err.errors) || typeof err.message === "string";
 }
 
 /**
  * Parse any error into a typed AppError
- * Handles: ConvexError, WorkOS errors, HTTP client errors, standard Error, unknown
+ * Handles: ConvexError, structured API errors, HTTP client errors, standard Error, unknown
  */
 export function parseAppError(error: unknown): AppError {
-  // 1. ConvexError from Convex SDK (has .data property)
-  if (error instanceof ConvexError) {
-    const data = error.data as { code?: string; message?: string };
+  // 1. Structured errors that expose their payload through `.data`.
+  if (isDataError(error)) {
     return {
-      code: data.code ?? UNKNOWN_ERROR.code,
-      message: data.message ?? UNKNOWN_ERROR.message,
+      code: error.data.code ?? UNKNOWN_ERROR.code,
+      message: error.data.message ?? UNKNOWN_ERROR.message,
     };
   }
 
-  // 2. WorkOS API errors (have errors[] array or message property)
-  if (isWorkOSError(error)) {
+  // 2. ConvexError relayed by the HTTP client, which flattens it into a plain
+  // Error whose message embeds the original payload. This has to be tried
+  // before the structured-API shape check, which matches any object with a
+  // message.
+  if (error instanceof Error) {
+    const match = error.message.match(CONVEX_ERROR_PATTERN);
+    if (match?.[1]) {
+      try {
+        const parsed = JSON.parse(match[1]) as {
+          code?: string;
+          message?: string;
+        };
+        return {
+          code: parsed.code ?? UNKNOWN_ERROR.code,
+          message: parsed.message ?? UNKNOWN_ERROR.message,
+        };
+      } catch {
+        // JSON parse failed, fall through
+      }
+    }
+  }
+
+  // 3. Structured API errors (have errors[] array or message property)
+  if (isApiError(error)) {
     // Check nested errors array first (more specific)
     const [nestedError] = error.errors ?? [];
     if (nestedError) {
@@ -53,28 +88,12 @@ export function parseAppError(error: unknown): AppError {
     }
   }
 
-  // 3. ConvexError from HTTP client (embedded in error message as JSON)
+  // 4. Standard Error
   if (error instanceof Error) {
-    const match = error.message.match(CONVEX_ERROR_PATTERN);
-    if (match?.[1]) {
-      try {
-        const parsed = JSON.parse(match[1]) as {
-          code?: string;
-          message?: string;
-        };
-        return {
-          code: parsed.code ?? UNKNOWN_ERROR.code,
-          message: parsed.message ?? UNKNOWN_ERROR.message,
-        };
-      } catch {
-        // JSON parse failed, fall through
-      }
-    }
-    // Standard Error
     return { code: UNKNOWN_ERROR.code, message: error.message };
   }
 
-  // 4. Unknown error
+  // 5. Unknown error
   return UNKNOWN_ERROR;
 }
 

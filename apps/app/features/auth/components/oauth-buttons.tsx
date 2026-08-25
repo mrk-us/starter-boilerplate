@@ -12,9 +12,8 @@ export function OAuthButtons() {
     startTransition(async () => {
       const authorizationUrl = await getGoogleOAuthAuthorizationUrl();
 
-      // A top-level redirect rather than a popup. Popups are blocked by
-      // browsers, and the Electron shell hands `window.open` to the system
-      // browser, which would strand the session cookie there.
+      // A top-level redirect keeps the authorization flow in the current
+      // browser session. Popups can be blocked or open in another session.
       window.location.assign(authorizationUrl);
     });
   };

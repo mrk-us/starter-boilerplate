@@ -1,12 +1,9 @@
-import { ComponentExample } from "./components/component-example";
+import { APP_NAME } from "@repo/config";
 
 export default function Home() {
   return (
-    <div>
-      <main>
-        Web
-        <ComponentExample />
-      </main>
-    </div>
+    <main className="mx-auto flex min-h-screen max-w-5xl items-center justify-center p-6">
+      <h1>{APP_NAME}</h1>
+    </main>
   );
 }

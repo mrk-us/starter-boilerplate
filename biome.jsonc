@@ -10,6 +10,7 @@
     "includes": [
       "!!.agents/skills",
       "!!.claude/skills",
+      "!!.starter/**/routeTree.gen.ts",
       "!!packages/backend/convex/_generated"
     ]
   },
@@ -59,6 +60,22 @@
       }
     },
     {
+      "includes": [
+        ".starter/units/app-tanstack/**/*.tsx",
+        ".starter/variants/app-tanstack/**/*.tsx"
+      ],
+      "linter": {
+        "rules": {
+          "performance": {
+            "noImgElement": "off"
+          },
+          "style": {
+            "noHeadElement": "off"
+          }
+        }
+      }
+    },
+    {
       "includes": ["packages/ui/src/components/label.tsx"],
       "linter": {
         "rules": {
@@ -86,6 +103,43 @@
             "noNoninteractiveElementInteractions": "off",
             "useKeyWithClickEvents": "off",
             "useSemanticElements": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/ui/src/components/popover.tsx"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            // The two event handlers communicate through a ref across events.
+            "noUnnecessaryConditions": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "apps/app/features/billing/components/checkout-success-handler.tsx"
+      ],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            // The callback sets the ref after its first execution.
+            "noUnnecessaryConditions": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        ".starter/units/app-tanstack/src/features/billing/components/checkout-success-handler.tsx"
+      ],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            // The callback sets the ref after its first execution.
+            "noUnnecessaryConditions": "off"
           }
         }
       }

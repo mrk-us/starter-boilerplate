@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { UserData } from "@/features/shared/components";
+import { UserData } from "@/features/user/components/user-data";
 
 export const metadata: Metadata = {
   title: "Dashboard",

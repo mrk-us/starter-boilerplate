@@ -1,11 +1,7 @@
 import { tryCatch } from "@repo/shared";
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation, mutation } from "../_generated/server";
-import { requireUser } from "../auth/helpers";
-import { ERROR_CODE } from "../errors/constants";
-import { r2 } from "../r2";
-import { PROFILE_PICTURE_VALIDATION } from "./constants";
 
 /**
  * Upsert user - create if doesn't exist, update if exists
@@ -48,38 +44,6 @@ export const upsertUser = mutation({
 });
 
 /**
- * Internal mutation: Update user's email
- */
-export const updateUserEmail = internalMutation({
-  args: {
-    authId: v.string(),
-    email: v.string(),
-  },
-  handler: async (ctx, args) => {
-    // Get the user from the database (direct db query)
-    const user = await ctx.db
-      .query("users")
-      .withIndex("authId", (q) => q.eq("authId", args.authId))
-      .unique();
-
-    // If the user is not found, log an error
-    if (!user) {
-      console.error("[updateUserEmail] User not found:", args.authId);
-      // Return failure
-      return { success: false };
-    }
-
-    // Update the user's email in the database
-    await ctx.db.patch(user._id, {
-      email: args.email,
-    });
-
-    // Return success
-    return { success: true };
-  },
-});
-
-/**
  * Internal mutation: Update user's name
  */
 export const updateUserName = internalMutation({
@@ -106,66 +70,6 @@ export const updateUserName = internalMutation({
     });
 
     // Return success
-    return { success: true };
-  },
-});
-
-/**
- * Update the current user's profile picture (R2 storage)
- * Validates file, deletes old picture if exists, then saves new key
- */
-export const updateProfilePicture = mutation({
-  args: {
-    key: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const user = await requireUser(ctx);
-
-    // Validate uploaded file metadata (server-side security check)
-    const metadata = await r2.getMetadata(ctx, args.key);
-
-    if (metadata) {
-      // Validate content type
-      const allowedTypes =
-        PROFILE_PICTURE_VALIDATION.allowedTypes as readonly string[];
-
-      if (
-        metadata.contentType &&
-        !allowedTypes.includes(metadata.contentType)
-      ) {
-        // Delete invalid file
-        await tryCatch(r2.deleteObject(ctx, args.key));
-        throw new ConvexError({
-          code: ERROR_CODE.INVALID_INPUT,
-          message:
-            "Invalid file type. Please upload a JPEG, PNG, GIF, or WebP image.",
-        });
-      }
-
-      // Validate file size
-      if (
-        metadata.size &&
-        metadata.size > PROFILE_PICTURE_VALIDATION.maxSizeBytes
-      ) {
-        // Delete invalid file
-        await tryCatch(r2.deleteObject(ctx, args.key));
-        throw new ConvexError({
-          code: ERROR_CODE.INVALID_INPUT,
-          message: `File size must be less than ${PROFILE_PICTURE_VALIDATION.maxSizeMB}MB.`,
-        });
-      }
-    }
-
-    // Delete old profile picture from R2 (non-critical)
-    if (user.profilePictureKey) {
-      await tryCatch(r2.deleteObject(ctx, user.profilePictureKey));
-    }
-
-    // Save new key
-    await ctx.db.patch(user._id, {
-      profilePictureKey: args.key,
-    });
-
     return { success: true };
   },
 });
@@ -206,44 +110,6 @@ export const completeSetupInternal = internalMutation({
 });
 
 /**
- * Remove the current user's profile picture from R2
- */
-export const removeProfilePicture = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const user = await requireUser(ctx);
-
-    // Delete from R2 (non-critical)
-    if (user.profilePictureKey) {
-      await tryCatch(r2.deleteObject(ctx, user.profilePictureKey));
-    }
-
-    // Clear the key
-    await ctx.db.patch(user._id, {
-      profilePictureKey: undefined,
-    });
-
-    return { success: true };
-  },
-});
-
-/**
- * Internal mutation: Update user's Stripe customer ID
- */
-export const updateStripeCustomerId = internalMutation({
-  args: {
-    stripeCustomerId: v.string(),
-    userId: v.id("users"),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.userId, {
-      stripeCustomerId: args.stripeCustomerId,
-    });
-    return { success: true };
-  },
-});
-
-/**
  * Internal mutation: Delete user
  */
 export const deleteUser = internalMutation({
@@ -260,11 +126,6 @@ export const deleteUser = internalMutation({
     if (!user) {
       console.warn("[deleteUser] User not found:", args.authId);
       return { success: true };
-    }
-
-    // Delete profile picture from R2 (non-critical)
-    if (user.profilePictureKey) {
-      await tryCatch(r2.deleteObject(ctx, user.profilePictureKey));
     }
 
     // Delete user from db

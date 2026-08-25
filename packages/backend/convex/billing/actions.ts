@@ -1,18 +1,19 @@
 "use node";
 
+import { APP_URL } from "@repo/config";
 import { tryCatch } from "@repo/shared";
 import { ConvexError, v } from "convex/values";
 import Stripe from "stripe";
 import { components, internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import type { ActionCtx } from "../_generated/server";
-import { action, internalAction } from "../_generated/server";
+import { action } from "../_generated/server";
+import { ERROR_CODE, ERROR_MESSAGE } from "../errors/constants";
 import {
   BILLING_ERROR_CODE,
-  ERROR_CODE,
-  ERROR_MESSAGE,
-} from "../errors/constants";
-import { STRIPE_API_VERSION, STRIPE_PRICE_LOOKUP_KEY } from "./constants";
+  STRIPE_API_VERSION,
+  STRIPE_PRICE_LOOKUP_KEY,
+} from "./constants";
 import { createSubscriptionHash } from "./helpers";
 import { stripe } from "./index";
 
@@ -114,12 +115,45 @@ async function getOrCreateStripeCustomerWithCache(
   }
 
   // Cache the customer ID on the user record for future calls
-  await ctx.runMutation(internal.users.mutations.updateStripeCustomerId, {
+  await ctx.runMutation(internal.billing.mutations.updateStripeCustomerId, {
     stripeCustomerId: customerId,
     userId: userInfo._id,
   });
 
   return customerId;
+}
+
+/**
+ * Cancel user's subscription if they have one (non-blocking)
+ * Used during account deletion, where a failed cancellation must not block
+ * the deletion itself.
+ */
+export async function cancelUserSubscription(
+  ctx: ActionCtx,
+  userId: string
+): Promise<void> {
+  const subscriptions = await ctx.runQuery(
+    components.stripe.public.listSubscriptionsByUserId,
+    { userId }
+  );
+
+  const activeSubscription = subscriptions.find(
+    (sub: { status: string }) =>
+      sub.status === "active" || sub.status === "trialing"
+  );
+
+  if (activeSubscription) {
+    const stripeClient = getStripeClient();
+    const { error: cancelError } = await tryCatch(
+      stripeClient.subscriptions.cancel(activeSubscription.stripeSubscriptionId)
+    );
+    if (cancelError) {
+      console.warn(
+        "[cancelUserSubscription] Failed to cancel subscription:",
+        cancelError.message
+      );
+    }
+  }
 }
 
 /**
@@ -137,7 +171,7 @@ export const generateCheckoutLink = action({
   handler: async (ctx, args) => {
     // Get current user (throws if not authenticated)
     const userInfo = await ctx.runQuery(
-      internal.users.queries.requireCurrentUserForBilling
+      internal.billing.queries.requireCurrentUserForBilling
     );
 
     // Parallelize: Get subscription hash + price ID + customer ID
@@ -191,7 +225,7 @@ export const generateCustomerPortalUrl = action({
   handler: async (ctx, args) => {
     // Get current user (throws if not authenticated)
     const userInfo = await ctx.runQuery(
-      internal.users.queries.requireCurrentUserForBilling
+      internal.billing.queries.requireCurrentUserForBilling
     );
 
     // Get or create Stripe customer with caching
@@ -199,10 +233,13 @@ export const generateCustomerPortalUrl = action({
 
     // Create customer portal session using Stripe SDK directly
     const stripeClient = getStripeClient();
+    const portalConfigurationId = process.env.STRIPE_PORTAL_CONFIGURATION_ID;
     const portalSession = await stripeClient.billingPortal.sessions.create({
+      ...(portalConfigurationId
+        ? { configuration: portalConfigurationId }
+        : {}),
       customer: customerId,
-      return_url:
-        args.returnUrl ?? process.env.SITE_URL ?? "http://localhost:3000",
+      return_url: args.returnUrl ?? APP_URL,
     });
 
     return { url: portalSession.url };
@@ -221,7 +258,7 @@ export const cancelCurrentSubscription = action({
   handler: async (ctx, args) => {
     // Get current user (throws if not authenticated)
     const userInfo = await ctx.runQuery(
-      internal.users.queries.requireCurrentUserForBilling
+      internal.billing.queries.requireCurrentUserForBilling
     );
 
     // Get user's active subscription from the Stripe component
@@ -263,58 +300,6 @@ export const cancelCurrentSubscription = action({
 });
 
 /**
- * Internal: Cancel subscription by user ID
- * Used by deleteUserInternal when we don't have auth context (e.g. webhook)
- */
-export const cancelSubscriptionByUserId = internalAction({
-  args: {
-    cancelImmediately: v.optional(v.boolean()),
-    userId: v.id("users"),
-  },
-  handler: async (ctx, args) => {
-    // Get user's active subscription from the Stripe component
-    const subscriptions = await ctx.runQuery(
-      components.stripe.public.listSubscriptionsByUserId,
-      { userId: args.userId }
-    );
-
-    const activeSubscription = subscriptions.find(
-      (sub: { status: string }) =>
-        sub.status === "active" || sub.status === "trialing"
-    );
-
-    // No subscription to cancel - this is fine (user may never have subscribed)
-    if (!activeSubscription) {
-      return { success: true };
-    }
-
-    // Cancel the subscription
-    const stripeClient = getStripeClient();
-    const { error } = await tryCatch(
-      args.cancelImmediately
-        ? stripeClient.subscriptions.cancel(
-            activeSubscription.stripeSubscriptionId
-          )
-        : stripeClient.subscriptions.update(
-            activeSubscription.stripeSubscriptionId,
-            { cancel_at_period_end: true }
-          )
-    );
-
-    if (error) {
-      console.error(
-        "[cancelSubscriptionByUserId] Failed to cancel subscription:",
-        error.message
-      );
-      return { success: false };
-    }
-
-    return { success: true };
-  },
-  returns: v.object({ success: v.boolean() }),
-});
-
-/**
  * Reactivate a subscription that was set to cancel at period end
  */
 export const reactivateSubscription = action({
@@ -322,7 +307,7 @@ export const reactivateSubscription = action({
   handler: async (ctx) => {
     // Get current user (throws if not authenticated)
     const userInfo = await ctx.runQuery(
-      internal.users.queries.requireCurrentUserForBilling
+      internal.billing.queries.requireCurrentUserForBilling
     );
 
     // Get user's subscription that's set to cancel
@@ -355,46 +340,6 @@ export const reactivateSubscription = action({
 });
 
 /**
- * Get available prices for display
- */
-export const getAvailablePrices = action({
-  args: {},
-  handler: async () => {
-    const stripeClient = getStripeClient();
-
-    // Get prices by lookup keys
-    const prices = await stripeClient.prices.list({
-      active: true,
-      expand: ["data.product"],
-      lookup_keys: [
-        STRIPE_PRICE_LOOKUP_KEY.PRO_MONTHLY,
-        STRIPE_PRICE_LOOKUP_KEY.PRO_YEARLY,
-      ],
-    });
-
-    return prices.data.map((price) => ({
-      currency: price.currency,
-      id: price.id,
-      interval: price.recurring?.interval ?? null,
-      lookupKey: price.lookup_key,
-      productId:
-        typeof price.product === "string" ? price.product : price.product.id,
-      unitAmount: price.unit_amount,
-    }));
-  },
-  returns: v.array(
-    v.object({
-      currency: v.string(),
-      id: v.string(),
-      interval: v.union(v.string(), v.null()),
-      lookupKey: v.union(v.string(), v.null()),
-      productId: v.string(),
-      unitAmount: v.union(v.number(), v.null()),
-    })
-  ),
-});
-
-/**
  * Sync subscription status from Stripe API.
  * Called when user returns from checkout and webhook hasn't arrived yet.
  * Fetches directly from Stripe to verify subscription exists.
@@ -408,7 +353,7 @@ export const syncSubscriptionFromStripe = action({
   ): Promise<{ success: boolean; hasActiveSubscription: boolean }> => {
     // Get current user (throws if not authenticated)
     const userInfo = await ctx.runQuery(
-      internal.users.queries.requireCurrentUserForBilling
+      internal.billing.queries.requireCurrentUserForBilling
     );
 
     // Use cached customer ID if available, otherwise lookup by email

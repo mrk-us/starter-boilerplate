@@ -1,5 +1,5 @@
 {
-  "name": "starter-monorepo-workos-stripe",
+  "name": "starter-monorepo",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -10,7 +10,7 @@
     "build:desktop": "turbo run build:desktop --filter=desktop",
     "check": "ultracite check",
     "dev": "turbo run dev",
-    "dev:desktop": "turbo run dev:next dev:electron --filter=app --filter=desktop",
+    "dev:desktop": "turbo run dev:app dev:electron --filter=app --filter=desktop",
     "doctor": "ultracite doctor",
     "fix": "ultracite fix",
     "prepare": "husky",
@@ -19,6 +19,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.10",
     "@repo/typescript-config": "workspace:*",
+    "convex": "^1.45.0",
     "husky": "^9.1.7",
     "turbo": "^2.10.11",
     "typescript": "^7.0.2",
