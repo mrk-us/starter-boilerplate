@@ -848,30 +848,6 @@ const writePreset = async (
   });
 };
 
-const formatGeneratedJson = async (
-  destination: string,
-  workspaces: string[]
-): Promise<void> => {
-  const files = [
-    ".starter/preset.json",
-    "biome.jsonc",
-    "package.json",
-    "turbo.json",
-    ...workspaces.map((workspace) => `${workspace}/package.json`),
-  ];
-  await commandOutput(
-    [
-      join(REPOSITORY_ROOT, "node_modules/.bin/biome"),
-      "format",
-      "--write",
-      "--config-path",
-      join(REPOSITORY_ROOT, "biome.jsonc"),
-      ...files,
-    ],
-    destination
-  );
-};
-
 interface CopyCandidate {
   destination: string;
   source: string;
@@ -988,7 +964,6 @@ export const materialize = async (
   await writeTurboConfig(destination, selection);
   await writeReadme(destination, selection);
   await writePreset(destination, selection);
-  await formatGeneratedJson(destination, workspaces);
 
   if (options.initializeGit !== false) {
     await commandOutput(["git", "init", "--quiet"], destination);
