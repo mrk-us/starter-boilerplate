@@ -33,6 +33,7 @@ export interface ResolvedSelection extends Selection {
 
 export interface MaterializeOptions {
   biomeBin?: string;
+  biomeConfig?: string;
   destination?: string;
   initializeGit?: boolean;
   selection: Selection;
@@ -852,7 +853,8 @@ const writePreset = async (
 const formatGeneratedJson = async (
   destination: string,
   workspaces: string[],
-  biomeBin: string
+  biomeBin: string,
+  biomeConfig: string
 ): Promise<void> => {
   const files = [
     ".starter/preset.json",
@@ -862,14 +864,7 @@ const formatGeneratedJson = async (
     ...workspaces.map((workspace) => `${workspace}/package.json`),
   ];
   await commandOutput(
-    [
-      biomeBin,
-      "format",
-      "--write",
-      "--config-path",
-      join(REPOSITORY_ROOT, "biome.jsonc"),
-      ...files,
-    ],
+    [biomeBin, "format", "--write", "--config-path", biomeConfig, ...files],
     destination
   );
 };
@@ -993,7 +988,8 @@ export const materialize = async (
   await formatGeneratedJson(
     destination,
     workspaces,
-    options.biomeBin ?? join(REPOSITORY_ROOT, "node_modules/.bin/biome")
+    options.biomeBin ?? join(REPOSITORY_ROOT, "node_modules/.bin/biome"),
+    options.biomeConfig ?? join(REPOSITORY_ROOT, "biome.jsonc")
   );
 
   if (options.initializeGit !== false) {
@@ -1006,37 +1002,57 @@ export const materialize = async (
 const parseCli = (): {
   all: boolean;
   biomeBin?: string;
+  biomeConfig?: string;
   destination?: string;
   id?: string;
 } => {
   const args = process.argv.slice(2);
-  const parsed: { all: boolean; destination?: string; id?: string } = {
+  const parsed: {
+    all: boolean;
+    biomeBin?: string;
+    biomeConfig?: string;
+    destination?: string;
+    id?: string;
+  } = {
     all: false,
   };
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
-    if (argument === "--all") {
-      parsed.all = true;
-    } else if (argument === "--biome-bin") {
-      const biomeBin = args[index + 1];
-      if (!biomeBin) {
-        throw new Error("--biome-bin requires a path.");
-      }
-      parsed.biomeBin = biomeBin;
-      index += 1;
-    } else if (argument === "--id") {
-      parsed.id = args[index + 1];
-      index += 1;
-    } else if (argument === "--out") {
-      parsed.destination = args[index + 1];
-      index += 1;
-    } else if (argument === "--list") {
-      for (const selection of allValidSelections()) {
-        console.log(selection.id);
-      }
-      process.exit(0);
-    } else {
-      throw new Error(`Unknown argument: ${argument}`);
+    const value = args[index + 1];
+    switch (argument) {
+      case "--all":
+        parsed.all = true;
+        break;
+      case "--biome-bin":
+        if (!value) {
+          throw new Error("--biome-bin requires a path.");
+        }
+        parsed.biomeBin = value;
+        index += 1;
+        break;
+      case "--biome-config":
+        if (!value) {
+          throw new Error("--biome-config requires a path.");
+        }
+        parsed.biomeConfig = value;
+        index += 1;
+        break;
+      case "--id":
+        parsed.id = value;
+        index += 1;
+        break;
+      case "--list":
+        for (const selection of allValidSelections()) {
+          console.log(selection.id);
+        }
+        process.exit(0);
+        break;
+      case "--out":
+        parsed.destination = value;
+        index += 1;
+        break;
+      default:
+        throw new Error(`Unknown argument: ${argument}`);
     }
   }
   return parsed;
@@ -1055,6 +1071,7 @@ const runCli = async (): Promise<void> => {
       selections.map((candidateSelection) =>
         materialize({
           ...(cli.biomeBin ? { biomeBin: cli.biomeBin } : {}),
+          ...(cli.biomeConfig ? { biomeConfig: cli.biomeConfig } : {}),
           destination: join(allDestination, candidateSelection.id),
           selection: candidateSelection,
         })
@@ -1075,6 +1092,7 @@ const runCli = async (): Promise<void> => {
   }
   const project = await materialize({
     ...(cli.biomeBin ? { biomeBin: cli.biomeBin } : {}),
+    ...(cli.biomeConfig ? { biomeConfig: cli.biomeConfig } : {}),
     destination: cli.destination,
     selection,
   });
