@@ -32,6 +32,7 @@ export interface ResolvedSelection extends Selection {
 }
 
 export interface MaterializeOptions {
+  biomeBin?: string;
   destination?: string;
   initializeGit?: boolean;
   selection: Selection;
@@ -848,6 +849,31 @@ const writePreset = async (
   });
 };
 
+const formatGeneratedJson = async (
+  destination: string,
+  workspaces: string[],
+  biomeBin: string
+): Promise<void> => {
+  const files = [
+    ".starter/preset.json",
+    "biome.jsonc",
+    "package.json",
+    "turbo.json",
+    ...workspaces.map((workspace) => `${workspace}/package.json`),
+  ];
+  await commandOutput(
+    [
+      biomeBin,
+      "format",
+      "--write",
+      "--config-path",
+      join(REPOSITORY_ROOT, "biome.jsonc"),
+      ...files,
+    ],
+    destination
+  );
+};
+
 interface CopyCandidate {
   destination: string;
   source: string;
@@ -964,6 +990,11 @@ export const materialize = async (
   await writeTurboConfig(destination, selection);
   await writeReadme(destination, selection);
   await writePreset(destination, selection);
+  await formatGeneratedJson(
+    destination,
+    workspaces,
+    options.biomeBin ?? join(REPOSITORY_ROOT, "node_modules/.bin/biome")
+  );
 
   if (options.initializeGit !== false) {
     await commandOutput(["git", "init", "--quiet"], destination);
@@ -972,7 +1003,12 @@ export const materialize = async (
   return { destination, selection, workspaces };
 };
 
-const parseCli = (): { all: boolean; destination?: string; id?: string } => {
+const parseCli = (): {
+  all: boolean;
+  biomeBin?: string;
+  destination?: string;
+  id?: string;
+} => {
   const args = process.argv.slice(2);
   const parsed: { all: boolean; destination?: string; id?: string } = {
     all: false,
@@ -981,6 +1017,13 @@ const parseCli = (): { all: boolean; destination?: string; id?: string } => {
     const argument = args[index];
     if (argument === "--all") {
       parsed.all = true;
+    } else if (argument === "--biome-bin") {
+      const biomeBin = args[index + 1];
+      if (!biomeBin) {
+        throw new Error("--biome-bin requires a path.");
+      }
+      parsed.biomeBin = biomeBin;
+      index += 1;
     } else if (argument === "--id") {
       parsed.id = args[index + 1];
       index += 1;
@@ -1011,6 +1054,7 @@ const runCli = async (): Promise<void> => {
     const projects = await Promise.all(
       selections.map((candidateSelection) =>
         materialize({
+          ...(cli.biomeBin ? { biomeBin: cli.biomeBin } : {}),
           destination: join(allDestination, candidateSelection.id),
           selection: candidateSelection,
         })
@@ -1030,6 +1074,7 @@ const runCli = async (): Promise<void> => {
     throw new Error(`Unknown selection: ${cli.id}`);
   }
   const project = await materialize({
+    ...(cli.biomeBin ? { biomeBin: cli.biomeBin } : {}),
     destination: cli.destination,
     selection,
   });
