@@ -3,6 +3,7 @@ import { lstat, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn } from "bun";
+import { STRIPE_API_VERSION } from "../packages/backend/convex/billing/constants";
 import {
   allValidSelections,
   type MaterializedProject,
@@ -278,6 +279,22 @@ describe("materialization", () => {
     expect(fontSource).not.toContain("--font-inter");
     expect(sharedStyles).toContain("--typeset-font-body: var(--font-sans)");
     expect(sharedStyles).toContain("--typeset-font-heading: var(--font-sans)");
+  });
+
+  test.each(
+    allValidSelections()
+      .filter(({ payments }) => payments)
+      .map(({ id }) => id)
+  )("%s writes the Stripe API contract to its preset", async (id) => {
+    const project = projects.get(id);
+    expect(project).toBeDefined();
+    if (!project) {
+      return;
+    }
+    const preset = JSON.parse(
+      await readFile(join(project.destination, ".starter/preset.json"), "utf8")
+    );
+    expect(preset.provisioning.stripe.apiVersion).toBe(STRIPE_API_VERSION);
   });
 
   test.each(allValidSelections().map(({ id }) => id))(
