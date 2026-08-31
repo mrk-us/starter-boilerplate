@@ -27,7 +27,7 @@ export const SUBSCRIPTION_INTERVAL = {
 /**
  * Stripe API contract used by direct calls, component calls, and webhooks.
  */
-export const STRIPE_API_VERSION = "2026-07-29.dahlia" as const;
+export const STRIPE_API_VERSION = "2026-08-26.dahlia" as const;
 
 /**
  * Stripe Price Lookup Keys
