@@ -624,38 +624,6 @@ const writeEnvironmentExamples = async (
   }
 };
 
-const stripMarkerBlock = (
-  contents: string,
-  marker: string,
-  keep: boolean
-): string => {
-  if (keep) {
-    return contents;
-  }
-  const start = `<!-- BEGIN:${marker} -->`;
-  const end = `<!-- END:${marker} -->`;
-  const startIndex = contents.indexOf(start);
-  const endIndex = contents.indexOf(end);
-  if (startIndex === -1 || endIndex === -1) {
-    return contents;
-  }
-  return `${contents.slice(0, startIndex)}${contents.slice(endIndex + end.length)}`;
-};
-
-const stripConvexBlock = (contents: string, keep: boolean): string => {
-  if (keep) {
-    return contents;
-  }
-  const start = "<!-- convex-ai-start -->";
-  const end = "<!-- convex-ai-end -->";
-  const startIndex = contents.indexOf(start);
-  const endIndex = contents.indexOf(end);
-  if (startIndex === -1 || endIndex === -1) {
-    return contents;
-  }
-  return `${contents.slice(0, startIndex)}${contents.slice(endIndex + end.length)}`;
-};
-
 const workspaceDescription = (selection: ResolvedSelection): string => {
   const lines: string[] = [];
   if (selection.app) {
@@ -691,15 +659,40 @@ const writeAgentInstructions = async (
   selection: ResolvedSelection
 ): Promise<void> => {
   let contents = await readFile(join(REPOSITORY_ROOT, "AGENTS.md"), "utf8");
-  const keepsNextRules = !selection.app || selection.framework === "next";
-  contents = stripMarkerBlock(contents, "nextjs-agent-rules", keepsNextRules);
-  contents = stripConvexBlock(contents, selection.database);
   contents = contents.replace(
     REPOSITORY_SECTION_PATTERN,
     `## Repository\n\nThis is a Bun-managed Turborepo.\n\n${workspaceDescription(selection)}\n\n## Core principles`
   );
   await writeText(join(destination, "AGENTS.md"), `${contents.trimEnd()}\n`);
   await symlink("AGENTS.md", join(destination, "CLAUDE.md"));
+
+  const scopedInstructions: [string, string][] = [];
+  if (selection.app && selection.framework) {
+    scopedInstructions.push(["apps/app", selection.framework]);
+  }
+  if (selection.marketing) {
+    scopedInstructions.push(["apps/web", "next"]);
+  }
+  if (selection.electron) {
+    scopedInstructions.push(["apps/desktop", "electron"]);
+  }
+  if (selection.database) {
+    scopedInstructions.push(["packages/backend", "convex"]);
+  }
+  if (selection.auth) {
+    scopedInstructions.push(["packages/email", "email"]);
+  }
+
+  await Promise.all(
+    scopedInstructions.map(async ([workspace, seed]) => {
+      const workspaceRoot = join(destination, workspace);
+      await copyPath(
+        join(REPOSITORY_ROOT, ".starter/agent-guidance", seed, "AGENTS.md"),
+        join(workspaceRoot, "AGENTS.md")
+      );
+      await symlink("AGENTS.md", join(workspaceRoot, "CLAUDE.md"));
+    })
+  );
 };
 
 const writeBiomeConfig = async (

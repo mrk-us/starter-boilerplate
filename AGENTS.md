@@ -1,19 +1,13 @@
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
-
-This version has breaking changes—APIs, conventions, and file structure may differ from your training data. Before relying on Next.js behavior, read the relevant guide in `node_modules/next/dist/docs/` and heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
-
 # Agent rules
 
 ## Repository
 
 This is a Bun-managed Turborepo.
 
-- `apps/app` - Authenticated Next.js application.
-- `apps/desktop` - Electron desktop shell for the authenticated application.
-- `apps/web` - Next.js marketing site.
-- `packages/backend` - Convex backend, authentication, billing, storage, and email delivery.
+- `apps/app` - Product application.
+- `apps/desktop` - Desktop shell for the product application.
+- `apps/web` - Marketing site.
+- `packages/backend` - Backend functions and schema.
 - `packages/config` - Shared configuration.
 - `packages/email` - React Email templates and preview tooling.
 - `packages/shared` - Shared utilities.
@@ -71,13 +65,13 @@ Avoid comments that narrate syntax, restate names, describe the conversation, or
 For example, avoid:
 
 ```ts
-// We need this because, as you mentioned, Stripe can send the event twice.
+// We need this because, as you mentioned, the provider can send the event twice.
 ```
 
 Prefer:
 
 ```ts
-// Stripe may deliver the same event more than once; processing must remain idempotent.
+// The provider may deliver the same event more than once; processing must remain idempotent.
 ```
 
 Keep comments synchronized with the code.
@@ -141,7 +135,7 @@ Keep intentional `finally` cleanup, retry policy, boundary translation, and secu
 
 Prefer names that express domain meaning.
 
-Use `invoice`, `webhookPayload`, or `parseStripeEvent` instead of generic names such as `data`, `item`, `result`, `processor`, or `helper` when the domain is known.
+Use `invoice`, `webhookPayload`, or `parseWebhookEvent` instead of generic names such as `data`, `item`, `result`, `processor`, or `helper` when the domain is known.
 
 Avoid:
 
@@ -282,14 +276,7 @@ This project uses **Ultracite**, a zero-config preset that enforces strict code 
 - Use top-level regex literals instead of creating them in loops
 - Prefer specific imports over namespace imports
 - Avoid barrel files (index files that re-export everything)
-- Use proper image components (e.g., Next.js `<Image>`) over `<img>` tags
-
-### Framework-Specific Guidance
-
-**Next.js:**
-- Use Next.js `<Image>` component for images
-- Use `next/head` or App Router metadata API for head elements
-- Use Server Components for async data fetching instead of async Client Components
+- Use the framework's optimized image component over `<img>` when one is available
 
 **React 19+:**
 - Use ref as a prop instead of `React.forwardRef`
@@ -318,17 +305,3 @@ Biome's linter will catch most issues automatically. Focus your attention on:
 4. **Edge cases** - Handle boundary conditions and error states
 5. **User experience** - Accessibility, performance, and usability considerations
 6. **Documentation** - Add comments for complex logic, but prefer self-documenting code
-
-<!-- convex-ai-start -->
-
-This project uses [Convex](https://convex.dev) as its backend.
-
-When working on Convex code, **always read
-`packages/backend/convex/_generated/ai/guidelines.md` first** for important guidelines on
-how to correctly use Convex APIs and patterns. The file contains rules that
-override what you may have learned about Convex from training data.
-
-Convex agent skills for common tasks can be installed by running
-`bunx convex ai-files install`.
-
-<!-- convex-ai-end -->

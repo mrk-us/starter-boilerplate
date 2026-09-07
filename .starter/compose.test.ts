@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { lstat, mkdtemp, readFile, rm } from "node:fs/promises";
+import { lstat, mkdtemp, readFile, readlink, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn } from "bun";
@@ -224,6 +224,105 @@ describe("materialization", () => {
           )
         )
       ).not.toContain(false);
+    }
+  );
+
+  test.each(allValidSelections().map(({ id }) => id))(
+    "%s has scoped agent instructions and canonical Claude symlinks",
+    async (id) => {
+      const project = projects.get(id);
+      expect(project).toBeDefined();
+      if (!project) {
+        return;
+      }
+
+      const { selection } = project;
+      const scopedInstructions = [
+        ["apps/app", selection.app],
+        ["apps/web", selection.marketing],
+        ["apps/desktop", selection.electron],
+        ["packages/backend", selection.database],
+        ["packages/email", selection.auth],
+      ] as const;
+      const expectedInstructionRoots = [
+        "",
+        ...scopedInstructions
+          .filter(([, selected]) => selected)
+          .map(([workspace]) => workspace),
+      ];
+
+      const instructionPresence = await Promise.all(
+        scopedInstructions.map(async ([workspace]) => ({
+          agents: await exists(
+            join(project.destination, workspace, "AGENTS.md")
+          ),
+          claude: await exists(
+            join(project.destination, workspace, "CLAUDE.md")
+          ),
+        }))
+      );
+      expect(instructionPresence).toEqual(
+        scopedInstructions.map(([, selected]) => ({
+          agents: selected,
+          claude: selected,
+        }))
+      );
+
+      expect(
+        await Promise.all(
+          expectedInstructionRoots.map(
+            async (workspace) =>
+              await readlink(join(project.destination, workspace, "CLAUDE.md"))
+          )
+        )
+      ).toEqual(expectedInstructionRoots.map(() => "AGENTS.md"));
+
+      const generatedAgentFiles = (await generatedFiles(project)).filter(
+        (path) => path === "AGENTS.md" || path.endsWith("/AGENTS.md")
+      );
+      expect(generatedAgentFiles).toHaveLength(expectedInstructionRoots.length);
+
+      const rootInstructions = await readFile(
+        join(project.destination, "AGENTS.md"),
+        "utf8"
+      );
+      const allInstructions = (
+        await Promise.all(
+          expectedInstructionRoots.map(
+            async (workspace) =>
+              await readFile(
+                join(project.destination, workspace, "AGENTS.md"),
+                "utf8"
+              )
+          )
+        )
+      ).join("\n");
+      const usesNext =
+        selection.marketing ||
+        (selection.app && selection.framework === "next");
+
+      expect(rootInstructions.includes("Next.js")).toBe(usesNext);
+      expect(rootInstructions.includes("Convex")).toBe(selection.database);
+      expect(rootInstructions.includes("Electron")).toBe(selection.electron);
+      expect(allInstructions.includes("Next.js")).toBe(usesNext);
+      expect(allInstructions.includes("Convex")).toBe(selection.database);
+      expect(allInstructions.includes("Electron")).toBe(selection.electron);
+
+      if (usesNext) {
+        expect(allInstructions).toContain("<!-- BEGIN:nextjs-agent-rules -->");
+        expect(allInstructions).toContain(
+          "node_modules/next/dist/server/lib/generate-agent-files.js"
+        );
+      }
+      if (selection.app && selection.framework === "tanstack") {
+        const appInstructions = await readFile(
+          join(project.destination, "apps/app/AGENTS.md"),
+          "utf8"
+        );
+        expect(appInstructions).toContain("# TanStack Start workspace");
+        expect(appInstructions).not.toContain("Next.js");
+        expect(appInstructions).not.toContain("Convex");
+      }
     }
   );
 
