@@ -17,13 +17,13 @@
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.13",
+    "@biomejs/biome": "2.5.14",
     "@repo/typescript-config": "workspace:*",
-    "convex": "^1.45.0",
+    "convex": "^1.46.0",
     "husky": "^9.1.7",
-    "turbo": "^2.10.12",
+    "turbo": "^2.11.2",
     "typescript": "^7.0.2",
-    "ultracite": "7.11.1"
+    "ultracite": "7.12.0"
   },
   "packageManager": "bun@1.3.14",
   "engines": {
