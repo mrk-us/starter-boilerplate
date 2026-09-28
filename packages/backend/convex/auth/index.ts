@@ -22,11 +22,5 @@ const authFunctions: AuthFunctions = {
  * Initialize AuthKit component
  */
 export const authKit = new AuthKit<DataModel>(components.workOSAuthKit, {
-  additionalEventTypes: [
-    "session.created",
-    "invitation.created",
-    "password_reset.created",
-    "email_verification.created",
-  ],
   authFunctions,
 });
