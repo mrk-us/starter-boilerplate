@@ -13,12 +13,12 @@
     "@convex-dev/rate-limiter": "^0.4.0",
     "@convex-dev/resend": "^0.2.8",
     "@convex-dev/stripe": "^0.1.6",
-    "@convex-dev/workos-authkit": "^0.2.9",
+    "@convex-dev/workos-authkit": "^0.2.10",
     "@react-email/render": "^2.1.0",
     "@repo/config": "workspace:*",
     "@repo/email": "workspace:*",
     "@repo/shared": "workspace:*",
-    "@workos-inc/node": "^10.13.0",
+    "@workos-inc/node": "^10.14.0",
     "convex": "^1.46.0",
     "disposable-email-domains-js": "^1.26.0",
     "react": "19.3.0",
@@ -27,7 +27,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@types/node": "^26.6.2",
+    "@types/node": "^26.6.3",
     "typescript": "^7.0.2"
   }
 }
