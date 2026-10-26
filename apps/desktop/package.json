@@ -18,12 +18,12 @@
   "devDependencies": {
     "@repo/shared": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@types/node": "^26.6.3",
-    "electron": "43.4.1",
-    "electron-builder": "^26.15.7",
-    "electron-vite": "^5.0.0",
+    "@types/node": "^26.6.5",
+    "electron": "43.8.3",
+    "electron-builder": "^26.18.0",
+    "electron-vite": "^6.0.0",
     "typescript": "^7.0.2",
-    "vite": "^7.3.6"
+    "vite": "^8.3.5"
   },
   "productName": "Starter"
 }
