@@ -5,7 +5,7 @@ A Bun and Turborepo starter for a Next.js product with WorkOS authentication, Co
 ## Requirements
 
 - Bun 1.3.14
-- Node.js 22.11 or newer
+- Node.js 22.22.2+ on Node 22, or 24.15.0+
 
 The repository includes an `.nvmrc` pinned to Node 22.
 

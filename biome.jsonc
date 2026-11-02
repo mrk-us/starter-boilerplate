@@ -16,6 +16,9 @@
   },
   "linter": {
     "rules": {
+      // Keep existing syntax and class ordering during the toolchain migration.
+      "style": { "useNamedCaptureGroup": "off", "useUnicodeRegex": "off" },
+      "nursery": { "useTailwindSortedClasses": "off" },
       "performance": {
         // Workspace and feature entry points intentionally expose public modules.
         "noBarrelFile": "off",
@@ -30,7 +33,30 @@
   },
   "overrides": [
     {
+      "includes": [".starter/variants/**"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            // Variants inherit their dependencies after materialization.
+            "noUndeclaredDependencies": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/router.tsx"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            // TanStack creates each router and its providers once per instance.
+            "noComponentHookFactories": "off"
+          }
+        }
+      }
+    },
+    {
       "includes": ["packages/ui/**/*.css"],
+      "assist": { "actions": { "source": { "useSortedProperties": "off" } } },
       "css": {
         "parser": {
           "tailwindDirectives": true
@@ -39,7 +65,9 @@
       "linter": {
         "rules": {
           "suspicious": {
-            "noUnknownAtRules": "off"
+            "noUnknownAtRules": "off",
+            "useBaseline": "off",
+            "noDuplicateSelectors": "off"
           }
         }
       }
@@ -90,7 +118,8 @@
       "linter": {
         "rules": {
           "a11y": {
-            "useSemanticElements": "off"
+            "useSemanticElements": "off",
+            "noLabelWithoutControl": "off"
           }
         }
       }

@@ -10,24 +10,24 @@
     "typecheck": "tsc --noEmit -p convex"
   },
   "dependencies": {
-    "@convex-dev/rate-limiter": "^0.4.0",
-    "@convex-dev/resend": "^0.2.8",
-    "@convex-dev/stripe": "^0.1.6",
+    "@convex-dev/rate-limiter": "^0.4.2",
+    "@convex-dev/resend": "^0.2.10",
+    "@convex-dev/stripe": "^0.1.7",
     "@convex-dev/workos-authkit": "^0.2.10",
-    "@react-email/render": "^2.1.0",
+    "@react-email/render": "^2.1.1",
     "@repo/config": "workspace:*",
     "@repo/email": "workspace:*",
     "@repo/shared": "workspace:*",
     "@workos-inc/node": "^10.14.0",
-    "convex": "^1.46.0",
+    "convex": "^1.48.0",
     "disposable-email-domains-js": "^1.26.0",
-    "react": "19.3.0",
-    "react-dom": "19.3.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "stripe": "22.6.2",
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@types/node": "^26.6.3",
+    "@types/node": "^26.6.5",
     "typescript": "^7.0.2"
   }
 }
