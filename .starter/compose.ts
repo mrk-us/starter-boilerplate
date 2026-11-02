@@ -806,7 +806,7 @@ const writeReadme = async (
         )}\n\nResume an interrupted setup with \`bunx @mrk-us/create-app --resume .\`.\n`
     : "";
 
-  const contents = `# Starter monorepo\n\nA Bun and Turborepo starter with ${capabilities.join(", ")}.\n\n## Requirements\n\n- Bun 1.3.14\n- Node.js 22.22.2+ on Node 22, or 24.15.0+\n\n## Workspaces\n\n${workspaceDescription(selection)}\n\n## Setup\n\n\`\`\`sh\nbun install\n\`\`\`\n${environment}\n## Commands\n\n\`\`\`sh\n${commands.join("\n")}\n\`\`\`\n`;
+  const contents = `# Starter monorepo\n\nA Bun and Turborepo starter with ${capabilities.join(", ")}.\n\n## Requirements\n\n- Bun 1.3.14\n- Node.js 24.15.0 or newer\n\n## Workspaces\n\n${workspaceDescription(selection)}\n\n## Setup\n\n\`\`\`sh\nbun install\n\`\`\`\n${environment}\n## Commands\n\n\`\`\`sh\n${commands.join("\n")}\n\`\`\`\n`;
   await writeText(join(destination, "README.md"), contents);
 };
 
