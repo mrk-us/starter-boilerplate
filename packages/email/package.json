@@ -16,13 +16,12 @@
     "react-dom": "19.3.1"
   },
   "devDependencies": {
-    "@react-email/preview-server": "^5.2.10",
-    "@react-email/ui": "^6.11.3",
+    "@react-email/ui": "^6.11.6",
     "@repo/typescript-config": "workspace:*",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "react-email": "^6.11.3",
+    "react-email": "^6.11.6",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2"
   }

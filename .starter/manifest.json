@@ -592,7 +592,6 @@
     },
     "packages/email": {
       "@react-email/components": "auth",
-      "@react-email/preview-server": "auth",
       "@react-email/ui": "auth",
       "@repo/config": "auth",
       "@repo/typescript-config": "auth",
