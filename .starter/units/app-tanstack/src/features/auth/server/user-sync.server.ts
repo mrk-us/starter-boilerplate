@@ -9,9 +9,7 @@ if (!convexUrl) {
 }
 
 /**
- * Convex client for requests made outside of a signed-in browser session — the
- * OAuth callback and the password sign-in server function, both of which run
- * before the session cookie exists.
+ * Unauthenticated client for the password authentication action.
  */
 export const convexHttpClient = new ConvexHttpClient(convexUrl);
 
@@ -19,22 +17,24 @@ export const convexHttpClient = new ConvexHttpClient(convexUrl);
  * Mirrors a freshly authenticated WorkOS user into Convex.
  * Returns true when a new user document was created.
  */
-export async function syncUserToDb(user: User): Promise<boolean> {
-  const exists = await convexHttpClient.query(
-    api.users.queries.userExistsByAuthId,
-    { authId: user.id }
-  );
+export async function syncUserToDb(
+  user: User,
+  accessToken: string
+): Promise<boolean> {
+  // A request-specific client prevents concurrent sign-ins sharing tokens.
+  const client = new ConvexHttpClient(convexHttpClient.url);
+  client.setAuth(accessToken);
+  const exists = await client.query(api.users.queries.userExistsByAuthId, {});
 
   if (exists) {
     return false;
   }
 
-  await convexHttpClient.mutation(api.users.mutations.upsertUser, {
-    authId: user.id,
+  const { created } = await client.mutation(api.users.mutations.upsertUser, {
     email: user.email,
     name: user.name ?? user.firstName ?? undefined,
     profilePictureUrl: user.profilePictureUrl ?? undefined,
   });
 
-  return true;
+  return created;
 }

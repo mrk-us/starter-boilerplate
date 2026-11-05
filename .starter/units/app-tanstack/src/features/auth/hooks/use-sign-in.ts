@@ -1,6 +1,7 @@
 import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
+import { getSignInDestination } from "@/features/auth/return-path";
 import { signIn as signInAction } from "@/features/auth/server/session";
 
 interface SignInData {
@@ -17,7 +18,10 @@ export function useSignIn() {
       // A document navigation rather than a client-side one: the session cookie
       // was just set on the RPC response, and only a fresh request lets the
       // server pick it up when rendering the destination.
-      window.location.href = redirect ?? "/";
+      window.location.href = getSignInDestination(
+        redirect,
+        window.location.hash
+      );
     },
   });
 

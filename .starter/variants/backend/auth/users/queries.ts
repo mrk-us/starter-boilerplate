@@ -1,31 +1,21 @@
 import { v } from "convex/values";
 import { internalQuery, query } from "../_generated/server";
-import { getAuthenticatedUser } from "../auth/helpers";
+import { getAuthenticatedUser, requireAuthId } from "../auth/helpers";
 
 /**
- * Check if user exists by authId
- * Public query used by auth callback to skip sync for returning users
+ * Check whether the authenticated user has already been synced.
  */
 export const userExistsByAuthId = query({
-  args: { authId: v.string() },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const authId = await requireAuthId(ctx);
     const user = await ctx.db
       .query("users")
-      .withIndex("authId", (q) => q.eq("authId", args.authId))
+      .withIndex("authId", (q) => q.eq("authId", authId))
       .first();
     return user !== null;
   },
   returns: v.boolean(),
-});
-
-/**
- * Get user by ID (internal)
- */
-export const getUserById = internalQuery({
-  args: {
-    userId: v.id("users"),
-  },
-  handler: async (ctx, args) => await ctx.db.get(args.userId),
 });
 
 /**

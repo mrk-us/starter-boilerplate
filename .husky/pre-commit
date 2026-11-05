@@ -2,10 +2,6 @@
 # ultracite
 set -e
 
-if [ -d "$HOME/.bun/bin" ]; then
-  export PATH="$HOME/.bun/bin:$PATH"
-fi
-
 if git diff --cached --quiet --diff-filter=ACMR; then
   echo "No staged files to check"
   exit 0
