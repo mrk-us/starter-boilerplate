@@ -188,11 +188,6 @@ export function SignInForm() {
       }
       title="Sign in"
     >
-      {error === "oauth" && (
-        <p className="text-destructive text-sm" role="alert">
-          We couldn't complete sign-in. Please try again.
-        </p>
-      )}
       {step === "email" && <EmailStep onSuccess={handleEmailSuccess} />}
 
       {step === "password" && (
@@ -201,7 +196,14 @@ export function SignInForm() {
 
       <FieldSeparator>or</FieldSeparator>
 
-      <OAuthButtons redirect={redirect} />
+      <OAuthButtons
+        callbackError={
+          error === "oauth"
+            ? "We couldn't complete sign-in. Please try again."
+            : undefined
+        }
+        redirect={redirect}
+      />
     </AuthCard>
   );
 }

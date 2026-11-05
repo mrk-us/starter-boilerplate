@@ -1,10 +1,17 @@
 import { Button } from "@repo/ui/components";
+import { FormErrorContent } from "@repo/ui/components/form/form-errors";
 import { IconBrandGoogle } from "@tabler/icons-react";
 import { useState, useTransition } from "react";
 import { getSignInDestination } from "@/features/auth/return-path";
 import { getGoogleOAuthAuthorizationUrl } from "@/features/auth/server/oauth";
 
-export function OAuthButtons({ redirect }: { redirect?: string }) {
+export function OAuthButtons({
+  callbackError,
+  redirect,
+}: {
+  callbackError?: string;
+  redirect?: string;
+}) {
   const [error, setError] = useState<string>();
   const [isPending, startTransition] = useTransition();
 
@@ -36,11 +43,7 @@ export function OAuthButtons({ redirect }: { redirect?: string }) {
         <IconBrandGoogle className="size-4 fill-primary-foreground/25 stroke-none" />
         Continue with Google
       </Button>
-      {error && (
-        <p className="text-destructive text-sm" role="alert">
-          {error}
-        </p>
-      )}
+      <FormErrorContent errors={error ?? callbackError} role="alert" />
     </div>
   );
 }

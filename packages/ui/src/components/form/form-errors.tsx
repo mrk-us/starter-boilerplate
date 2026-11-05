@@ -35,12 +35,14 @@ export function FormErrors({ className }: FormErrorsProps) {
   );
 }
 
-function FormErrorContent({
+export function FormErrorContent({
   errors,
   className,
+  role,
 }: {
   errors: unknown;
   className?: string;
+  role?: "alert";
 }) {
   const content = useMemo(() => {
     if (!errors) {
@@ -85,6 +87,7 @@ function FormErrorContent({
         "relative flex flex-row gap-3 rounded-lg bg-destructive/7.5 py-2 pr-3 pl-2 font-medium text-destructive text-xs",
         className
       )}
+      role={role}
     >
       <div className="w-1 shrink-0 self-stretch rounded-full bg-destructive" />
       {content}
