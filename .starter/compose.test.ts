@@ -205,7 +205,7 @@ describe("materialization", () => {
   });
 
   test.each(allValidSelections().map(({ id }) => id))(
-    "%s has the declared workspace set",
+    "%s has the declared workspaces and Node.js minimum",
     async (id) => {
       const project = projects.get(id);
       expect(project).toBeDefined();
@@ -216,6 +216,10 @@ describe("materialization", () => {
         await readFile(join(project.destination, "package.json"), "utf8")
       );
       expect(packageJson.workspaces).toEqual(project.workspaces);
+      expect(packageJson.engines.node).toBe(">=26.0.0");
+      expect(await readFile(join(project.destination, ".nvmrc"), "utf8")).toBe(
+        "26.0.0\n"
+      );
       expect(
         await Promise.all(
           project.workspaces.map(
