@@ -41,9 +41,6 @@ export function AccountForm() {
     .slice(0, 2);
 
   const form = useAppForm({
-    // A failed save leaves a submit error that would otherwise disable the
-    // button until the field changes, which blocks retrying the same value.
-    canSubmitWhenInvalid: true,
     defaultValues: {
       name: user?.name ?? "",
     } satisfies FormData as FormData,
