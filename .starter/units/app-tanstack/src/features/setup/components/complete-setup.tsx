@@ -14,6 +14,9 @@ export function CompleteSetup() {
   const { completeSetup } = useCompleteSetup();
 
   const form = useAppForm({
+    // A failed save leaves a submit error that would otherwise disable the
+    // button until the field changes, which blocks retrying the same value.
+    canSubmitWhenInvalid: true,
     defaultValues: {
       name: user?.name ?? "",
     },
