@@ -33,7 +33,7 @@ export const signIn = createServerFn({ method: "POST" })
       throw new Error(getErrorMessage(error));
     }
 
-    await syncUserToDb(authResponse.user);
+    await syncUserToDb(authResponse.user, authResponse.accessToken);
 
     const authkit = await getAuthkit();
     const sealedSession = await sessionEncryption.sealData(

@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getAuthorizationUrl } from "@workos/authkit-tanstack-react-start";
+import { getReturnPath } from "../return-path";
 
 const GOOGLE_OAUTH_PROVIDER = "GoogleOAuth";
 
@@ -12,9 +13,13 @@ const GOOGLE_OAUTH_PROVIDER = "GoogleOAuth";
  */
 export const getGoogleOAuthAuthorizationUrl = createServerFn({
   method: "POST",
-}).handler(async () => {
-  const authorizationUrl = new URL(await getAuthorizationUrl());
-  authorizationUrl.searchParams.set("provider", GOOGLE_OAUTH_PROVIDER);
+})
+  .validator(getReturnPath)
+  .handler(async ({ data }) => {
+    const authorizationUrl = new URL(
+      await getAuthorizationUrl({ data: { state: data } })
+    );
+    authorizationUrl.searchParams.set("provider", GOOGLE_OAUTH_PROVIDER);
 
-  return authorizationUrl.toString();
-});
+    return authorizationUrl.toString();
+  });

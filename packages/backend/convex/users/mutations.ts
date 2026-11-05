@@ -2,23 +2,24 @@ import { tryCatch } from "@repo/shared";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation, mutation } from "../_generated/server";
+import { requireAuthId } from "../auth/helpers";
 
 /**
  * Upsert user - create if doesn't exist, update if exists
  * Called from auth callback to ensure user exists immediately after sign-in/up
- * Public mutation (called from Next.js server action after WorkOS auth)
+ * The caller's verified WorkOS token determines which user can be synced.
  */
 export const upsertUser = mutation({
   args: {
-    authId: v.string(),
     email: v.string(),
     name: v.optional(v.string()),
     profilePictureUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const authId = await requireAuthId(ctx);
     const existingUser = await ctx.db
       .query("users")
-      .withIndex("authId", (q) => q.eq("authId", args.authId))
+      .withIndex("authId", (q) => q.eq("authId", authId))
       .unique();
 
     if (existingUser) {
@@ -32,7 +33,7 @@ export const upsertUser = mutation({
 
     // Create new user
     const userId = await ctx.db.insert("users", {
-      authId: args.authId,
+      authId,
       email: args.email,
       name: args.name ?? "",
       profilePictureUrl: args.profilePictureUrl,
@@ -41,6 +42,7 @@ export const upsertUser = mutation({
 
     return { created: true, userId };
   },
+  returns: v.object({ created: v.boolean(), userId: v.id("users") }),
 });
 
 /**

@@ -13,7 +13,7 @@ import {
 import { Button } from "@repo/ui/components/button";
 import { Input } from "@repo/ui/components/input";
 import { IconX } from "@tabler/icons-react";
-import { Link } from "@tanstack/react-router";
+import { Link, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import type { z } from "zod";
 import { AuthCard, OAuthButtons } from "@/features/auth/components";
@@ -159,6 +159,7 @@ function PasswordStep({
 }
 
 export function SignInForm() {
+  const { error, redirect } = useSearch({ from: "/_auth/sign-in" });
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
 
@@ -187,6 +188,11 @@ export function SignInForm() {
       }
       title="Sign in"
     >
+      {error === "oauth" && (
+        <p className="text-destructive text-sm" role="alert">
+          We couldn't complete sign-in. Please try again.
+        </p>
+      )}
       {step === "email" && <EmailStep onSuccess={handleEmailSuccess} />}
 
       {step === "password" && (
@@ -195,7 +201,7 @@ export function SignInForm() {
 
       <FieldSeparator>or</FieldSeparator>
 
-      <OAuthButtons />
+      <OAuthButtons redirect={redirect} />
     </AuthCard>
   );
 }

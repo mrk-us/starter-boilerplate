@@ -2,8 +2,6 @@ import type { StripeEventHandlers } from "@convex-dev/stripe";
 import { ConvexError } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
-import { ERROR_MESSAGE } from "../errors/constants";
-import { USER_ERROR_CODE } from "../users/constants";
 import { STRIPE_PRICE_LOOKUP_KEY } from "./constants";
 
 /**
@@ -45,8 +43,8 @@ export const stripeEventHandlers: StripeEventHandlers = {
 
       if (!user) {
         throw new ConvexError({
-          code: USER_ERROR_CODE.USER_NOT_FOUND,
-          message: ERROR_MESSAGE.USER_NOT_FOUND,
+          code: "USER_NOT_FOUND",
+          message: "User not found",
         });
       }
 

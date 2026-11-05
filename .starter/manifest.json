@@ -474,6 +474,7 @@
       "@biomejs/biome": "base",
       "@repo/typescript-config": "base",
       "convex": "convex",
+      "convex-test": "template-tooling",
       "husky": "base",
       "turbo": "base",
       "typescript": "base",
