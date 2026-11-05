@@ -4,7 +4,7 @@ import viteReact from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [
     tailwindcss(),
     tanstackStart(),
@@ -21,8 +21,14 @@ export default defineConfig({
     port: 3001,
   },
   ssr: {
-    // Workspace packages ship TypeScript sources, so they must be bundled
-    // rather than externalized for the server build.
-    noExternal: ["@repo/backend", "@repo/config", "@repo/shared", "@repo/ui"],
+    // Production bundles everything because a CommonJS dependency of a workspace
+    // package otherwise keeps a runtime require("react"), which loads a second
+    // React from node_modules and breaks hooks during server rendering. Dev can
+    // only inline workspace packages, which ship TypeScript sources, because its
+    // module runner cannot evaluate CommonJS.
+    noExternal:
+      command === "build"
+        ? true
+        : ["@repo/backend", "@repo/config", "@repo/shared", "@repo/ui"],
   },
-});
+}));
