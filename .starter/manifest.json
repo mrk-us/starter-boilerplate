@@ -537,6 +537,7 @@
       "react-dom": "app-tanstack",
       "tailwindcss": "app-tanstack",
       "typescript": "app-tanstack",
+      "use-sync-external-store": "app-tanstack",
       "vite": "app-tanstack",
       "zod": "auth-tanstack"
     },
