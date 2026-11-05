@@ -43,7 +43,7 @@ export function OAuthButtons({
         <IconBrandGoogle className="size-4 fill-primary-foreground/25 stroke-none" />
         Continue with Google
       </Button>
-      <FormErrorContent errors={error ?? callbackError} role="alert" />
+      <FormErrorContent errors={error ?? callbackError} />
     </div>
   );
 }
