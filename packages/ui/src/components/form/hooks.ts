@@ -9,7 +9,7 @@ import { FormTextarea } from "./form-textarea";
 const { fieldContext, formContext, useFieldContext, useFormContext } =
   createFormHookContexts();
 
-const { useAppForm } = createFormHook({
+const { useAppForm: useBaseAppForm } = createFormHook({
   fieldComponents: {
     Checkbox: FormCheckbox,
     Input: FormInput,
@@ -23,5 +23,11 @@ const { useAppForm } = createFormHook({
   },
   formContext,
 });
+
+// A failed submit leaves an error that would otherwise disable the button until
+// a field changes, which blocks retrying the same value. Every submit still runs
+// validation first.
+const useAppForm: typeof useBaseAppForm = (props) =>
+  useBaseAppForm({ canSubmitWhenInvalid: true, ...props });
 
 export { useAppForm, useFieldContext, useFormContext };

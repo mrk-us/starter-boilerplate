@@ -81,6 +81,8 @@ export function AccountForm() {
           {(field) => <field.Input label="Name" />}
         </form.AppField>
 
+        <form.Errors />
+
         <FormSubmit
           hasChanged={(values) => values.name !== user?.name}
           isPending={isUpdatingName}
@@ -92,7 +94,9 @@ export function AccountForm() {
         Delete Account
       </Button>
       {deleteUserError && (
-        <div className="text-red-500 text-sm">{deleteUserError}</div>
+        <div className="text-red-500 text-sm" role="alert">
+          {deleteUserError}
+        </div>
       )}
     </main>
   );

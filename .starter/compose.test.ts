@@ -358,6 +358,41 @@ describe("materialization", () => {
 
   test.each(
     allValidSelections()
+      .filter(({ app, framework }) => app && framework === "tanstack")
+      .map(({ id }) => id)
+  )("%s passes Vite variables to Turbo builds", async (id) => {
+    const project = projects.get(id);
+    expect(project).toBeDefined();
+    if (!project) {
+      return;
+    }
+    const turboConfig = JSON.parse(
+      await readFile(join(project.destination, "apps/app/turbo.json"), "utf8")
+    );
+    expect(turboConfig.extends).toEqual(["//"]);
+    expect(turboConfig.tasks.build.env).toEqual(["VITE_*"]);
+  });
+
+  test.each(
+    allValidSelections()
+      .filter(({ app, framework }) => app && framework === "tanstack")
+      .map(({ id }) => id)
+  )("%s keeps one React in the server build", async (id) => {
+    const project = projects.get(id);
+    expect(project).toBeDefined();
+    if (!project) {
+      return;
+    }
+    const packageJson = JSON.parse(
+      await readFile(join(project.destination, "apps/app/package.json"), "utf8")
+    );
+    // No source file imports this, so nothing else fails if it is removed. See
+    // the ssr comment in the template's vite.config.ts.
+    expect(packageJson.dependencies?.["use-sync-external-store"]).toBeDefined();
+  });
+
+  test.each(
+    allValidSelections()
       .filter(({ app }) => app)
       .map(({ framework, id }) => [id, framework] as const)
   )("%s maps Inter to font-sans", async (id, framework) => {
