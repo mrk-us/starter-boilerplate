@@ -12,7 +12,7 @@ export function OAuthButtons({
   callbackError?: string;
   redirect?: string;
 }) {
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<string | undefined>();
   const [isPending, startTransition] = useTransition();
 
   const handleOAuth = () => {
