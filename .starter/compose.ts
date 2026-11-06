@@ -400,7 +400,7 @@ export const ownerForPath = (path: string, framework: Framework): string => {
 
 export const sourceInventory = async (): Promise<string[]> => {
   const output = await commandOutput(
-    ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+    ["git", "ls-files", "--cached", "-z"],
     REPOSITORY_ROOT
   );
   const paths = output.split("\0").filter(Boolean);
@@ -772,6 +772,9 @@ const writeTurboConfig = async (
   await writeJson(join(destination, "turbo.json"), config);
 };
 
+const LOCAL_NODE_NOTE =
+  "\nA local Convex deployment runs Node actions with the `node` command on your PATH. The current local backend accepts Node.js 22 or 24, not 26. If a deploy reports `Node.js v22 or 24 is not installed`, put Node.js 24 first on your PATH before you run `bun run dev`. `nvm use 24` does this. Installing Node.js 24 is not enough.\n";
+
 const writeReadme = async (
   destination: string,
   selection: ResolvedSelection
@@ -803,7 +806,7 @@ const writeReadme = async (
         .filter(Boolean)
         .join(
           "\n"
-        )}\n\nResume an interrupted setup with \`bunx @mrk-us/create-app --resume .\`.\n`
+        )}\n\nResume an interrupted setup with \`bunx @mrk-us/create-app --resume .\`.\n${selection.auth ? LOCAL_NODE_NOTE : ""}`
     : "";
 
   const workosEmails = selection.auth

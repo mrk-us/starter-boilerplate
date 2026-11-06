@@ -28,6 +28,7 @@
       "include": [
         ".starter/**",
         ".agents/**",
+        ".github/workflows/weekly-dependency-updates.yml",
         ".claude/skills/**",
         "apps/app/README.md",
         "bun.lock",

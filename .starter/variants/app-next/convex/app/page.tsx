@@ -1,8 +1,9 @@
+import { APP_NAME } from "@repo/config";
 import type { Metadata } from "next";
 import { ConvexStatus } from "@/features/shared/components/convex-status";
 
 export const metadata: Metadata = {
-  title: "App",
+  title: APP_NAME,
 };
 
 export default function Home() {

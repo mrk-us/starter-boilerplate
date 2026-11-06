@@ -1,7 +1,14 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { lstat, mkdtemp, readFile, readlink, rm } from "node:fs/promises";
+import {
+  lstat,
+  mkdtemp,
+  readFile,
+  readlink,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { spawn } from "bun";
 import { STRIPE_API_VERSION } from "../packages/backend/convex/billing/constants";
 import {
@@ -175,6 +182,17 @@ describe("manifest ownership", () => {
       true
     );
   });
+
+  test("leaves untracked files out of the inventory", async () => {
+    const name = "untracked-inventory-probe.txt";
+    const path = resolve(import.meta.dir, "..", name);
+    await writeFile(path, "stray");
+    try {
+      expect(await sourceInventory()).not.toContain(name);
+    } finally {
+      await rm(path);
+    }
+  });
 });
 
 describe("materialization", () => {
@@ -191,15 +209,22 @@ describe("materialization", () => {
         templateComposer: await exists(
           join(project.destination, ".starter/compose.ts")
         ),
+        templateWorkflow: await exists(
+          join(
+            project.destination,
+            ".github/workflows/weekly-dependency-updates.yml"
+          )
+        ),
       }))
     );
     expect(
       results.every(
-        ({ history, lockfile, remote, templateComposer }) =>
+        ({ history, lockfile, remote, templateComposer, templateWorkflow }) =>
           history.trim() === "0" &&
           !lockfile &&
           remote.trim() === "" &&
-          !templateComposer
+          !templateComposer &&
+          !templateWorkflow
       )
     ).toBe(true);
   });
