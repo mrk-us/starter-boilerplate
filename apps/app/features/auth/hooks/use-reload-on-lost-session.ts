@@ -3,8 +3,10 @@
 import { useConvexAuth } from "convex/react";
 import { useEffect, useRef } from "react";
 
-// Convex also reports signed out for a moment when it changes to a new token
-const LOST_SESSION_GRACE_MS = 5000;
+// Convex also reports signed out for a moment when it changes to a new token.
+// It asks for that token 10 seconds before the old one expires, and the server
+// accepts the old one until then, so an earlier reload would return to this page.
+const LOST_SESSION_GRACE_MS = 15_000;
 
 /**
  * The server redirects to sign-in only on navigation, so an open page stays
