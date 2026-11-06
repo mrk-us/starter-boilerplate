@@ -90,11 +90,14 @@ export const completeSetupInternal = internalMutation({
       setupComplete: true,
     });
 
-    // Send welcome email
-    await ctx.scheduler.runAfter(0, internal.emails.actions.sendWelcomeEmail, {
-      email: user.email,
-      name: args.name,
-    });
+    // Send welcome email only when the setup completes for the first time
+    if (!user.setupComplete) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.emails.actions.sendWelcomeEmail,
+        { email: user.email, name: args.name }
+      );
+    }
 
     return { success: true };
   },

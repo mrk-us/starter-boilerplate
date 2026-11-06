@@ -4,7 +4,17 @@ import { components } from "./_generated/api";
 // TODO: Lower rates for prod
 export const rateLimiter = new RateLimiter(components.rateLimiter, {
   /*
-   * Check email rate limit: 10 attempts per day per email
+   * Auth emails: 10 per hour per recipient, for verification and password reset
+   */
+  authEmailPerRecipient: {
+    capacity: 10,
+    kind: "token bucket",
+    period: HOUR,
+    rate: 10,
+  },
+
+  /*
+   * Check email rate limit: 100 attempts per day per email
    */
   checkEmail: {
     capacity: 100,
@@ -65,7 +75,7 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
   // },
 
   /*
-   * Sign in rate limit: 5 attempts per 30 minutes per email
+   * Sign in rate limit: 100 attempts per 30 minutes per email
    */
   signIn: {
     capacity: 100,
@@ -74,12 +84,22 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
     rate: 100,
   },
   /*
-   * Sign up rate limit: 5 attempts per hour per email
+   * Sign up rate limit: 50 attempts per hour per email
    */
   signUp: {
     capacity: 50,
     kind: "token bucket",
     period: HOUR,
     rate: 50,
+  },
+
+  /*
+   * Email verification code: 10 attempts per hour per user
+   */
+  verifyEmail: {
+    capacity: 10,
+    kind: "token bucket",
+    period: HOUR,
+    rate: 10,
   },
 });

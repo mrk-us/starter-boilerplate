@@ -104,10 +104,17 @@ export const completeSetup = action({
     }
 
     // Update Convex DB and send welcome email
-    await ctx.runMutation(internal.users.mutations.completeSetupInternal, {
-      authId,
-      name,
-    });
+    const { success } = await ctx.runMutation(
+      internal.users.mutations.completeSetupInternal,
+      { authId, name }
+    );
+
+    if (!success) {
+      throw new ConvexError({
+        code: AUTH_ERROR_CODE.UPDATE_USER_FAILED,
+        message: ERROR_MESSAGE.UNKNOWN,
+      });
+    }
 
     return { success: true };
   },

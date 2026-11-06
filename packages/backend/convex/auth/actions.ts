@@ -88,11 +88,21 @@ export const createUserAccount = action({
       });
     }
 
-    // Send verification email for unverified users
+    // The account now exists, so a failed send must not fail sign-up. The verify
+    // page can send the email again.
     if (!createUserData.emailVerified) {
-      await authKit.workos.userManagement.sendVerificationEmail({
-        userId: createUserData.id,
-      });
+      const { error: sendEmailError } = await tryCatch(
+        authKit.workos.userManagement.sendVerificationEmail({
+          userId: createUserData.id,
+        })
+      );
+
+      if (sendEmailError) {
+        console.error(
+          "Failed to send verification email:",
+          sendEmailError.message
+        );
+      }
     }
 
     return {
@@ -110,7 +120,19 @@ export const verifyEmail = action({
     authId: v.string(),
     code: v.string(),
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
+    // Rate limit: the code has only 6 digits
+    const { ok, retryAfter } = await rateLimiter.limit(ctx, "verifyEmail", {
+      key: args.authId,
+    });
+
+    if (!ok) {
+      throw new ConvexError({
+        code: AUTH_ERROR_CODE.RATE_LIMITED,
+        message: `Too many attempts. Please try again in ${Math.ceil(retryAfter / 60_000)} minutes.`,
+      });
+    }
+
     const { error: verifyEmailError } = await tryCatch(
       authKit.workos.userManagement.verifyEmail({
         code: args.code,
@@ -151,16 +173,14 @@ export const checkEmailExists = action({
 
     const { email } = validationResult.data;
 
-    // Rate limit: 10 attempts per day per email
-    const { ok, retryAfter } = await rateLimiter.limit(ctx, "checkEmail", {
+    // Anyone can spend this email's tokens, so an exhausted limit must not block
+    // sign-in. Skip the lookup and continue to the password step.
+    const { ok } = await rateLimiter.limit(ctx, "checkEmail", {
       key: email,
     });
 
     if (!ok) {
-      throw new ConvexError({
-        code: AUTH_ERROR_CODE.RATE_LIMITED,
-        message: `Too many attempts. Please try again in ${Math.ceil(retryAfter / 3_600_000)} ${Math.ceil(retryAfter / 3_600_000) === 1 ? "hour" : "hours"}.`,
-      });
+      return { exists: true, oauthProviders: [] };
     }
 
     // Check if user exists in WorkOS
@@ -368,6 +388,13 @@ export const authenticateWithPassword = action({
   },
 });
 
+function passwordResetFailed() {
+  return new ConvexError({
+    code: AUTH_ERROR_CODE.SEND_PASSWORD_RESET_FAILED,
+    message: "We couldn't send the reset email. Please try again.",
+  });
+}
+
 /**
  * Request password reset email
  */
@@ -390,10 +417,31 @@ export const requestPasswordReset = action({
       });
     }
 
-    // Always return success to prevent email enumeration
-    await tryCatch(
+    const { data: listUsersData, error: listUsersError } = await tryCatch(
+      authKit.workos.userManagement.listUsers({ email })
+    );
+
+    if (listUsersError) {
+      console.error("Failed to look up reset email:", listUsersError.message);
+      throw passwordResetFailed();
+    }
+
+    // An unknown email gets the same response as a known email
+    if (listUsersData.data.length === 0) {
+      return { success: true };
+    }
+
+    const { error: createPasswordResetError } = await tryCatch(
       authKit.workos.userManagement.createPasswordReset({ email })
     );
+
+    if (createPasswordResetError) {
+      console.error(
+        "Failed to create password reset:",
+        createPasswordResetError.message
+      );
+      throw passwordResetFailed();
+    }
 
     return { success: true };
   },

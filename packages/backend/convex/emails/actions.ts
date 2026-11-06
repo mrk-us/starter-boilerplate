@@ -8,32 +8,31 @@ import WelcomeEmail from "@repo/email/emails/welcome-email";
 import WelcomeToProEmail from "@repo/email/emails/welcome-to-pro-email";
 import { tryCatch } from "@repo/shared";
 import { v } from "convex/values";
+import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
 import { authKit } from "../auth";
 import { rateLimiter } from "../rateLimiter";
 import { resend } from "./index";
+
+// Webhook events omit the code and the token, so a failed lookup would lose the
+// email. These are the waits before each new lookup.
+const LOOKUP_RETRY_DELAYS_MS = [5000, 30_000, 120_000];
+
+// A quoted display name stays valid when APP_NAME contains a comma
+function getFromAddress() {
+  const displayName = APP_NAME.replace(/["\\]/g, "\\$&");
+  return `"${displayName}" <${process.env.RESEND_FROM_EMAIL}>`;
+}
 
 /**
  * Send email verification email (triggered by webhook)
  */
 export const sendEmailVerificationEmail = internalAction({
   args: {
+    attempt: v.optional(v.number()),
     emailVerificationId: v.string(),
   },
-  handler: async (ctx, args) => {
-    // Rate limit
-    const { ok } = await rateLimiter.limit(ctx, "resendEmailVerification", {
-      key: args.emailVerificationId,
-    });
-
-    if (!ok) {
-      console.warn(
-        "Rate limited: sendEmailVerificationEmail",
-        args.emailVerificationId
-      );
-      return;
-    }
-
+  handler: async (ctx, args): Promise<void> => {
     // Validate input
     if (!args.emailVerificationId) {
       console.warn("Invalid emailVerificationId:", args.emailVerificationId);
@@ -49,9 +48,21 @@ export const sendEmailVerificationEmail = internalAction({
       );
 
     if (emailVerificationError) {
-      console.error(
-        "Failed to get email verification:",
-        emailVerificationError.message
+      const attempt = args.attempt ?? 0;
+      const retryDelay = LOOKUP_RETRY_DELAYS_MS[attempt];
+
+      if (retryDelay === undefined) {
+        console.error(
+          "Failed to get email verification:",
+          emailVerificationError.message
+        );
+        return;
+      }
+
+      await ctx.scheduler.runAfter(
+        retryDelay,
+        internal.emails.actions.sendEmailVerificationEmail,
+        { attempt: attempt + 1, emailVerificationId: args.emailVerificationId }
       );
       return;
     }
@@ -61,13 +72,26 @@ export const sendEmailVerificationEmail = internalAction({
       return;
     }
 
+    // Rate limit per recipient, because each event has a new id
+    const { ok } = await rateLimiter.limit(ctx, "authEmailPerRecipient", {
+      key: emailVerificationData.email,
+    });
+
+    if (!ok) {
+      console.warn(
+        "Rate limited: sendEmailVerificationEmail",
+        args.emailVerificationId
+      );
+      return;
+    }
+
     // Build verification URL
     const verificationUrl = `${APP_URL}/verify-email?authId=${emailVerificationData.userId}`;
 
     // Send email
     const { error: sendEmailError } = await tryCatch(
       resend.sendEmail(ctx, {
-        from: `${APP_NAME} <${process.env.RESEND_FROM_EMAIL}>`,
+        from: getFromAddress(),
         headers: [{ name: "X-Email-Category", value: "email_verification" }],
         html: await render(
           VerifyEmailEmail({
@@ -94,22 +118,10 @@ export const sendEmailVerificationEmail = internalAction({
  */
 export const sendPasswordResetEmail = internalAction({
   args: {
+    attempt: v.optional(v.number()),
     passwordResetId: v.string(),
   },
-  handler: async (ctx, args) => {
-    // Rate limit
-    const { ok } = await rateLimiter.limit(ctx, "passwordReset", {
-      key: args.passwordResetId,
-    });
-
-    if (!ok) {
-      console.warn(
-        "Rate limited: sendPasswordResetEmail",
-        args.passwordResetId
-      );
-      return;
-    }
-
+  handler: async (ctx, args): Promise<void> => {
     if (!args.passwordResetId) {
       // Validate input
       console.warn("Invalid passwordResetId:", args.passwordResetId);
@@ -123,9 +135,21 @@ export const sendPasswordResetEmail = internalAction({
       );
 
     if (passwordResetError) {
-      console.error(
-        "Failed to get password reset:",
-        passwordResetError.message
+      const attempt = args.attempt ?? 0;
+      const retryDelay = LOOKUP_RETRY_DELAYS_MS[attempt];
+
+      if (retryDelay === undefined) {
+        console.error(
+          "Failed to get password reset:",
+          passwordResetError.message
+        );
+        return;
+      }
+
+      await ctx.scheduler.runAfter(
+        retryDelay,
+        internal.emails.actions.sendPasswordResetEmail,
+        { attempt: attempt + 1, passwordResetId: args.passwordResetId }
       );
       return;
     }
@@ -135,13 +159,26 @@ export const sendPasswordResetEmail = internalAction({
       return;
     }
 
+    // Rate limit per recipient, because each event has a new id
+    const { ok } = await rateLimiter.limit(ctx, "authEmailPerRecipient", {
+      key: passwordResetData.email,
+    });
+
+    if (!ok) {
+      console.warn(
+        "Rate limited: sendPasswordResetEmail",
+        args.passwordResetId
+      );
+      return;
+    }
+
     // Build reset URL
     const resetUrl = `${APP_URL}/reset-password?token=${passwordResetData.passwordResetToken}`;
 
     // Send email
     const { error: sendEmailError } = await tryCatch(
       resend.sendEmail(ctx, {
-        from: `${APP_NAME} <${process.env.RESEND_FROM_EMAIL}>`,
+        from: getFromAddress(),
         headers: [{ name: "X-Email-Category", value: "password_reset" }],
         html: await render(PasswordResetEmail({ url: resetUrl })),
         subject: "Reset your password",
@@ -179,7 +216,7 @@ export const sendWelcomeEmail = internalAction({
     // Send email
     const { error: sendEmailError } = await tryCatch(
       resend.sendEmail(ctx, {
-        from: `${APP_NAME} <${process.env.RESEND_FROM_EMAIL}>`,
+        from: getFromAddress(),
         html: await render(WelcomeEmail({ name: args.name })),
         subject: `Welcome to ${APP_NAME}`,
         to: args.email,
@@ -213,7 +250,7 @@ export const sendWelcomeToProEmail = internalAction({
     // Send email
     const { error: sendEmailError } = await tryCatch(
       resend.sendEmail(ctx, {
-        from: `${APP_NAME} <${process.env.RESEND_FROM_EMAIL}>`,
+        from: getFromAddress(),
         headers: [{ name: "X-Email-Category", value: "welcome_to_pro" }],
         html: await render(
           WelcomeToProEmail({
