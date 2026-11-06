@@ -1,42 +1,31 @@
 import { tryCatch } from "@repo/shared";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import { internalMutation, mutation } from "../_generated/server";
-import { requireAuthId } from "../auth/helpers";
+import { internalMutation } from "../_generated/server";
 
 /**
- * Upsert user - create if doesn't exist, update if exists
- * Called from auth callback to ensure user exists immediately after sign-in/up
- * The caller's verified WorkOS token determines which user can be synced.
+ * Internal mutation: Create the user's record if it doesn't exist.
+ * Existing records stay in sync through the WorkOS user.updated webhook.
  */
-export const upsertUser = mutation({
+export const createUserIfMissing = internalMutation({
   args: {
+    authId: v.string(),
     email: v.string(),
-    name: v.optional(v.string()),
+    name: v.string(),
     profilePictureUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const authId = await requireAuthId(ctx);
     const existingUser = await ctx.db
       .query("users")
-      .withIndex("authId", (q) => q.eq("authId", authId))
+      .withIndex("authId", (q) => q.eq("authId", args.authId))
       .unique();
 
     if (existingUser) {
-      // Update existing user (sync from WorkOS)
-      await ctx.db.patch(existingUser._id, {
-        email: args.email,
-        profilePictureUrl: args.profilePictureUrl,
-      });
       return { created: false, userId: existingUser._id };
     }
 
-    // Create new user
     const userId = await ctx.db.insert("users", {
-      authId,
-      email: args.email,
-      name: args.name ?? "",
-      profilePictureUrl: args.profilePictureUrl,
+      ...args,
       setupComplete: false,
     });
 

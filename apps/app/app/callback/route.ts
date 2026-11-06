@@ -2,9 +2,9 @@ import { handleAuth } from "@workos-inc/authkit-nextjs";
 import { syncUserToDb } from "@/features/auth/server";
 
 export const GET = handleAuth({
-  onSuccess: async ({ user, accessToken }) => {
+  onSuccess: async ({ accessToken }) => {
     // Sync user to Convex DB (SetupGuard handles redirect to /setup for new users)
-    await syncUserToDb(user, accessToken);
+    await syncUserToDb(accessToken);
   },
   returnPathname: "/",
 });

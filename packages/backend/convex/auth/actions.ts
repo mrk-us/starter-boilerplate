@@ -1,11 +1,14 @@
 import { tryCatch } from "@repo/shared";
 import { ConvexError, v } from "convex/values";
 import { isDisposableEmail } from "disposable-email-domains-js";
+import { internal } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
 import type { ActionCtx } from "../_generated/server";
 import { action, internalAction } from "../_generated/server";
 import { ERROR_CODE, ERROR_MESSAGE } from "../errors/constants";
 import { rateLimiter } from "../rateLimiter";
 import { AUTH_ERROR_CODE } from "./constants";
+import { requireAuthId } from "./helpers";
 import { authKit } from "./index";
 import type { AuthenticateResult, CheckEmailResult } from "./types";
 import { checkEmailSchema } from "./validation";
@@ -16,6 +19,27 @@ import { checkEmailSchema } from "./validation";
 export const { authKitAction } = authKit.actions({
   authentication: async (_ctx, _action, response) => response.allow(),
   userRegistration: async (_ctx, _action, response) => response.allow(),
+});
+
+/**
+ * Create the signed-in user's record from their WorkOS profile.
+ * The profile comes from WorkOS because billing and emails trust this email,
+ * so a client must not be able to choose it.
+ */
+export const syncCurrentUser = action({
+  args: {},
+  handler: async (ctx): Promise<{ created: boolean; userId: Id<"users"> }> => {
+    const authId = await requireAuthId(ctx);
+    const user = await authKit.workos.userManagement.getUser(authId);
+
+    return await ctx.runMutation(internal.users.mutations.createUserIfMissing, {
+      authId,
+      email: user.email,
+      name: user.name ?? user.firstName ?? "",
+      profilePictureUrl: user.profilePictureUrl ?? undefined,
+    });
+  },
+  returns: v.object({ created: v.boolean(), userId: v.id("users") }),
 });
 
 /**

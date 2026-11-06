@@ -1,5 +1,6 @@
 import { authkit, handleAuthkitHeaders } from "@workos-inc/authkit-nextjs";
 import type { NextRequest } from "next/server";
+import { getReturnPath } from "./features/auth/return-path";
 import { isPublicPath, isSetupPath } from "./lib/routes";
 
 /**
@@ -19,7 +20,9 @@ export default async function proxy(request: NextRequest) {
 
   // Redirect authenticated users away from auth pages
   if (session.user && isPublic) {
-    return handleAuthkitHeaders(request, headers, { redirect: "/" });
+    return handleAuthkitHeaders(request, headers, {
+      redirect: getReturnPath(request.nextUrl.searchParams.get("redirect")),
+    });
   }
 
   // Allow public routes without authentication
@@ -30,7 +33,7 @@ export default async function proxy(request: NextRequest) {
   // Redirect unauthenticated users to sign-in
   if (!session.user) {
     const signInUrl = new URL("/sign-in", request.url);
-    signInUrl.searchParams.set("redirect", pathname);
+    signInUrl.searchParams.set("redirect", pathname + request.nextUrl.search);
     return handleAuthkitHeaders(request, headers, {
       redirect: signInUrl.toString(),
     });

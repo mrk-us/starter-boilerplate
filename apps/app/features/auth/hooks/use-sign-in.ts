@@ -3,6 +3,10 @@
 import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
+import {
+  getReturnPath,
+  getSignInDestination,
+} from "@/features/auth/return-path";
 import { signIn as signInAction } from "@/features/auth/server";
 
 interface SignInData {
@@ -13,12 +17,15 @@ interface SignInData {
 export function useSignIn() {
   const searchParams = useSearchParams();
   // Redirect to the original URL after sign in
-  const redirect = searchParams.get("redirect") || "/";
+  const redirect = getReturnPath(searchParams.get("redirect"));
 
   const { mutateAsync, isPending, error } = useMutation({
     mutationFn: (data: SignInData) => signInAction(data),
     onSuccess: () => {
-      window.location.href = redirect;
+      window.location.href = getSignInDestination(
+        redirect,
+        window.location.hash
+      );
     },
   });
 
