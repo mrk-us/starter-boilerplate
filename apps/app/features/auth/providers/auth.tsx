@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect } from "react";
 import { useReloadOnLostSession } from "@/features/auth/hooks/use-reload-on-lost-session";
+import { SectionSpinner } from "@/features/shared/components/section-spinner";
 import { useCurrentUser } from "@/features/user/hooks";
 import { isPublicPath, isSetupPath } from "@/lib/routes";
 
@@ -41,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Wait for auth to resolve
   if (isLoading) {
-    return null;
+    return <SectionSpinner />;
   }
 
   // Not authenticated - middleware redirects

@@ -9,6 +9,8 @@ import {
 } from "@workos/authkit-tanstack-react-start/client";
 import { ConvexProviderWithAuth } from "convex/react";
 import { useCallback, useMemo } from "react";
+import { ErrorPage } from "@/features/shared/components/error-page";
+import { NotFoundPage } from "@/features/shared/components/not-found-page";
 import { routeTree } from "./routeTree.gen";
 
 export function getRouter() {
@@ -30,6 +32,8 @@ export function getRouter() {
   convexQueryClient.connect(queryClient);
 
   const router = createRouter({
+    defaultErrorComponent: ErrorPage,
+    defaultNotFoundComponent: NotFoundPage,
     context: {
       convexClient: convexQueryClient.convexClient,
       convexQueryClient,
