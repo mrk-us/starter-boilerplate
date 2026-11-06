@@ -1,10 +1,9 @@
 "use client";
 
-import { useConvexAction } from "@convex-dev/react-query";
-import { api } from "@repo/backend/convex/_generated/api";
 import { getOAuthSignInHint } from "@repo/backend/convex/auth/oauth";
-import { getErrorMessage, tryCatch } from "@repo/shared";
+import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
+import { checkEmail as checkEmailAction } from "@/features/auth/server";
 
 interface CheckEmailData {
   email: string;
@@ -18,22 +17,17 @@ interface CheckEmailSuccess {
 type CheckEmailResponse = CheckEmailSuccess;
 
 export function useCheckEmail() {
-  const checkEmailExistsAction = useConvexAction(
-    api.auth.actions.checkEmailExists
-  );
-
   const { mutateAsync, isPending, error } = useMutation({
     mutationFn: async (data: CheckEmailData): Promise<CheckEmailResponse> => {
-      const { data: checkEmailExistsData, error: checkEmailExistsError } =
-        await tryCatch(checkEmailExistsAction({ email: data.email }));
+      const result = await checkEmailAction(data.email);
 
-      if (checkEmailExistsError) {
-        throw new Error(checkEmailExistsError.message);
+      if ("error" in result) {
+        throw new Error(result.error);
       }
 
       return {
         canProceed: true,
-        hint: getOAuthSignInHint(checkEmailExistsData.oauthProviders),
+        hint: getOAuthSignInHint(result.oauthProviders),
       };
     },
   });

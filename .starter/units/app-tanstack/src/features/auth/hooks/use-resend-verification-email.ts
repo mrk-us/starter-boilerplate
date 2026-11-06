@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 
 interface ResendVerificationEmailData {
   authId: string;
+  token: string;
 }
 
 export function useResendVerificationEmail() {
@@ -14,7 +15,7 @@ export function useResendVerificationEmail() {
 
   const { mutateAsync, isPending, error } = useMutation({
     mutationFn: (data: ResendVerificationEmailData) =>
-      resendUserVerificationEmail({ authId: data.authId }),
+      resendUserVerificationEmail({ authId: data.authId, token: data.token }),
     onSuccess: (res) => {
       if (res.success) {
         // TODO: Show success message

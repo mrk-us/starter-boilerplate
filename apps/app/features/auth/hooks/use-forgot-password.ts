@@ -1,22 +1,24 @@
 "use client";
 
-import { useConvexAction } from "@convex-dev/react-query";
-import { api } from "@repo/backend/convex/_generated/api";
 import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
+import { requestPasswordReset } from "@/features/auth/server";
 
 interface ForgotPasswordData {
   email: string;
 }
 
 export function useForgotPassword() {
-  const requestPasswordReset = useConvexAction(
-    api.auth.actions.requestPasswordReset
-  );
-
   const { mutateAsync, isPending, error, isSuccess } = useMutation({
-    mutationFn: (data: ForgotPasswordData) =>
-      requestPasswordReset({ email: data.email }),
+    mutationFn: async (data: ForgotPasswordData) => {
+      const result = await requestPasswordReset(data.email);
+
+      if ("error" in result) {
+        throw new Error(result.error);
+      }
+
+      return result;
+    },
   });
 
   return {

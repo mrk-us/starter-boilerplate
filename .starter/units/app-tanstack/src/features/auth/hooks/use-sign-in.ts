@@ -15,9 +15,12 @@ export function useSignIn() {
 
   const { mutateAsync, isPending, error } = useMutation({
     mutationFn: (data: SignInData) => signInAction({ data }),
-    onSuccess: ({ verifyAuthId }) => {
+    onSuccess: ({ verifyAuthId, verifyToken }) => {
       if (verifyAuthId) {
-        navigate({ search: { authId: verifyAuthId }, to: "/verify-email" });
+        navigate({
+          search: { authId: verifyAuthId, token: verifyToken },
+          to: "/verify-email",
+        });
         return;
       }
 

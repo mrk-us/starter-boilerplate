@@ -32,7 +32,9 @@ export function useSignIn() {
     },
     onSuccess: (result) => {
       if ("verifyAuthId" in result) {
-        router.push(`/verify-email?authId=${result.verifyAuthId}`);
+        router.push(
+          `/verify-email?authId=${result.verifyAuthId}&token=${result.verifyToken}`
+        );
         return;
       }
 

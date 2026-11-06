@@ -14,13 +14,23 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
   },
 
   /*
-   * Check email rate limit: 100 attempts per day per email
+   * Check email ceiling: 1000 attempts per day per email, across all clients
    */
   checkEmail: {
-    capacity: 100,
+    capacity: 1000,
     kind: "token bucket",
     period: DAY,
-    rate: 100,
+    rate: 1000,
+  },
+
+  /*
+   * Check email: 60 attempts per hour per client
+   */
+  checkEmailByClient: {
+    capacity: 60,
+    kind: "token bucket",
+    period: HOUR,
+    rate: 60,
   },
 
   /*
@@ -34,13 +44,24 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
   },
 
   /*
-   * Password reset: 3 attempts per hour per email
+   * Password reset ceiling: 20 attempts per hour per email, across all clients.
+   * authEmailPerRecipient limits the email that this can send.
    */
   passwordReset: {
-    capacity: 3,
+    capacity: 20,
     kind: "token bucket",
     period: HOUR,
-    rate: 3,
+    rate: 20,
+  },
+
+  /*
+   * Password reset: 5 attempts per hour per client
+   */
+  passwordResetByClient: {
+    capacity: 5,
+    kind: "token bucket",
+    period: HOUR,
+    rate: 5,
   },
 
   /*
@@ -64,18 +85,8 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
   },
 
   /*
-   * Sign up by IP: 10 attempts per hour
-   */
-  // TODO: Add IP rate limiting
-  // signUpByIp: {
-  // 	kind: "token bucket",
-  // 	rate: 5,
-  // 	period: HOUR,
-  // 	capacity: 5,
-  // },
-
-  /*
-   * Sign in rate limit: 100 attempts per 30 minutes per email
+   * Sign in lockout: 100 failed passwords per 30 minutes per email. This is above
+   * the per-client limit, so one client cannot lock an account.
    */
   signIn: {
     capacity: 100,
@@ -83,14 +94,35 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
     period: HOUR / 2,
     rate: 100,
   },
+
   /*
-   * Sign up rate limit: 50 attempts per hour per email
+   * Sign in: 60 attempts per 30 minutes per client
+   */
+  signInByClient: {
+    capacity: 60,
+    kind: "token bucket",
+    period: HOUR / 2,
+    rate: 60,
+  },
+
+  /*
+   * Sign up ceiling: 50 attempts per hour per email, across all clients
    */
   signUp: {
     capacity: 50,
     kind: "token bucket",
     period: HOUR,
     rate: 50,
+  },
+
+  /*
+   * Sign up: 10 attempts per hour per client
+   */
+  signUpByClient: {
+    capacity: 10,
+    kind: "token bucket",
+    period: HOUR,
+    rate: 10,
   },
 
   /*

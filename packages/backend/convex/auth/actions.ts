@@ -1,3 +1,4 @@
+import type { RateLimitReturns } from "@convex-dev/rate-limiter";
 import { tryCatch } from "@repo/shared";
 import { ConvexError, v } from "convex/values";
 import { isDisposableEmail } from "disposable-email-domains-js";
@@ -10,8 +11,69 @@ import { rateLimiter } from "../rateLimiter";
 import { AUTH_ERROR_CODE } from "./constants";
 import { requireAuthId } from "./helpers";
 import { authKit } from "./index";
+import {
+  type ClientProof,
+  createVerifyToken,
+  isClientProofValid,
+  isVerifyTokenValid,
+} from "./proofs";
 import type { AuthenticateResult, CheckEmailResult } from "./types";
 import { checkEmailSchema } from "./validation";
+
+const clientProofArg = v.object({ address: v.string(), proof: v.string() });
+
+type ClientLimit =
+  | "checkEmailByClient"
+  | "passwordResetByClient"
+  | "signInByClient"
+  | "signUpByClient";
+
+/**
+ * Reject calls that skip the app server, then spend one token of this client.
+ */
+async function limitClient(
+  ctx: ActionCtx,
+  name: ClientLimit,
+  clientProof: ClientProof
+): Promise<RateLimitReturns> {
+  if (!(await isClientProofValid(clientProof))) {
+    console.error(
+      "Rejected an auth call with no valid proof. The app server and Convex must use the same WORKOS_API_KEY."
+    );
+    throw new ConvexError({
+      code: AUTH_ERROR_CODE.UNAUTHORIZED,
+      message: ERROR_MESSAGE.UNAUTHORIZED,
+    });
+  }
+
+  // With no address, all visitors would share one bucket and block each other.
+  // The per-email limit still applies.
+  if (!clientProof.address) {
+    return { ok: true, retryAfter: undefined };
+  }
+
+  return await rateLimiter.limit(ctx, name, { key: clientProof.proof });
+}
+
+/**
+ * The per-client limit stops one client. The per-email ceiling stops many
+ * clients, and is high enough that one client cannot lock an email.
+ */
+async function limitClientAndEmail(
+  ctx: ActionCtx,
+  limits: {
+    client: ClientLimit;
+    email: "checkEmail" | "passwordReset" | "signUp";
+  },
+  clientProof: ClientProof,
+  email: string
+) {
+  const byClient = await limitClient(ctx, limits.client, clientProof);
+
+  return byClient.ok
+    ? await rateLimiter.limit(ctx, limits.email, { key: email })
+    : byClient;
+}
 
 /**
  * AuthKit action handler (required by WorkOS AuthKit component)
@@ -47,6 +109,7 @@ export const syncCurrentUser = action({
  */
 export const createUserAccount = action({
   args: {
+    clientProof: clientProofArg,
     email: v.string(),
     password: v.string(),
   },
@@ -54,9 +117,12 @@ export const createUserAccount = action({
     const email = args.email.toLowerCase().trim();
 
     // Rate limit
-    const { ok, retryAfter } = await rateLimiter.limit(ctx, "signUp", {
-      key: email,
-    });
+    const { ok, retryAfter } = await limitClientAndEmail(
+      ctx,
+      { client: "signUpByClient", email: "signUp" },
+      args.clientProof,
+      email
+    );
 
     if (!ok) {
       throw new ConvexError({
@@ -108,6 +174,7 @@ export const createUserAccount = action({
     return {
       emailVerified: createUserData.emailVerified,
       id: createUserData.id,
+      verifyToken: await createVerifyToken(createUserData.id),
     };
   },
 });
@@ -156,6 +223,7 @@ export const verifyEmail = action({
  */
 export const checkEmailExists = action({
   args: {
+    clientProof: clientProofArg,
     email: v.string(),
   },
   handler: async (ctx, args): Promise<CheckEmailResult> => {
@@ -173,11 +241,14 @@ export const checkEmailExists = action({
 
     const { email } = validationResult.data;
 
-    // Anyone can spend this email's tokens, so an exhausted limit must not block
-    // sign-in. Skip the lookup and continue to the password step.
-    const { ok } = await rateLimiter.limit(ctx, "checkEmail", {
-      key: email,
-    });
+    // Many clients can spend this email's tokens, so an exhausted limit must not
+    // block sign-in. Skip the lookup and continue to the password step.
+    const { ok } = await limitClientAndEmail(
+      ctx,
+      { client: "checkEmailByClient", email: "checkEmail" },
+      args.clientProof,
+      email
+    );
 
     if (!ok) {
       return { exists: true, oauthProviders: [] };
@@ -283,8 +354,17 @@ async function sendVerificationEmail(ctx: ActionCtx, authId: string) {
 export const resendVerificationEmail = action({
   args: {
     authId: v.string(),
+    token: v.string(),
   },
   handler: async (ctx, args) => {
+    if (!(await isVerifyTokenValid(args.authId, args.token))) {
+      throw new ConvexError({
+        code: AUTH_ERROR_CODE.UNAUTHORIZED,
+        message:
+          "We couldn't send a new code from this link. Sign in to get a new link.",
+      });
+    }
+
     await sendVerificationEmail(ctx, args.authId);
     return { success: true };
   },
@@ -308,16 +388,18 @@ export const resendVerificationEmailOnEmailChange = internalAction({
  */
 export const authenticateWithPassword = action({
   args: {
+    clientProof: clientProofArg,
     email: v.string(),
     password: v.string(),
   },
   handler: async (ctx, args): Promise<AuthenticateResult> => {
     const email = args.email.toLowerCase().trim();
 
-    // Rate limit
-    const { ok, retryAfter } = await rateLimiter.limit(ctx, "signIn", {
-      key: email,
-    });
+    // Rate limit. Only a failed password spends this email's tokens, below.
+    const byClient = await limitClient(ctx, "signInByClient", args.clientProof);
+    const { ok, retryAfter } = byClient.ok
+      ? await rateLimiter.check(ctx, "signIn", { key: email })
+      : byClient;
 
     if (!ok) {
       throw new ConvexError({
@@ -354,11 +436,16 @@ export const authenticateWithPassword = action({
       const [user] = listUsersData?.data ?? [];
 
       if (user) {
-        return { authId: user.id, emailVerificationRequired: true };
+        return {
+          authId: user.id,
+          emailVerificationRequired: true,
+          verifyToken: await createVerifyToken(user.id),
+        };
       }
     }
 
     if (authResponseError) {
+      await rateLimiter.limit(ctx, "signIn", { key: email });
       throw new ConvexError({
         code: AUTH_ERROR_CODE.AUTHENTICATION_FAILED,
         message: authResponseError.message,
@@ -400,15 +487,19 @@ function passwordResetFailed() {
  */
 export const requestPasswordReset = action({
   args: {
+    clientProof: clientProofArg,
     email: v.string(),
   },
   handler: async (ctx, args) => {
     const email = args.email.toLowerCase().trim();
 
     // Rate limit
-    const { ok, retryAfter } = await rateLimiter.limit(ctx, "passwordReset", {
-      key: email,
-    });
+    const { ok, retryAfter } = await limitClientAndEmail(
+      ctx,
+      { client: "passwordResetByClient", email: "passwordReset" },
+      args.clientProof,
+      email
+    );
 
     if (!ok) {
       throw new ConvexError({

@@ -24,6 +24,7 @@ export type AuthenticateResult =
   | {
       authId: string;
       emailVerificationRequired: true;
+      verifyToken: string;
     };
 
 export interface CheckEmailResult {

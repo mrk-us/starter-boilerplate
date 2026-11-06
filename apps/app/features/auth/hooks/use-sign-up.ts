@@ -1,10 +1,9 @@
 "use client";
 
-import { useConvexAction } from "@convex-dev/react-query";
-import { api } from "@repo/backend/convex/_generated/api";
 import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { createAccount } from "@/features/auth/server";
 
 interface SignUpData {
   email: string;
@@ -14,15 +13,18 @@ interface SignUpData {
 export function useSignUp() {
   const router = useRouter();
 
-  const createUserAccount = useConvexAction(api.auth.actions.createUserAccount);
-
   const { mutateAsync, isPending, error } = useMutation({
-    mutationFn: (data: SignUpData) =>
-      createUserAccount({ email: data.email, password: data.password }),
-    onSuccess: (res) => {
-      if (res) {
-        router.push(`/verify-email?authId=${res.id}`);
+    mutationFn: async (data: SignUpData) => {
+      const result = await createAccount(data);
+
+      if ("error" in result) {
+        throw new Error(result.error);
       }
+
+      return result;
+    },
+    onSuccess: (res) => {
+      router.push(`/verify-email?authId=${res.id}&token=${res.verifyToken}`);
     },
   });
 

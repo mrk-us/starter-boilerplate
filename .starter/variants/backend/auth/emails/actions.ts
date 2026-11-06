@@ -10,6 +10,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
 import { authKit } from "../auth";
+import { createVerifyToken } from "../auth/proofs";
 import { rateLimiter } from "../rateLimiter";
 import { resend } from "./index";
 
@@ -85,7 +86,8 @@ export const sendEmailVerificationEmail = internalAction({
     }
 
     // Build verification URL
-    const verificationUrl = `${APP_URL}/verify-email?authId=${emailVerificationData.userId}`;
+    const verifyToken = await createVerifyToken(emailVerificationData.userId);
+    const verificationUrl = `${APP_URL}/verify-email?authId=${emailVerificationData.userId}&token=${verifyToken}`;
 
     // Send email
     const { error: sendEmailError } = await tryCatch(

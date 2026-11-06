@@ -45,6 +45,8 @@ https://<your-convex-site>.convex.site/workos/webhook
 
 The app sends the verification and password reset emails from that webhook. In the WorkOS Dashboard, go to Emails > Configuration, select Manage, and turn off the default email verification and password reset emails. If they stay on, users get two emails for each event.
 
+Sign-in, sign-up, and password reset limit each visitor by address. The app server signs the address and Convex checks the signature, so both must use the same `WORKOS_API_KEY`, and you must deploy them together. The app reads the last `X-Forwarded-For` entry, so your host must set that entry to the visitor's address. With a CDN in front of your host, the last entry is the CDN's address. Visitors then share one limit, and real users can be blocked.
+
 Configure the Stripe webhook endpoint with API version
 `2026-07-29.dahlia` at:
 
