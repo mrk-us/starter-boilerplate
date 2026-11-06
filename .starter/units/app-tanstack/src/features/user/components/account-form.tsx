@@ -1,6 +1,20 @@
 import { updateUserNameSchema } from "@repo/backend/convex/users/validation";
 import { getErrorMessage, tryCatch } from "@repo/shared/utils";
-import { Button, Form, FormSubmit, useAppForm } from "@repo/ui/components";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+  Button,
+  Form,
+  FormSubmit,
+  useAppForm,
+} from "@repo/ui/components";
 import {
   Avatar,
   AvatarFallback,
@@ -57,7 +71,8 @@ export function AccountForm() {
   });
 
   const handleDeleteAccount = async () => {
-    await deleteAccount();
+    // The hook keeps the error, and the dialog shows it
+    await tryCatch(deleteAccount());
   };
 
   return (
@@ -100,14 +115,37 @@ export function AccountForm() {
         </form.Subscribe>
       </Form>
 
-      <Button disabled={isDeletingUser} onClick={handleDeleteAccount}>
-        Delete Account
-      </Button>
-      {deleteUserError && (
-        <div className="text-red-500 text-sm" role="alert">
-          {deleteUserError}
-        </div>
-      )}
+      <AlertDialog>
+        <AlertDialogTrigger render={<Button />}>
+          Delete Account
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently deletes your account and cancels any
+              subscription. You can&apos;t undo this.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {deleteUserError && (
+            <p className="text-destructive text-sm" role="alert">
+              {deleteUserError}
+            </p>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingUser}>
+              Keep Account
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeletingUser}
+              onClick={handleDeleteAccount}
+            >
+              {isDeletingUser ? "Deleting..." : "Yes, Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }

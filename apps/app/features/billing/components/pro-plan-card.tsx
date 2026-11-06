@@ -55,15 +55,17 @@ export function ProPlanCard({
             <span className="font-bold text-2xl text-foreground">
               {formatPrice(monthlyEquivalent)}
             </span>
-            <span className="ml-1 text-white/50">/ mo</span>
+            <span className="ml-1 text-muted-foreground">/ mo</span>
           </div>
 
           {isYearly ? (
-            <span className="text-white/50 text-xs">
+            <span className="text-muted-foreground text-xs">
               (billed yearly at {formatPrice(price)})
             </span>
           ) : (
-            <span className="text-white/50 text-xs">(billed monthly)</span>
+            <span className="text-muted-foreground text-xs">
+              (billed monthly)
+            </span>
           )}
         </CardDescription>
       </CardHeader>

@@ -2,11 +2,38 @@
  * Billing error codes
  */
 export const BILLING_ERROR_CODE = {
+  ALREADY_SUBSCRIBED: "ALREADY_SUBSCRIBED",
   CHECKOUT_FAILED: "CHECKOUT_FAILED",
   CUSTOMER_DELETE_FAILED: "CUSTOMER_DELETE_FAILED",
   PRODUCTS_SYNC_FAILED: "PRODUCTS_SYNC_FAILED",
   SUBSCRIPTION_CANCEL_FAILED: "SUBSCRIPTION_CANCEL_FAILED",
 } as const;
+
+/**
+ * Statuses that grant Pro access
+ */
+export const PRO_SUBSCRIPTION_STATUSES: readonly string[] = [
+  "active",
+  "trialing",
+];
+
+/**
+ * Statuses of a subscription that needs a payment. These give no Pro access, but
+ * the customer still has the subscription and can fix the payment.
+ */
+export const PAYMENT_ISSUE_SUBSCRIPTION_STATUSES: readonly string[] = [
+  "past_due",
+  "paused",
+  "unpaid",
+];
+
+/**
+ * Statuses of a subscription that can no longer charge the customer
+ */
+export const ENDED_SUBSCRIPTION_STATUSES: readonly string[] = [
+  "canceled",
+  "incomplete_expired",
+];
 
 /**
  * Subscription plan

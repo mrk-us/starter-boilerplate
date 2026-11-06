@@ -24,21 +24,28 @@ export function CheckoutButton({
   className,
   successUrl,
 }: CheckoutButtonProps) {
-  const { checkout, isPending } = useCheckout();
+  const { checkout, error, isPending } = useCheckout();
 
   const handleClick = () => {
     checkout({ priceLookupKey, successUrl });
   };
 
   return (
-    <Button
-      className={className}
-      disabled={isPending}
-      onClick={handleClick}
-      pending={isPending}
-      variant={variant}
-    >
-      {isPending ? "Loading..." : children}
-    </Button>
+    <div className="flex w-full flex-col items-start gap-2">
+      <Button
+        className={className}
+        disabled={isPending}
+        onClick={handleClick}
+        pending={isPending}
+        variant={variant}
+      >
+        {isPending ? "Loading..." : children}
+      </Button>
+      {error && (
+        <p className="text-destructive text-sm" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }

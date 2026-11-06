@@ -7,3 +7,4 @@ export { CustomerPortalButton } from "./customer-portal-button";
 export { FreePlanCard } from "./free-plan-card";
 export { ManageSubscription } from "./manage-subscription";
 export { ProPlanCard } from "./pro-plan-card";
+export { ResumeSubscription } from "./resume-subscription";
