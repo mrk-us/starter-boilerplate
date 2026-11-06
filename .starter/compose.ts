@@ -806,7 +806,11 @@ const writeReadme = async (
         )}\n\nResume an interrupted setup with \`bunx @mrk-us/create-app --resume .\`.\n`
     : "";
 
-  const contents = `# Starter monorepo\n\nA Bun and Turborepo starter with ${capabilities.join(", ")}.\n\n## Requirements\n\n- Bun 1.4.4\n- Node.js 26.0.0 or newer\n\n## Workspaces\n\n${workspaceDescription(selection)}\n\n## Setup\n\n\`\`\`sh\nbun install\n\`\`\`\n${environment}\n## Commands\n\n\`\`\`sh\n${commands.join("\n")}\n\`\`\`\n`;
+  const workosEmails = selection.auth
+    ? "\n## WorkOS emails\n\nThe app sends the verification and password reset emails from the WorkOS webhook. In the WorkOS Dashboard, go to Emails > Configuration, select Manage, and turn off the default email verification and password reset emails. If they stay on, users get two emails for each event.\n"
+    : "";
+
+  const contents = `# Starter monorepo\n\nA Bun and Turborepo starter with ${capabilities.join(", ")}.\n\n## Requirements\n\n- Bun 1.4.4\n- Node.js 26.0.0 or newer\n\n## Workspaces\n\n${workspaceDescription(selection)}\n\n## Setup\n\n\`\`\`sh\nbun install\n\`\`\`\n${environment}${workosEmails}\n## Commands\n\n\`\`\`sh\n${commands.join("\n")}\n\`\`\`\n`;
   await writeText(join(destination, "README.md"), contents);
 };
 

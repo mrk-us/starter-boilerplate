@@ -30,7 +30,11 @@ const SIGN_IN_NOTICES = new Map([
 
 type Step = "email" | "password";
 
-function EmailStep({ onSuccess }: { onSuccess: (email: string) => void }) {
+function EmailStep({
+  onSuccess,
+}: {
+  onSuccess: (email: string, hint?: string) => void;
+}) {
   const { checkEmail } = useCheckEmail();
 
   type EmailFormData = z.infer<typeof checkEmailSchema>;
@@ -42,13 +46,15 @@ function EmailStep({ onSuccess }: { onSuccess: (email: string) => void }) {
     validators: {
       onSubmit: checkEmailSchema,
       onSubmitAsync: async ({ value }) => {
-        const { error } = await tryCatch(checkEmail({ email: value.email }));
+        const { data, error } = await tryCatch(
+          checkEmail({ email: value.email })
+        );
 
         if (error) {
           throw getErrorMessage(error);
         }
 
-        onSuccess(value.email);
+        onSuccess(value.email, data.hint);
       },
     },
   });
@@ -84,9 +90,11 @@ function EmailStep({ onSuccess }: { onSuccess: (email: string) => void }) {
 
 function PasswordStep({
   email,
+  hint,
   onReset,
 }: {
   email: string;
+  hint?: string;
   onReset: () => void;
 }) {
   const { signIn } = useSignIn();
@@ -133,6 +141,12 @@ function PasswordStep({
           </Button>
         </div>
 
+        {hint && (
+          <p className="text-muted-foreground text-xs" role="status">
+            {hint}
+          </p>
+        )}
+
         <form.AppField name="password">
           {(field) => (
             <div className="justify-baseline relative flex flex-col items-end gap-1">
@@ -172,9 +186,11 @@ export function SignInForm() {
   const notice = SIGN_IN_NOTICES.get(searchParams.get("notice") ?? "");
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
+  const [hint, setHint] = useState<string>();
 
-  const handleEmailSuccess = (verifiedEmail: string) => {
+  const handleEmailSuccess = (verifiedEmail: string, oauthHint?: string) => {
     setEmail(verifiedEmail);
+    setHint(oauthHint);
     setStep("password");
   };
 
@@ -207,7 +223,7 @@ export function SignInForm() {
       {step === "email" && <EmailStep onSuccess={handleEmailSuccess} />}
 
       {step === "password" && (
-        <PasswordStep email={email} onReset={handleReset} />
+        <PasswordStep email={email} hint={hint} onReset={handleReset} />
       )}
 
       <FieldSeparator>or</FieldSeparator>

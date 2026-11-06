@@ -41,6 +41,8 @@ Use `packages/backend/.env.example` as the list of backend values. Set secret va
 https://<your-convex-site>.convex.site/workos/webhook
 ```
 
+The app sends the verification and password reset emails from that webhook. In the WorkOS Dashboard, go to Emails > Configuration, select Manage, and turn off the default email verification and password reset emails. If they stay on, users get two emails for each event.
+
 Configure the Stripe webhook endpoint with API version
 `2026-07-29.dahlia` at:
 

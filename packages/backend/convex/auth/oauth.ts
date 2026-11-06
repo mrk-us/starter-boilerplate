@@ -1,40 +1,28 @@
-export type OAuthProvider = "GoogleOAuth" | "GitHubOAuth";
-
-export interface OAuthProviderConfig {
-  message: string;
-  provider: OAuthProvider;
-}
-
-export const OAUTH_PROVIDERS: OAuthProviderConfig[] = [
-  {
-    message: "You previously signed in with Google.",
-    provider: "GoogleOAuth",
-  },
-  {
-    message: "You previously signed in with GitHub.",
-    provider: "GitHubOAuth",
-  },
-];
+const OAUTH_PROVIDER_NAMES: Record<string, string> = {
+  AppleOAuth: "Apple",
+  GitHubOAuth: "GitHub",
+  GoogleOAuth: "Google",
+  MicrosoftOAuth: "Microsoft",
+};
 
 /**
- * Get OAuth provider message by provider name
+ * Describe the ways to sign in to an account that has OAuth identities. WorkOS
+ * does not say if the account also has a password, so the password step stays
+ * available. Google is the only OAuth button in the sign-in form.
  */
-export function getOAuthProviderMessage(provider: string): string | undefined {
-  return OAUTH_PROVIDERS.find((p) => p.provider === provider)?.message;
-}
-
-/**
- * Get OAuth provider message for a list of providers
- * Returns the first matching provider's message
- */
-export function getOAuthProvidersMessage(
-  providers: string[]
-): string | undefined {
-  for (const provider of providers) {
-    const message = getOAuthProviderMessage(provider);
-    if (message) {
-      return message;
-    }
+export function getOAuthSignInHint(providers: string[]): string | undefined {
+  if (providers.length === 0) {
+    return undefined;
   }
-  return undefined;
+
+  const names = new Set(
+    providers.map(
+      (provider) => OAUTH_PROVIDER_NAMES[provider] ?? "another provider"
+    )
+  );
+  const googleOption = providers.includes("GoogleOAuth")
+    ? 'use "Continue with Google" or '
+    : "";
+
+  return `You previously signed in with ${[...names].join(" and ")}. If you don't have a password, ${googleOption}use "Forgot password?" to set one.`;
 }

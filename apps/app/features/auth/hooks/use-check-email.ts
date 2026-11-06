@@ -2,7 +2,7 @@
 
 import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@repo/backend/convex/_generated/api";
-import { getOAuthProvidersMessage } from "@repo/backend/convex/auth/oauth";
+import { getOAuthSignInHint } from "@repo/backend/convex/auth/oauth";
 import { getErrorMessage, tryCatch } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
 
@@ -12,6 +12,7 @@ interface CheckEmailData {
 
 interface CheckEmailSuccess {
   canProceed: true;
+  hint?: string;
 }
 
 type CheckEmailResponse = CheckEmailSuccess;
@@ -30,16 +31,10 @@ export function useCheckEmail() {
         throw new Error(checkEmailExistsError.message);
       }
 
-      // Check for OAuth providers - throw as error so form.Errors displays it
-      if (checkEmailExistsData.oauthProviders.length > 0) {
-        const message = getOAuthProvidersMessage(
-          checkEmailExistsData.oauthProviders
-        );
-
-        throw new Error(message);
-      }
-
-      return { canProceed: true };
+      return {
+        canProceed: true,
+        hint: getOAuthSignInHint(checkEmailExistsData.oauthProviders),
+      };
     },
   });
 
