@@ -9,6 +9,8 @@ A Bun and Turborepo starter for a Next.js product with WorkOS authentication, Co
 
 The repository includes an `.nvmrc` pinned to Node 26.0.0.
 
+A local Convex deployment runs Node actions with the `node` command on your PATH. The current local backend accepts Node.js 22 or 24, not 26. If a deploy reports `Node.js v22 or 24 is not installed`, put Node.js 24 first on your PATH before you run `bun run dev`. `nvm use 24` does this. Installing Node.js 24 is not enough.
+
 ## Workspace
 
 - `apps/app`: authenticated Next.js product app on port 3001

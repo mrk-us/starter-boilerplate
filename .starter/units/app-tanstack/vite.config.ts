@@ -2,10 +2,26 @@ import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
+import packageJson from "./package.json" with { type: "json" };
+
+/**
+ * Vite builds without error when this variable is missing, and every server
+ * route then fails at runtime.
+ */
+const requireConvexUrl: Plugin = {
+  apply: "build",
+  configResolved(config) {
+    if ("convex" in packageJson.dependencies && !config.env.VITE_CONVEX_URL) {
+      throw new Error("VITE_CONVEX_URL must be set to build this app.");
+    }
+  },
+  name: "require-convex-url",
+};
 
 export default defineConfig({
   plugins: [
+    requireConvexUrl,
     tailwindcss(),
     tanstackStart(),
     nitro(),
