@@ -3,6 +3,7 @@ import { DesktopIpcChannels } from "@repo/shared/desktop";
 import {
   app,
   BrowserWindow,
+  dialog,
   ipcMain,
   Menu,
   nativeTheme,
@@ -88,15 +89,22 @@ const editContextMenu = Menu.buildFromTemplate([
   { role: "selectAll" },
 ]);
 
-const applyContentsPolicy = (contents: WebContents): void => {
-  contents.on("will-navigate", (event, url) => {
-    if (isAllowedNavigation(url)) {
-      return;
-    }
+const guardNavigation = (
+  event: { isMainFrame: boolean; preventDefault: () => void },
+  url: string
+): void => {
+  // Frames do not get window.desktop, and Stripe pages embed other hosts
+  if (!event.isMainFrame || isAllowedNavigation(url)) {
+    return;
+  }
 
-    event.preventDefault();
-    openExternalSafely(url);
-  });
+  event.preventDefault();
+  openExternalSafely(url);
+};
+
+const applyContentsPolicy = (contents: WebContents): void => {
+  contents.on("will-navigate", guardNavigation);
+  contents.on("will-redirect", guardNavigation);
 
   contents.setWindowOpenHandler(({ url }) => {
     openExternalSafely(url);
@@ -112,6 +120,40 @@ const applyContentsPolicy = (contents: WebContents): void => {
       editContextMenu.popup();
     }
   });
+};
+
+const loadApp = async (window: BrowserWindow): Promise<void> => {
+  try {
+    await window.loadURL(APP_URL);
+  } catch (error) {
+    console.error("Failed to load the app URL:", error);
+
+    if (window.isDestroyed()) {
+      return;
+    }
+
+    window.show();
+
+    // Another navigation replaced this load, so nothing is wrong to report
+    if ((error as NodeJS.ErrnoException).code === "ERR_ABORTED") {
+      return;
+    }
+
+    const { response } = await dialog.showMessageBox(window, {
+      buttons: ["Retry", "Quit"],
+      cancelId: 1,
+      defaultId: 0,
+      detail: "Check your connection and try again.",
+      message: `${app.getName()} could not load.`,
+      type: "error",
+    });
+
+    if (response === 0) {
+      await loadApp(window);
+    } else {
+      app.quit();
+    }
+  }
 };
 
 const createWindow = (): void => {
@@ -140,9 +182,7 @@ const createWindow = (): void => {
   });
 
   window.once("ready-to-show", () => window.show());
-  window.loadURL(APP_URL).catch((error: unknown) => {
-    console.error("Failed to load the app URL:", error);
-  });
+  loadApp(window);
 };
 
 const focusExistingWindow = (): void => {
@@ -197,7 +237,9 @@ const registerPermissionHandlers = (): void => {
 
   session.defaultSession.setPermissionCheckHandler(
     (_contents, permission, requestingOrigin) =>
-      requestingOrigin === APP_ORIGIN && GRANTED_PERMISSIONS.has(permission)
+      // Electron passes this origin with a trailing slash
+      parseUrl(requestingOrigin)?.origin === APP_ORIGIN &&
+      GRANTED_PERMISSIONS.has(permission)
   );
 };
 
