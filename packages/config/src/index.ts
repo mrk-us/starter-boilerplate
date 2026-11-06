@@ -7,7 +7,6 @@ const DEFAULT_APP_URL_DEV = "http://localhost:3001";
 // above), and `process` does not exist there.
 interface RuntimeEnvironment {
   APP_URL?: string;
-  NODE_ENV?: string;
 }
 
 const runtime = globalThis as {
@@ -15,11 +14,8 @@ const runtime = globalThis as {
 };
 const env = runtime.process?.env;
 
-export const IS_PRODUCTION = env?.NODE_ENV === "production";
-
 const configuredAppUrl = env?.APP_URL?.replace(/\/$/, "") ?? "";
 
 // Important for emails: if this is empty, links become relative ("/verify-email?..."),
 // and some clients (e.g. Apple Mail) rewrite them to internal schemes like `x-webdoc://`.
-export const APP_URL =
-  IS_PRODUCTION && configuredAppUrl ? configuredAppUrl : DEFAULT_APP_URL_DEV;
+export const APP_URL = configuredAppUrl || DEFAULT_APP_URL_DEV;

@@ -54,27 +54,9 @@ async function getPriceIdByLookupKey(lookupKey: string): Promise<string> {
 }
 
 /**
- * Find an existing Stripe customer by email.
- * This prevents duplicate customers when users delete and recreate accounts.
- * @see https://docs.stripe.com/api/customers/list
- */
-async function findExistingStripeCustomerByEmail(
-  email: string
-): Promise<string | null> {
-  const stripeClient = getStripeClient();
-  const customers = await stripeClient.customers.list({
-    email,
-    limit: 1,
-  });
-
-  const [customer] = customers.data;
-
-  return customer?.id ?? null;
-}
-
-/**
  * Get or create a Stripe customer with caching.
  * Uses cached stripeCustomerId when available, otherwise looks up/creates and caches.
+ * Customers are matched by user ID only. An email match is not proof of ownership.
  */
 async function getOrCreateStripeCustomerWithCache(
   ctx: ActionCtx,
@@ -89,30 +71,20 @@ async function getOrCreateStripeCustomerWithCache(
     return userInfo.stripeCustomerId;
   }
 
-  // Check if a Stripe customer already exists with this email
-  const existingCustomerId = await findExistingStripeCustomerByEmail(
-    userInfo.email
+  const existingCustomer = await ctx.runQuery(
+    components.stripe.public.getCustomerByUserId,
+    { userId: userInfo._id }
   );
 
-  let customerId: string;
-
-  if (existingCustomerId) {
-    // Reuse existing Stripe customer
-    customerId = existingCustomerId;
-
-    // Update the customer's metadata to link to the new user
-    const stripeClient = getStripeClient();
-    await stripeClient.customers.update(existingCustomerId, {
-      metadata: { userId: userInfo._id },
-    });
-  } else {
-    // Create new customer via the Stripe component
-    const customer = await stripe.getOrCreateCustomer(ctx, {
-      email: userInfo.email,
-      userId: userInfo._id,
-    });
-    ({ customerId } = customer);
-  }
+  const customerId =
+    existingCustomer?.stripeCustomerId ??
+    (
+      await stripe.createCustomer(ctx, {
+        email: userInfo.email,
+        idempotencyKey: userInfo._id,
+        metadata: { userId: userInfo._id },
+      })
+    ).customerId;
 
   // Cache the customer ID on the user record for future calls
   await ctx.runMutation(internal.billing.mutations.updateStripeCustomerId, {
@@ -356,12 +328,7 @@ export const syncSubscriptionFromStripe = action({
       internal.billing.queries.requireCurrentUserForBilling
     );
 
-    // Use cached customer ID if available, otherwise lookup by email
-    let customerId: string | null | undefined = userInfo.stripeCustomerId;
-
-    if (!customerId) {
-      customerId = await findExistingStripeCustomerByEmail(userInfo.email);
-    }
+    const customerId = userInfo.stripeCustomerId;
 
     if (!customerId) {
       // No Stripe customer exists - user has never subscribed

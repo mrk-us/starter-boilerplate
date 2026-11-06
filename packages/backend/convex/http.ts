@@ -1,11 +1,10 @@
 import { registerRoutes } from "@convex-dev/stripe";
 import { httpRouter } from "convex/server";
 import { components } from "./_generated/api";
-import { httpAction } from "./_generated/server";
 import { authKit } from "./auth/index";
 import { STRIPE_API_VERSION } from "./billing/constants";
 import { onStripeEvent, stripeEventHandlers } from "./billing/events";
-import { resend } from "./emails/index";
+import { handleResendWebhook } from "./emails/index";
 
 const http = httpRouter();
 
@@ -20,9 +19,7 @@ authKit.registerRoutes(http);
  * Webhook endpoint: https://<your-convex-site>.convex.site/resend/webhooks
  */
 http.route({
-  handler: httpAction(
-    async (ctx, req) => await resend.handleResendEventWebhook(ctx, req)
-  ),
+  handler: handleResendWebhook,
   method: "POST",
   path: "/resend/webhooks",
 });

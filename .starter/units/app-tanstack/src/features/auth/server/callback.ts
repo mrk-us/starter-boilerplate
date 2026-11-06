@@ -6,8 +6,8 @@ export async function handleOAuthCallback({ request }: { request: Request }) {
   let returnPath: string | undefined;
   const response = await handleCallbackRoute({
     errorRedirectUrl: OAUTH_ERROR_REDIRECT,
-    onSuccess: async ({ user, accessToken, state }) => {
-      await syncUserToDb(user, accessToken);
+    onSuccess: async ({ accessToken, state }) => {
+      await syncUserToDb(accessToken);
       returnPath = getReturnPath(state);
     },
     returnPathname: "/",

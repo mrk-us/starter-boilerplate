@@ -3,9 +3,9 @@
 import { api } from "@repo/backend/convex/_generated/api";
 import { tryCatch } from "@repo/shared";
 import { getSignInUrl, saveSession } from "@workos-inc/authkit-nextjs";
-import type { User } from "@workos-inc/node";
 import { ConvexHttpClient } from "convex/browser";
 import { headers } from "next/headers";
+import { getReturnPath } from "../return-path";
 
 const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
 
@@ -17,8 +17,12 @@ const client = new ConvexHttpClient(convexUrl);
 
 const GOOGLE_OAUTH_PROVIDER = "GoogleOAuth";
 
-export async function getGoogleOAuthAuthorizationUrl(): Promise<string> {
-  const authorizationUrl = new URL(await getSignInUrl());
+export async function getGoogleOAuthAuthorizationUrl(
+  returnTo: string
+): Promise<string> {
+  const authorizationUrl = new URL(
+    await getSignInUrl({ returnTo: getReturnPath(returnTo) })
+  );
 
   // getSignInUrl creates the sealed state and verifier cookie required by
   // handleAuth. WorkOS rejects the hosted UI screen hint when a social provider
@@ -33,10 +37,7 @@ export async function getGoogleOAuthAuthorizationUrl(): Promise<string> {
  * Sync user to Convex DB after WorkOS authentication
  * Returns true if new user was created, false if already exists
  */
-export async function syncUserToDb(
-  user: User,
-  accessToken: string
-): Promise<boolean> {
+export async function syncUserToDb(accessToken: string): Promise<boolean> {
   const authenticatedClient = new ConvexHttpClient(client.url);
   authenticatedClient.setAuth(accessToken);
   const exists = await authenticatedClient.query(
@@ -48,13 +49,9 @@ export async function syncUserToDb(
     return false;
   }
 
-  const { created } = await authenticatedClient.mutation(
-    api.users.mutations.upsertUser,
-    {
-      email: user.email,
-      name: user.name ?? user.firstName ?? undefined,
-      profilePictureUrl: user.profilePictureUrl ?? undefined,
-    }
+  const { created } = await authenticatedClient.action(
+    api.auth.actions.syncCurrentUser,
+    {}
   );
   return created;
 }
@@ -80,7 +77,7 @@ export async function signIn(data: { email: string; password: string }) {
   }
 
   // Sync user to Convex DB
-  await syncUserToDb(authResultData.user, authResultData.accessToken);
+  await syncUserToDb(authResultData.accessToken);
 
   // Save session (tokens stay server-side)
   await saveSession(

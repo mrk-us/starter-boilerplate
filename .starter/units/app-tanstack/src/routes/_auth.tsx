@@ -1,9 +1,14 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { getReturnPath } from "@/features/auth/return-path";
 
 export const Route = createFileRoute("/_auth")({
-  beforeLoad: ({ context }) => {
+  beforeLoad: ({ context, location }) => {
     if (context.user) {
-      throw redirect({ to: "/" });
+      throw redirect({
+        href: getReturnPath(
+          new URLSearchParams(location.searchStr).get("redirect")
+        ),
+      });
     }
   },
   component: AuthLayout,
