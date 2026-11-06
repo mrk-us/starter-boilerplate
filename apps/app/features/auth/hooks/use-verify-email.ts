@@ -21,7 +21,7 @@ export function useVerifyEmail() {
       verifyUserEmail({ authId: data.authId, code: data.code }),
     onSuccess: (res) => {
       if (res.success) {
-        router.push("/");
+        router.push("/sign-in?notice=verified");
       }
     },
   });

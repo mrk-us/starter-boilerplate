@@ -325,6 +325,19 @@ export const authenticateWithPassword = action({
       })
     );
 
+    // The verify page needs the user id, and the WorkOS error is reduced to its
+    // code and message here
+    if (authResponseError?.code === "email_verification_required") {
+      const { data: listUsersData } = await tryCatch(
+        authKit.workos.userManagement.listUsers({ email })
+      );
+      const [user] = listUsersData?.data ?? [];
+
+      if (user) {
+        return { authId: user.id, emailVerificationRequired: true };
+      }
+    }
+
     if (authResponseError) {
       throw new ConvexError({
         code: AUTH_ERROR_CODE.AUTHENTICATION_FAILED,

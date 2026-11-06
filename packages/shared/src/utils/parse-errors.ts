@@ -2,6 +2,8 @@ import { UNKNOWN_ERROR } from "../errors";
 import type { AppError } from "../errors/types";
 
 const CONVEX_ERROR_PATTERN = /ConvexError: ({.*})/;
+// Convex adds this to server failures that are not a ConvexError
+const CONVEX_SERVER_FAILURE_PATTERN = /\[Request ID: [^\]]*\]/;
 
 /** Structured API error response: a top-level message and/or an errors[] array */
 interface ApiErrorShape {
@@ -34,9 +36,28 @@ function isApiError(error: unknown): error is ApiErrorShape {
   return Array.isArray(err.errors) || typeof err.message === "string";
 }
 
+function parseRelayedConvexError(message: string): AppError | undefined {
+  const match = message.match(CONVEX_ERROR_PATTERN);
+  if (!match?.[1]) {
+    return undefined;
+  }
+  try {
+    const parsed = JSON.parse(match[1]) as {
+      code?: string;
+      message?: string;
+    };
+    return {
+      code: parsed.code ?? UNKNOWN_ERROR.code,
+      message: parsed.message ?? UNKNOWN_ERROR.message,
+    };
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * Parse any error into a typed AppError
- * Handles: ConvexError, structured API errors, HTTP client errors, standard Error, unknown
+ * Handles: ConvexError, Convex server failures, structured API errors, HTTP client errors, standard Error, unknown
  */
 export function parseAppError(error: unknown): AppError {
   // 1. Structured errors that expose their payload through `.data`.
@@ -52,24 +73,20 @@ export function parseAppError(error: unknown): AppError {
   // before the structured-API shape check, which matches any object with a
   // message.
   if (error instanceof Error) {
-    const match = error.message.match(CONVEX_ERROR_PATTERN);
-    if (match?.[1]) {
-      try {
-        const parsed = JSON.parse(match[1]) as {
-          code?: string;
-          message?: string;
-        };
-        return {
-          code: parsed.code ?? UNKNOWN_ERROR.code,
-          message: parsed.message ?? UNKNOWN_ERROR.message,
-        };
-      } catch {
-        // JSON parse failed, fall through
-      }
+    const relayedError = parseRelayedConvexError(error.message);
+    if (relayedError) {
+      return relayedError;
+    }
+
+    // 3. Other Convex server failures. Their message can contain function paths
+    // and stack text, so it goes to the log and not to the user.
+    if (CONVEX_SERVER_FAILURE_PATTERN.test(error.message)) {
+      console.error(error);
+      return UNKNOWN_ERROR;
     }
   }
 
-  // 3. Structured API errors (have errors[] array or message property)
+  // 4. Structured API errors (have errors[] array or message property)
   if (isApiError(error)) {
     // Check nested errors array first (more specific)
     const [nestedError] = error.errors ?? [];
@@ -88,12 +105,12 @@ export function parseAppError(error: unknown): AppError {
     }
   }
 
-  // 4. Standard Error
+  // 5. Standard Error
   if (error instanceof Error) {
     return { code: UNKNOWN_ERROR.code, message: error.message };
   }
 
-  // 5. Unknown error
+  // 6. Unknown error
   return UNKNOWN_ERROR;
 }
 

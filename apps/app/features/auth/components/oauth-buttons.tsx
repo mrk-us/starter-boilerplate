@@ -1,18 +1,26 @@
 "use client";
 
 import { Button } from "@repo/ui/components";
+import { FormErrorContent } from "@repo/ui/components/form/form-errors";
 import { IconBrandGoogle } from "@tabler/icons-react";
 import { useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   getReturnPath,
   getSignInDestination,
 } from "@/features/auth/return-path";
 import { getGoogleOAuthAuthorizationUrl } from "@/features/auth/server";
 
-export function OAuthButtons() {
+export function OAuthButtons({ callbackError }: { callbackError?: string }) {
   const searchParams = useSearchParams();
+  const [error, setError] = useState<string | undefined>();
   const [isPending, startTransition] = useTransition();
+
+  // Screen readers skip an alert that is already in the page when it loads, so
+  // the callback error is added after hydration rather than rendered on the server.
+  useEffect(() => {
+    setError(callbackError);
+  }, [callbackError]);
 
   const handleOAuth = () => {
     startTransition(async () => {
@@ -40,6 +48,7 @@ export function OAuthButtons() {
         <IconBrandGoogle className="size-4 fill-primary-foreground/25 stroke-none" />
         Continue with Google
       </Button>
+      <FormErrorContent errors={error} />
     </div>
   );
 }

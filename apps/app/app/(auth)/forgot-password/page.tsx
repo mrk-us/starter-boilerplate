@@ -5,7 +5,7 @@ import { ForgotPasswordForm } from "@/features/auth/components";
 
 export const metadata: Metadata = {
   description: APP_DESCRIPTION,
-  title: `Create an account | ${APP_NAME}`,
+  title: `Reset your password | ${APP_NAME}`,
 };
 
 export default function ForgotPasswordPage() {

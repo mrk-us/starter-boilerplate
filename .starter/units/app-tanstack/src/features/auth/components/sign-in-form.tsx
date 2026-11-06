@@ -19,6 +19,12 @@ import type { z } from "zod";
 import { AuthCard, OAuthButtons } from "@/features/auth/components";
 import { useCheckEmail, useSignIn } from "@/features/auth/hooks";
 
+// A Map, because the key comes from the URL and "__proto__" must not match
+const SIGN_IN_NOTICES = new Map([
+  ["reset", "Your password was reset. Sign in with your new password."],
+  ["verified", "Your email is verified. Sign in to continue."],
+]);
+
 type Step = "email" | "password";
 
 function EmailStep({ onSuccess }: { onSuccess: (email: string) => void }) {
@@ -159,7 +165,12 @@ function PasswordStep({
 }
 
 export function SignInForm() {
-  const { error, redirect } = useSearch({ from: "/_auth/sign-in" });
+  const {
+    error,
+    notice: noticeKey,
+    redirect,
+  } = useSearch({ from: "/_auth/sign-in" });
+  const notice = SIGN_IN_NOTICES.get(noticeKey ?? "");
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
 
@@ -188,6 +199,12 @@ export function SignInForm() {
       }
       title="Sign in"
     >
+      {notice && (
+        <p className="text-center text-muted-foreground text-xs" role="status">
+          {notice}
+        </p>
+      )}
+
       {step === "email" && <EmailStep onSuccess={handleEmailSuccess} />}
 
       {step === "password" && (

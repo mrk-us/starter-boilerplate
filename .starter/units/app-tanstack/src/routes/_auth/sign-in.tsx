@@ -9,6 +9,7 @@ export const Route = createFileRoute("/_auth/sign-in")({
   head: () => ({ meta: [{ title: `Sign in | ${APP_NAME}` }] }),
   validateSearch: z.object({
     error: z.literal("oauth").optional().catch(undefined),
+    notice: z.enum(["reset", "verified"]).optional().catch(undefined),
     redirect: z.string().transform(getReturnPath).optional().catch(undefined),
   }),
 });

@@ -2,7 +2,7 @@
 
 import { getErrorMessage } from "@repo/shared";
 import { useMutation } from "@tanstack/react-query";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   getReturnPath,
   getSignInDestination,
@@ -15,13 +15,27 @@ interface SignInData {
 }
 
 export function useSignIn() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   // Redirect to the original URL after sign in
   const redirect = getReturnPath(searchParams.get("redirect"));
 
   const { mutateAsync, isPending, error } = useMutation({
-    mutationFn: (data: SignInData) => signInAction(data),
-    onSuccess: () => {
+    mutationFn: async (data: SignInData) => {
+      const result = await signInAction(data);
+
+      if ("error" in result) {
+        throw new Error(result.error);
+      }
+
+      return result;
+    },
+    onSuccess: (result) => {
+      if ("verifyAuthId" in result) {
+        router.push(`/verify-email?authId=${result.verifyAuthId}`);
+        return;
+      }
+
       window.location.href = getSignInDestination(
         redirect,
         window.location.hash

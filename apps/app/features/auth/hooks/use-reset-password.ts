@@ -25,7 +25,7 @@ export function useResetPassword() {
         token: data.token,
       }),
     onSuccess: () => {
-      router.push("/sign-in?reset=success");
+      router.push("/sign-in?notice=reset");
     },
   });
 

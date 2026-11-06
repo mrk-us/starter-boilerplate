@@ -1,4 +1,5 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { useReloadOnLostSession } from "@/features/auth/hooks/use-reload-on-lost-session";
 import { UserMenu } from "@/features/user/components/user-menu";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -11,6 +12,8 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
+  useReloadOnLostSession();
+
   return (
     <>
       <UserMenu />

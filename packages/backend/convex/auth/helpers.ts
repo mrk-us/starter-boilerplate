@@ -2,7 +2,6 @@ import { ConvexError } from "convex/values";
 import type { ActionCtx, MutationCtx, QueryCtx } from "../_generated/server";
 import { ERROR_MESSAGE } from "../errors/constants";
 import { AUTH_ERROR_CODE } from "./constants";
-import { authKit } from "./index";
 
 /**
  * Get the authenticated user's WorkOS ID from the Convex identity
@@ -44,15 +43,15 @@ export async function requireAuthId(
  * Returns null if not authenticated or user not found
  */
 export async function getAuthenticatedUser(ctx: QueryCtx | MutationCtx) {
-  const authUser = await authKit.getAuthUser(ctx);
+  const authId = await getAuthId(ctx);
 
-  if (!authUser) {
+  if (!authId) {
     return null;
   }
 
   return ctx.db
     .query("users")
-    .withIndex("authId", (q) => q.eq("authId", authUser.id))
+    .withIndex("authId", (q) => q.eq("authId", authId))
     .unique();
 }
 

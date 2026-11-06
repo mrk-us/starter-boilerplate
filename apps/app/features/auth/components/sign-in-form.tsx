@@ -16,10 +16,17 @@ import { Button } from "@repo/ui/components/button";
 import { Input } from "@repo/ui/components/input";
 import { IconX } from "@tabler/icons-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import type { z } from "zod";
 import { AuthCard, OAuthButtons } from "@/features/auth/components";
 import { useCheckEmail, useSignIn } from "@/features/auth/hooks";
+
+// A Map, because the key comes from the URL and "__proto__" must not match
+const SIGN_IN_NOTICES = new Map([
+  ["reset", "Your password was reset. Sign in with your new password."],
+  ["verified", "Your email is verified. Sign in to continue."],
+]);
 
 type Step = "email" | "password";
 
@@ -161,6 +168,8 @@ function PasswordStep({
 }
 
 export function SignInForm() {
+  const searchParams = useSearchParams();
+  const notice = SIGN_IN_NOTICES.get(searchParams.get("notice") ?? "");
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
 
@@ -189,6 +198,12 @@ export function SignInForm() {
       }
       title="Sign in"
     >
+      {notice && (
+        <p className="text-center text-muted-foreground text-xs" role="status">
+          {notice}
+        </p>
+      )}
+
       {step === "email" && <EmailStep onSuccess={handleEmailSuccess} />}
 
       {step === "password" && (
@@ -197,7 +212,13 @@ export function SignInForm() {
 
       <FieldSeparator>or</FieldSeparator>
 
-      <OAuthButtons />
+      <OAuthButtons
+        callbackError={
+          searchParams.get("error") === "oauth"
+            ? "We couldn't complete sign-in. Please try again."
+            : undefined
+        }
+      />
     </AuthCard>
   );
 }

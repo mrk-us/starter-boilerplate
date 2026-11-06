@@ -15,11 +15,16 @@ export interface WorkOSUser {
   updatedAt: string;
 }
 
-export interface AuthenticateResult {
-  accessToken: string;
-  refreshToken: string;
-  user: WorkOSUser;
-}
+export type AuthenticateResult =
+  | {
+      accessToken: string;
+      refreshToken: string;
+      user: WorkOSUser;
+    }
+  | {
+      authId: string;
+      emailVerificationRequired: true;
+    };
 
 export interface CheckEmailResult {
   exists: boolean;

@@ -33,6 +33,10 @@ export const signIn = createServerFn({ method: "POST" })
       throw new Error(getErrorMessage(error));
     }
 
+    if ("emailVerificationRequired" in authResponse) {
+      return { verifyAuthId: authResponse.authId };
+    }
+
     await syncUserToDb(authResponse.accessToken);
 
     const authkit = await getAuthkit();
@@ -47,4 +51,6 @@ export const signIn = createServerFn({ method: "POST" })
     );
 
     await authkit.saveSession(undefined, sealedSession);
+
+    return {};
   });
