@@ -11,7 +11,7 @@ import {
 } from "@/features/auth/hooks";
 
 export function VerifyEmailForm() {
-  const { authId } = useSearch({ from: "/_auth/verify-email" });
+  const { authId, token = "" } = useSearch({ from: "/_auth/verify-email" });
 
   const [resendError, setResendError] = useState<string | undefined>();
   const [resendSent, setResendSent] = useState(false);
@@ -43,7 +43,9 @@ export function VerifyEmailForm() {
     setResendError(undefined);
     setResendSent(false);
 
-    const { error } = await tryCatch(resendVerificationEmail({ authId }));
+    const { error } = await tryCatch(
+      resendVerificationEmail({ authId, token })
+    );
 
     if (error) {
       setResendError(getErrorMessage(error));

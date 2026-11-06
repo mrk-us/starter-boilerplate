@@ -14,6 +14,7 @@ import type * as auth_events from "../auth/events.js";
 import type * as auth_helpers from "../auth/helpers.js";
 import type * as auth_index from "../auth/index.js";
 import type * as auth_oauth from "../auth/oauth.js";
+import type * as auth_proofs from "../auth/proofs.js";
 import type * as auth_types from "../auth/types.js";
 import type * as auth_validation from "../auth/validation.js";
 import type * as crons from "../crons.js";
@@ -43,6 +44,7 @@ declare const fullApi: ApiFromModules<{
   "auth/helpers": typeof auth_helpers;
   "auth/index": typeof auth_index;
   "auth/oauth": typeof auth_oauth;
+  "auth/proofs": typeof auth_proofs;
   "auth/types": typeof auth_types;
   "auth/validation": typeof auth_validation;
   crons: typeof crons;

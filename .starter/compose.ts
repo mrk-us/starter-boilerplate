@@ -810,7 +810,7 @@ const writeReadme = async (
     : "";
 
   const workosEmails = selection.auth
-    ? "\n## WorkOS emails\n\nThe app sends the verification and password reset emails from the WorkOS webhook. In the WorkOS Dashboard, go to Emails > Configuration, select Manage, and turn off the default email verification and password reset emails. If they stay on, users get two emails for each event.\n"
+    ? "\n## WorkOS emails\n\nThe app sends the verification and password reset emails from the WorkOS webhook. In the WorkOS Dashboard, go to Emails > Configuration, select Manage, and turn off the default email verification and password reset emails. If they stay on, users get two emails for each event.\n\n## Auth rate limits\n\nSign-in, sign-up, and password reset limit each visitor by address. The app server signs the address and Convex checks the signature, so both must use the same `WORKOS_API_KEY`, and you must deploy them together. The app reads the last `X-Forwarded-For` entry, so your host must set that entry to the visitor's address. With a CDN in front of your host, the last entry is the CDN's address. Visitors then share one limit, and real users can be blocked.\n"
     : "";
 
   const contents = `# Starter monorepo\n\nA Bun and Turborepo starter with ${capabilities.join(", ")}.\n\n## Requirements\n\n- Bun 1.4.4\n- Node.js 26.0.0 or newer\n\n## Workspaces\n\n${workspaceDescription(selection)}\n\n## Setup\n\n\`\`\`sh\nbun install\n\`\`\`\n${environment}${workosEmails}\n## Commands\n\n\`\`\`sh\n${commands.join("\n")}\n\`\`\`\n`;

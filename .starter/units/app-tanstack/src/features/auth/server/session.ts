@@ -4,6 +4,7 @@ import { getErrorMessage, tryCatch } from "@repo/shared";
 import { createServerFn } from "@tanstack/react-start";
 import { getConfig, sessionEncryption } from "@workos/authkit-session";
 import { getAuthkit } from "@workos/authkit-tanstack-react-start";
+import { getClientProof } from "./client-proof.server";
 import { convexHttpClient, syncUserToDb } from "./user-sync.server";
 
 /**
@@ -21,6 +22,7 @@ export const signIn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: authResponse, error } = await tryCatch(
       convexHttpClient.action(api.auth.actions.authenticateWithPassword, {
+        clientProof: await getClientProof(),
         email: data.email,
         password: data.password,
       })
@@ -34,7 +36,10 @@ export const signIn = createServerFn({ method: "POST" })
     }
 
     if ("emailVerificationRequired" in authResponse) {
-      return { verifyAuthId: authResponse.authId };
+      return {
+        verifyAuthId: authResponse.authId,
+        verifyToken: authResponse.verifyToken,
+      };
     }
 
     await syncUserToDb(authResponse.accessToken);

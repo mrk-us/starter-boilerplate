@@ -1,7 +1,11 @@
 "use server";
 
 import { api } from "@repo/backend/convex/_generated/api";
-import { tryCatch } from "@repo/shared";
+import {
+  type ClientProof,
+  createClientProof,
+} from "@repo/backend/convex/auth/proofs";
+import { getErrorMessage, tryCatch } from "@repo/shared";
 import { getSignInUrl, saveSession } from "@workos-inc/authkit-nextjs";
 import { ConvexHttpClient } from "convex/browser";
 import { headers } from "next/headers";
@@ -56,7 +60,26 @@ export async function syncUserToDb(accessToken: string): Promise<boolean> {
   return created;
 }
 
-async function signInWithPassword(data: { email: string; password: string }) {
+/**
+ * Calls an anonymous Convex auth action with the signed address of the visitor.
+ * Returns errors, because React replaces the message of a thrown Server Action
+ * error in production
+ */
+async function callWithClientProof<T>(
+  run: (clientProof: ClientProof) => Promise<T>
+) {
+  const headersList = await headers();
+  const { data, error } = await tryCatch(
+    createClientProof(headersList.get("x-forwarded-for")).then(run)
+  );
+
+  return error ? { error: getErrorMessage(error) } : data;
+}
+
+async function signInWithPassword(
+  data: { email: string; password: string },
+  clientProof: ClientProof
+) {
   const headersList = await headers();
   const host = headersList.get("host") || "localhost:3001";
   const protocol = host.includes("localhost") ? "http" : "https";
@@ -64,6 +87,7 @@ async function signInWithPassword(data: { email: string; password: string }) {
 
   const { data: authResultData, error: authResultError } = await tryCatch(
     client.action(api.auth.actions.authenticateWithPassword, {
+      clientProof,
       email: data.email,
       password: data.password,
     })
@@ -74,7 +98,10 @@ async function signInWithPassword(data: { email: string; password: string }) {
   }
 
   if ("emailVerificationRequired" in authResultData) {
-    return { verifyAuthId: authResultData.authId };
+    return {
+      verifyAuthId: authResultData.authId,
+      verifyToken: authResultData.verifyToken,
+    };
   }
 
   // Sync user to Convex DB
@@ -96,11 +123,34 @@ async function signInWithPassword(data: { email: string; password: string }) {
 
 /**
  * Sign in with email/password and save session
- * Returns errors, because React replaces the message of a thrown Server Action
- * error in production
  */
 export async function signIn(data: { email: string; password: string }) {
-  const { data: result, error } = await tryCatch(signInWithPassword(data));
+  return await callWithClientProof((clientProof) =>
+    signInWithPassword(data, clientProof)
+  );
+}
 
-  return error ? { error: error.message } : result;
+export async function checkEmail(email: string) {
+  return await callWithClientProof((clientProof) =>
+    client.action(api.auth.actions.checkEmailExists, { clientProof, email })
+  );
+}
+
+export async function createAccount(data: { email: string; password: string }) {
+  return await callWithClientProof((clientProof) =>
+    client.action(api.auth.actions.createUserAccount, {
+      clientProof,
+      email: data.email,
+      password: data.password,
+    })
+  );
+}
+
+export async function requestPasswordReset(email: string) {
+  return await callWithClientProof((clientProof) =>
+    client.action(api.auth.actions.requestPasswordReset, {
+      clientProof,
+      email,
+    })
+  );
 }

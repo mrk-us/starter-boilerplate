@@ -9,5 +9,7 @@ export const Route = createFileRoute("/_auth/verify-email")({
   validateSearch: z.object({
     // WorkOS user id, carried over from sign-up so the code can be matched.
     authId: z.string().optional(),
+    // Lets this page ask for a new email for this account.
+    token: z.string().optional(),
   }),
 });

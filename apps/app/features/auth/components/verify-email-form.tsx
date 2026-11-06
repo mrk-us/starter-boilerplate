@@ -15,6 +15,7 @@ import {
 export function VerifyEmailForm() {
   const searchParams = useSearchParams();
   const authId = searchParams.get("authId");
+  const token = searchParams.get("token") ?? "";
 
   if (!authId) {
     console.error("Invalid verification link (no authId)");
@@ -56,7 +57,9 @@ export function VerifyEmailForm() {
     setResendError(undefined);
     setResendSent(false);
 
-    const { error } = await tryCatch(resendVerificationEmail({ authId }));
+    const { error } = await tryCatch(
+      resendVerificationEmail({ authId, token })
+    );
 
     if (error) {
       setResendError(getErrorMessage(error));
