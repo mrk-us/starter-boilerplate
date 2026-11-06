@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect } from "react";
+import { useReloadOnLostSession } from "@/features/auth/hooks/use-reload-on-lost-session";
 import { useCurrentUser } from "@/features/user/hooks";
 import { isPublicPath, isSetupPath } from "@/lib/routes";
 
@@ -14,6 +15,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isLoading, isAuthenticated } = useCurrentUser();
+  useReloadOnLostSession();
 
   const isAuthPage = isPublicPath(pathname);
   const isSetupPage = isSetupPath(pathname);

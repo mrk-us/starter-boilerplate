@@ -23,7 +23,7 @@ export function useResetPassword() {
         token: data.token,
       }),
     onSuccess: () => {
-      navigate({ to: "/sign-in" });
+      navigate({ search: { notice: "reset" }, to: "/sign-in" });
     },
   });
 

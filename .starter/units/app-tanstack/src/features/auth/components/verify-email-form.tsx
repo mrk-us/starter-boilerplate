@@ -1,7 +1,9 @@
 import { verifyEmailSchema } from "@repo/backend/convex/auth/validation";
-import { getErrorMessage } from "@repo/shared/utils";
+import { getErrorMessage, tryCatch } from "@repo/shared/utils";
 import { FieldGroup, Form, FormSubmit, useAppForm } from "@repo/ui/components";
+import { FormErrorContent } from "@repo/ui/components/form/form-errors";
 import { useSearch } from "@tanstack/react-router";
+import { useState } from "react";
 import { AuthCard } from "@/features/auth/components";
 import {
   useResendVerificationEmail,
@@ -11,6 +13,8 @@ import {
 export function VerifyEmailForm() {
   const { authId } = useSearch({ from: "/_auth/verify-email" });
 
+  const [resendError, setResendError] = useState<string | undefined>();
+  const [resendSent, setResendSent] = useState(false);
   const { verifyEmail } = useVerifyEmail();
   const { resendVerificationEmail } = useResendVerificationEmail();
 
@@ -36,11 +40,17 @@ export function VerifyEmailForm() {
       return;
     }
 
-    try {
-      await resendVerificationEmail({ authId });
-    } catch (error) {
-      console.error(getErrorMessage(error));
+    setResendError(undefined);
+    setResendSent(false);
+
+    const { error } = await tryCatch(resendVerificationEmail({ authId }));
+
+    if (error) {
+      setResendError(getErrorMessage(error));
+      return;
     }
+
+    setResendSent(true);
   }
 
   if (!authId) {
@@ -78,6 +88,14 @@ export function VerifyEmailForm() {
       <button onClick={handleResendVerificationEmail} type="button">
         Resend verification email
       </button>
+
+      {resendSent && (
+        <p className="text-center text-muted-foreground text-xs" role="status">
+          We sent a new code. Check your email.
+        </p>
+      )}
+
+      <FormErrorContent errors={resendError} />
     </AuthCard>
   );
 }

@@ -1,9 +1,11 @@
 "use client";
 
 import { verifyEmailSchema } from "@repo/backend/convex/auth/validation";
-import { getErrorMessage } from "@repo/shared/utils";
+import { getErrorMessage, tryCatch } from "@repo/shared/utils";
 import { FieldGroup, Form, FormSubmit, useAppForm } from "@repo/ui/components";
+import { FormErrorContent } from "@repo/ui/components/form/form-errors";
 import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { AuthCard } from "@/features/auth/components";
 import {
   useResendVerificationEmail,
@@ -18,6 +20,8 @@ export function VerifyEmailForm() {
     console.error("Invalid verification link (no authId)");
   }
 
+  const [resendError, setResendError] = useState<string | undefined>();
+  const [resendSent, setResendSent] = useState(false);
   const { verifyEmail } = useVerifyEmail();
 
   const form = useAppForm({
@@ -49,17 +53,17 @@ export function VerifyEmailForm() {
       return;
     }
 
-    try {
-      const res = await resendVerificationEmail({ authId });
+    setResendError(undefined);
+    setResendSent(false);
 
-      if (res.success) {
-        // TODO: Handle resend timer
-      }
+    const { error } = await tryCatch(resendVerificationEmail({ authId }));
 
-      return res;
-    } catch (error) {
-      console.error(getErrorMessage(error));
+    if (error) {
+      setResendError(getErrorMessage(error));
+      return;
     }
+
+    setResendSent(true);
   }
 
   return (
@@ -86,6 +90,14 @@ export function VerifyEmailForm() {
       <button onClick={handleResendVerificationEmail} type="button">
         Resend verification email
       </button>
+
+      {resendSent && (
+        <p className="text-center text-muted-foreground text-xs" role="status">
+          We sent a new code. Check your email.
+        </p>
+      )}
+
+      <FormErrorContent errors={resendError} />
     </AuthCard>
   );
 }

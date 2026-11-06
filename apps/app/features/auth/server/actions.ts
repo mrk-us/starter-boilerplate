@@ -56,10 +56,7 @@ export async function syncUserToDb(accessToken: string): Promise<boolean> {
   return created;
 }
 
-/**
- * Sign in with email/password and save session
- */
-export async function signIn(data: { email: string; password: string }) {
+async function signInWithPassword(data: { email: string; password: string }) {
   const headersList = await headers();
   const host = headersList.get("host") || "localhost:3001";
   const protocol = host.includes("localhost") ? "http" : "https";
@@ -74,6 +71,10 @@ export async function signIn(data: { email: string; password: string }) {
 
   if (authResultError) {
     throw new Error(authResultError.message);
+  }
+
+  if ("emailVerificationRequired" in authResultData) {
+    return { verifyAuthId: authResultData.authId };
   }
 
   // Sync user to Convex DB
@@ -91,4 +92,15 @@ export async function signIn(data: { email: string; password: string }) {
   );
 
   return { success: true };
+}
+
+/**
+ * Sign in with email/password and save session
+ * Returns errors, because React replaces the message of a thrown Server Action
+ * error in production
+ */
+export async function signIn(data: { email: string; password: string }) {
+  const { data: result, error } = await tryCatch(signInWithPassword(data));
+
+  return error ? { error: error.message } : result;
 }
