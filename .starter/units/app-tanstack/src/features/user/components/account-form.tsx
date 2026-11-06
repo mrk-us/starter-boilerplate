@@ -71,7 +71,7 @@ export function AccountForm() {
   });
 
   const handleDeleteAccount = async () => {
-    // The hook keeps the error, and this form shows it under the button
+    // The hook keeps the error, and the dialog shows it
     await tryCatch(deleteAccount());
   };
 
@@ -116,8 +116,8 @@ export function AccountForm() {
       </Form>
 
       <AlertDialog>
-        <AlertDialogTrigger render={<Button disabled={isDeletingUser} />}>
-          {isDeletingUser ? "Deleting..." : "Delete Account"}
+        <AlertDialogTrigger render={<Button />}>
+          Delete Account
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -127,22 +127,25 @@ export function AccountForm() {
               subscription. You can&apos;t undo this.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {deleteUserError && (
+            <p className="text-destructive text-sm" role="alert">
+              {deleteUserError}
+            </p>
+          )}
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep Account</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeletingUser}>
+              Keep Account
+            </AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeletingUser}
               onClick={handleDeleteAccount}
             >
-              Yes, Delete
+              {isDeletingUser ? "Deleting..." : "Yes, Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      {deleteUserError && (
-        <div className="text-red-500 text-sm" role="alert">
-          {deleteUserError}
-        </div>
-      )}
     </main>
   );
 }

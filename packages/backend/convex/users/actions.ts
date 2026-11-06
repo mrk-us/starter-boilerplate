@@ -171,7 +171,7 @@ export const deleteUser = action({
       throw new ConvexError({
         code: AUTH_ERROR_CODE.DELETE_USER_FAILED,
         message:
-          "We cancelled your subscription, but we could not delete your account. Try again.",
+          "We could not delete your account, but any subscription on it is now cancelled. Try again.",
       });
     }
 
