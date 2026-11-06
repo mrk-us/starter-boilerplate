@@ -25,7 +25,7 @@ export async function getGoogleOAuthAuthorizationUrl(
   returnTo: string
 ): Promise<string> {
   const authorizationUrl = new URL(
-    await getSignInUrl({ returnTo: getReturnPath(returnTo) })
+    await getSignInUrl({ state: getReturnPath(returnTo) })
   );
 
   // getSignInUrl creates the sealed state and verifier cookie required by
