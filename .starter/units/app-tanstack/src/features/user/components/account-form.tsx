@@ -24,7 +24,7 @@ type FormData = z.infer<typeof accountFormSchema>;
 export function AccountForm() {
   const { user } = useCurrentUser();
 
-  const { updateName, isPending: isUpdatingName } = useUpdateName();
+  const { updateName, isPending: isUpdatingName, savedName } = useUpdateName();
 
   const {
     deleteAccount,
@@ -88,6 +88,16 @@ export function AccountForm() {
           isPending={isUpdatingName}
           label="Save"
         />
+
+        <form.Subscribe selector={(state) => state.values.name}>
+          {(name) =>
+            name === savedName ? (
+              <p className="text-sm" role="status">
+                Name saved.
+              </p>
+            ) : null
+          }
+        </form.Subscribe>
       </Form>
 
       <Button disabled={isDeletingUser} onClick={handleDeleteAccount}>

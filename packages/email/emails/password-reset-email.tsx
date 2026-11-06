@@ -68,7 +68,7 @@ export default function PasswordResetEmail({ url }: { url: string }) {
             </Section>
 
             <Section className="mt-4">
-              <Text className="m-0 text-[16px] text-secondary">Have fun,</Text>
+              <Text className="m-0 text-[16px] text-secondary">Thanks,</Text>
               <Text className="m-0 text-[16px] text-secondary">{APP_NAME}</Text>
             </Section>
           </Container>

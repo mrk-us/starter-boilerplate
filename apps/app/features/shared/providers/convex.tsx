@@ -32,16 +32,20 @@ export function ConvexClientProvider({
     return new ConvexReactClient(url);
   });
 
-  const convexQueryClient = new ConvexQueryClient(convex);
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        queryFn: convexQueryClient.queryFn(),
-        queryKeyHashFn: convexQueryClient.hashFn(),
+  const [queryClient] = useState(() => {
+    const convexQueryClient = new ConvexQueryClient(convex);
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: {
+          queryFn: convexQueryClient.queryFn(),
+          queryKeyHashFn: convexQueryClient.hashFn(),
+        },
       },
-    },
+    });
+    convexQueryClient.connect(client);
+    return client;
   });
-  convexQueryClient.connect(queryClient);
+
   return (
     <AuthKitProvider initialAuth={initialAuth}>
       <ConvexProviderWithAuth client={convex} useAuth={useAuthFromAuthKit}>

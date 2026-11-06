@@ -3,6 +3,8 @@ import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { ConvexProvider } from "convex/react";
+import { ErrorPage } from "@/features/shared/components/error-page";
+import { NotFoundPage } from "@/features/shared/components/not-found-page";
 import { routeTree } from "./routeTree.gen";
 
 export function getRouter() {
@@ -24,6 +26,8 @@ export function getRouter() {
   convexQueryClient.connect(queryClient);
 
   const router = createRouter({
+    defaultErrorComponent: ErrorPage,
+    defaultNotFoundComponent: NotFoundPage,
     context: {
       convexClient: convexQueryClient.convexClient,
       convexQueryClient,
