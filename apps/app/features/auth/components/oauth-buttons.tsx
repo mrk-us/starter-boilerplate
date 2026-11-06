@@ -24,16 +24,21 @@ export function OAuthButtons({ callbackError }: { callbackError?: string }) {
 
   const handleOAuth = () => {
     startTransition(async () => {
-      const authorizationUrl = await getGoogleOAuthAuthorizationUrl(
-        getSignInDestination(
-          getReturnPath(searchParams.get("redirect")),
-          window.location.hash
-        )
-      );
+      setError(undefined);
+      try {
+        const authorizationUrl = await getGoogleOAuthAuthorizationUrl(
+          getSignInDestination(
+            getReturnPath(searchParams.get("redirect")),
+            window.location.hash
+          )
+        );
 
-      // A top-level redirect keeps the authorization flow in the current
-      // browser session. Popups can be blocked or open in another session.
-      window.location.assign(authorizationUrl);
+        // A top-level redirect keeps the authorization flow in the current
+        // browser session. Popups can be blocked or open in another session.
+        window.location.assign(authorizationUrl);
+      } catch {
+        setError("We couldn't start sign-in. Please try again.");
+      }
     });
   };
 

@@ -228,18 +228,20 @@ const registerIpcHandlers = (): void => {
   });
 };
 
+const isPermissionGranted = (permission: string, url: string): boolean =>
+  // The window can show sign-in and checkout pages from other hosts
+  parseUrl(url)?.origin === APP_ORIGIN && GRANTED_PERMISSIONS.has(permission);
+
 const registerPermissionHandlers = (): void => {
   session.defaultSession.setPermissionRequestHandler(
-    (_contents, permission, callback) => {
-      callback(GRANTED_PERMISSIONS.has(permission));
+    (_contents, permission, callback, { requestingUrl }) => {
+      callback(isPermissionGranted(permission, requestingUrl));
     }
   );
 
   session.defaultSession.setPermissionCheckHandler(
     (_contents, permission, requestingOrigin) =>
-      // Electron passes this origin with a trailing slash
-      parseUrl(requestingOrigin)?.origin === APP_ORIGIN &&
-      GRANTED_PERMISSIONS.has(permission)
+      isPermissionGranted(permission, requestingOrigin)
   );
 };
 
