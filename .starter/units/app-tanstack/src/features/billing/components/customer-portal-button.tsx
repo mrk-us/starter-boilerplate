@@ -25,7 +25,7 @@ export function CustomerPortalButton({
     api.billing.actions.generateCustomerPortalUrl
   );
 
-  const { mutate, isPending } = useMutation({
+  const { mutate, isPending, error } = useMutation({
     mutationFn: async () => {
       const result = await generatePortalUrl({
         returnUrl: window.location.href,
@@ -40,14 +40,21 @@ export function CustomerPortalButton({
   });
 
   return (
-    <Button
-      className={className}
-      disabled={isPending}
-      onClick={() => mutate()}
-      size={size}
-      variant={variant}
-    >
-      {isPending ? "Loading..." : children}
-    </Button>
+    <div className="flex w-full flex-col items-start gap-2">
+      <Button
+        className={className}
+        disabled={isPending}
+        onClick={() => mutate()}
+        size={size}
+        variant={variant}
+      >
+        {isPending ? "Loading..." : children}
+      </Button>
+      {error && (
+        <p className="text-destructive text-sm" role="alert">
+          {getErrorMessage(error)}
+        </p>
+      )}
+    </div>
   );
 }

@@ -7,7 +7,7 @@ import { action } from "../_generated/server";
 import { AUTH_ERROR_CODE } from "../auth/constants";
 import { requireAuthId } from "../auth/helpers";
 import { authKit } from "../auth/index";
-import { cancelUserSubscription } from "../billing/actions";
+import { cancelUserSubscriptions } from "../billing/actions";
 import { ERROR_CODE, ERROR_MESSAGE } from "../errors/constants";
 import { rateLimiter } from "../rateLimiter";
 import { userSchema } from "./validation";
@@ -139,10 +139,24 @@ export const deleteUser = action({
       authId,
     });
 
-    // Cancel subscription before WorkOS deletion (non-blocking)
-    if (user) {
-      await cancelUserSubscription(ctx, user._id);
+    // A WorkOS outage stops the deletion here, before billing changes
+    const { error: getWorkosUserError } = await tryCatch(
+      authKit.workos.userManagement.getUser(authId)
+    );
+
+    if (getWorkosUserError) {
+      console.error(
+        "Failed to reach auth provider:",
+        getWorkosUserError.message
+      );
+      throw new ConvexError({
+        code: AUTH_ERROR_CODE.DELETE_USER_FAILED,
+        message: ERROR_MESSAGE.UNKNOWN,
+      });
     }
+
+    // Cancel first, so that a deleted account can never keep a charge
+    await cancelUserSubscriptions(user?.stripeCustomerId);
 
     // Delete from WorkOS
     const { error: deleteWorkosUserError } = await tryCatch(
@@ -156,7 +170,8 @@ export const deleteUser = action({
       );
       throw new ConvexError({
         code: AUTH_ERROR_CODE.DELETE_USER_FAILED,
-        message: ERROR_MESSAGE.UNKNOWN,
+        message:
+          "We cancelled your subscription, but we could not delete your account. Try again.",
       });
     }
 

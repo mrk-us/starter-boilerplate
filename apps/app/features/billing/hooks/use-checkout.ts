@@ -27,7 +27,7 @@ export function useCheckout() {
     api.billing.actions.generateCheckoutLink
   );
 
-  const { mutateAsync, isPending, error } = useMutation({
+  const { mutate, isPending, error } = useMutation({
     mutationFn: async ({ priceLookupKey, successUrl }: CheckoutOptions) => {
       const { url } = await generateCheckoutLink({
         priceLookupKey,
@@ -44,8 +44,8 @@ export function useCheckout() {
   });
 
   return {
-    checkout: mutateAsync,
-    error: error ? new Error(getErrorMessage(error)) : undefined,
+    checkout: mutate,
+    error: error ? getErrorMessage(error) : null,
     isPending,
   };
 }

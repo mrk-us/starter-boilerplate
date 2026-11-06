@@ -14,7 +14,9 @@ export function useDeleteAccount() {
       await deleteUser();
       // signOut ends the WorkOS session and navigates the document, so it also
       // stands in for the post-delete redirect.
-      await signOut({ returnTo: "/sign-in" });
+      await signOut({
+        returnTo: new URL("/sign-in", window.location.origin).href,
+      });
     },
     onError: (mutationError) => {
       console.error(getErrorMessage(mutationError));
@@ -23,7 +25,7 @@ export function useDeleteAccount() {
 
   return {
     deleteAccount: mutateAsync,
-    error: error instanceof Error ? error.message : null,
+    error: error ? getErrorMessage(error) : null,
     isError,
     isPending,
     isSuccess,

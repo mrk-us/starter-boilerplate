@@ -28,7 +28,7 @@ export function useDeleteAccount() {
 
   return {
     deleteAccount: mutateAsync,
-    error: error instanceof Error ? error.message : null,
+    error: error ? getErrorMessage(error) : null,
     isError,
     isPending,
     isSuccess,

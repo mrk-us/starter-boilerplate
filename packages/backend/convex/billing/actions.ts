@@ -11,6 +11,8 @@ import { action } from "../_generated/server";
 import { ERROR_CODE, ERROR_MESSAGE } from "../errors/constants";
 import {
   BILLING_ERROR_CODE,
+  ENDED_SUBSCRIPTION_STATUSES,
+  PRO_SUBSCRIPTION_STATUSES,
   STRIPE_API_VERSION,
   STRIPE_PRICE_LOOKUP_KEY,
 } from "./constants";
@@ -96,35 +98,115 @@ async function getOrCreateStripeCustomerWithCache(
 }
 
 /**
- * Cancel user's subscription if they have one (non-blocking)
- * Used during account deletion, where a failed cancellation must not block
- * the deletion itself.
+ * List the customer's subscriptions directly from Stripe.
+ * Component rows depend on webhook delivery, so they can be late or missing.
  */
-export async function cancelUserSubscription(
+async function listStripeSubscriptions(customerId: string) {
+  const subscriptions = await getStripeClient().subscriptions.list({
+    customer: customerId,
+    limit: 100,
+    status: "all",
+  });
+
+  return subscriptions.data;
+}
+
+function canStillCharge(subscription: Stripe.Subscription) {
+  return !ENDED_SUBSCRIPTION_STATUSES.includes(subscription.status);
+}
+
+/**
+ * Save subscriptions read from Stripe in the component's table, with the same
+ * values as the webhook. The first mutation inserts a missing row and the second
+ * updates an existing row.
+ */
+async function saveSubscriptions(
   ctx: ActionCtx,
-  userId: string
-): Promise<void> {
-  const subscriptions = await ctx.runQuery(
-    components.stripe.public.listSubscriptionsByUserId,
-    { userId }
-  );
+  subscriptions: Stripe.Subscription[]
+) {
+  await Promise.all(
+    subscriptions.map(async (subscription) => {
+      const [item] = subscription.items.data;
+      const values = {
+        cancelAt: subscription.cancel_at ?? undefined,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        currentPeriodEnd: item?.current_period_end ?? 0,
+        metadata: subscription.metadata,
+        quantity: item?.quantity ?? 1,
+        status: subscription.status,
+        stripeSubscriptionId: subscription.id,
+      };
+      const stripeCustomerId =
+        typeof subscription.customer === "string"
+          ? subscription.customer
+          : subscription.customer.id;
 
-  const activeSubscription = subscriptions.find(
-    (sub: { status: string }) =>
-      sub.status === "active" || sub.status === "trialing"
-  );
-
-  if (activeSubscription) {
-    const stripeClient = getStripeClient();
-    const { error: cancelError } = await tryCatch(
-      stripeClient.subscriptions.cancel(activeSubscription.stripeSubscriptionId)
-    );
-    if (cancelError) {
-      console.warn(
-        "[cancelUserSubscription] Failed to cancel subscription:",
-        cancelError.message
+      await ctx.runMutation(
+        components.stripe.private.handleSubscriptionCreated,
+        { ...values, priceId: item?.price.id ?? "", stripeCustomerId }
       );
-    }
+      await ctx.runMutation(
+        components.stripe.private.handleSubscriptionUpdated,
+        { ...values, priceId: item?.price.id, stripeCustomerId }
+      );
+    })
+  );
+}
+
+/**
+ * Expire the customer's open Checkout sessions, so that an older tab cannot
+ * complete a second subscription.
+ */
+async function expireOpenCheckoutSessions(customerId: string) {
+  const stripeClient = getStripeClient();
+  const sessions = await stripeClient.checkout.sessions.list({
+    customer: customerId,
+    limit: 100,
+    status: "open",
+  });
+
+  await Promise.all(
+    sessions.data.map((session) =>
+      stripeClient.checkout.sessions.expire(session.id)
+    )
+  );
+}
+
+/**
+ * Cancel every subscription of the user that can still charge them.
+ * Throws when a cancellation fails, so that account deletion stops and the user
+ * is not charged without an account.
+ */
+export async function cancelUserSubscriptions(
+  stripeCustomerId: string | undefined
+): Promise<void> {
+  if (!stripeCustomerId) {
+    return;
+  }
+
+  const { error } = await tryCatch(
+    (async () => {
+      const subscriptions = await listStripeSubscriptions(stripeCustomerId);
+      await Promise.all(
+        subscriptions
+          .filter(canStillCharge)
+          .map((subscription) =>
+            getStripeClient().subscriptions.cancel(subscription.id)
+          )
+      );
+    })()
+  );
+
+  if (error) {
+    console.error(
+      "[cancelUserSubscriptions] Failed to cancel subscriptions:",
+      error.message
+    );
+    throw new ConvexError({
+      code: BILLING_ERROR_CODE.SUBSCRIPTION_CANCEL_FAILED,
+      message:
+        "We could not cancel your subscription, so your account was not deleted. Try again.",
+    });
   }
 }
 
@@ -146,14 +228,34 @@ export const generateCheckoutLink = action({
       internal.billing.queries.requireCurrentUserForBilling
     );
 
-    // Parallelize: Get subscription hash + price ID + customer ID
-    const [currentSubscription, priceId, customerId] = await Promise.all([
-      ctx.runQuery(internal.billing.queries.getSubscriptionStatusByUserId, {
-        userId: userInfo._id,
-      }),
+    // Parallelize: Get price ID + customer ID
+    const [priceId, customerId] = await Promise.all([
       getPriceIdByLookupKey(args.priceLookupKey),
       getOrCreateStripeCustomerWithCache(ctx, userInfo),
     ]);
+
+    // Stripe is the source of truth here, because a webhook can be late or lost.
+    // Saving the rows also corrects a billing page that still shows Free.
+    const subscriptions = await listStripeSubscriptions(customerId);
+    // An incomplete subscription has no first payment and expires by itself
+    const hasSubscription = subscriptions.some(
+      (subscription) =>
+        canStillCharge(subscription) && subscription.status !== "incomplete"
+    );
+    if (hasSubscription) {
+      await saveSubscriptions(ctx, subscriptions);
+      throw new ConvexError({
+        code: BILLING_ERROR_CODE.ALREADY_SUBSCRIBED,
+        message: "You already have a subscription. Manage it from this page.",
+      });
+    }
+
+    await expireOpenCheckoutSessions(customerId);
+
+    const currentSubscription = await ctx.runQuery(
+      internal.billing.queries.getSubscriptionStatusByUserId,
+      { userId: userInfo._id }
+    );
 
     // Create hash for checkout success comparison
     const preCheckoutHash = await createSubscriptionHash(currentSubscription);
@@ -314,7 +416,7 @@ export const reactivateSubscription = action({
 /**
  * Sync subscription status from Stripe API.
  * Called when user returns from checkout and webhook hasn't arrived yet.
- * Fetches directly from Stripe to verify subscription exists.
+ * Saves what Stripe returns, so the app does not depend on the webhook.
  *
  * @see https://raw.githubusercontent.com/t3dotgg/stripe-recommendations/refs/heads/main/README.md
  */
@@ -335,37 +437,28 @@ export const syncSubscriptionFromStripe = action({
       return { hasActiveSubscription: false, success: true };
     }
 
-    // Fetch latest subscription directly from Stripe API
-    const stripeClient = getStripeClient();
     const result = await tryCatch(
-      stripeClient.subscriptions.list({
-        customer: customerId,
-        expand: ["data.default_payment_method"],
-        limit: 1,
-        status: "all",
-      })
+      (async () => {
+        const subscriptions = await listStripeSubscriptions(customerId);
+        await saveSubscriptions(ctx, subscriptions);
+        return subscriptions;
+      })()
     );
 
     if (result.error) {
       console.error(
-        "[syncSubscriptionFromStripe] Failed to fetch subscriptions:",
+        "[syncSubscriptionFromStripe] Failed to sync subscriptions:",
         result.error.message
       );
       return { hasActiveSubscription: false, success: false };
     }
 
-    const stripeSubscriptions = result.data;
-
-    const [subscription] = stripeSubscriptions.data;
-
-    if (!subscription) {
-      return { hasActiveSubscription: false, success: true };
-    }
-
-    const isActive: boolean =
-      subscription.status === "active" || subscription.status === "trialing";
-
-    return { hasActiveSubscription: isActive, success: true };
+    return {
+      hasActiveSubscription: result.data.some((subscription) =>
+        PRO_SUBSCRIPTION_STATUSES.includes(subscription.status)
+      ),
+      success: true,
+    };
   },
   returns: v.object({
     hasActiveSubscription: v.boolean(),

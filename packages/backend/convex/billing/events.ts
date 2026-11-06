@@ -1,7 +1,5 @@
 import type { StripeEventHandlers } from "@convex-dev/stripe";
-import { ConvexError } from "convex/values";
 import { internal } from "../_generated/api";
-import type { Id } from "../_generated/dataModel";
 import { STRIPE_PRICE_LOOKUP_KEY } from "./constants";
 
 /**
@@ -36,23 +34,13 @@ export const stripeEventHandlers: StripeEventHandlers = {
 
     // Only send welcome email for Pro subscriptions
     if (proPlan) {
-      // Fetch user details
-      const user = await ctx.runQuery(internal.users.queries.getUserById, {
-        userId: subscription.metadata.userId as Id<"users">,
-      });
-
-      if (!user) {
-        throw new ConvexError({
-          code: "USER_NOT_FOUND",
-          message: "User not found",
-        });
-      }
-
-      // Send welcome to Pro email
-      await ctx.runAction(internal.emails.actions.sendWelcomeToProEmail, {
-        email: user.email,
-        name: user.name,
-      });
+      await ctx.runMutation(
+        internal.billing.mutations.sendProWelcomeEmailOnce,
+        {
+          stripeSubscriptionId: subscription.id,
+          userId: subscription.metadata.userId ?? "",
+        }
+      );
     }
   },
 

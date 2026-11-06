@@ -33,12 +33,18 @@ export function CurrentPlan() {
   ) : (
     <Badge variant="default">Active</Badge>
   );
+  // Only a subscription that needs a payment has a status on the Free plan
+  const needsPayment = plan === SUBSCRIPTION_PLAN.FREE && status !== null;
+  const freeStatusBadge = needsPayment ? (
+    <Badge variant="destructive">Payment needed</Badge>
+  ) : (
+    <Badge variant="outline">Free</Badge>
+  );
   const statusBadge =
-    plan === SUBSCRIPTION_PLAN.PRO ? (
-      proStatusBadge
-    ) : (
-      <Badge variant="outline">Free</Badge>
-    );
+    plan === SUBSCRIPTION_PLAN.PRO ? proStatusBadge : freeStatusBadge;
+  const freeDescription = needsPayment
+    ? "Update your payment method to get Pro features back"
+    : "Upgrade to Pro for more features";
 
   return (
     <Card>
@@ -50,7 +56,7 @@ export function CurrentPlan() {
         <CardDescription>
           {plan === SUBSCRIPTION_PLAN.PRO
             ? "You have access to all Pro features"
-            : "Upgrade to Pro for more features"}
+            : freeDescription}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -58,7 +64,7 @@ export function CurrentPlan() {
           {plan === SUBSCRIPTION_PLAN.PRO && (
             <>
               <div className="flex items-center justify-between">
-                <span className="text-white/50">Status</span>
+                <span className="text-muted-foreground">Status</span>
                 <span className="font-medium capitalize">
                   {status ?? "Active"}
                 </span>
@@ -66,7 +72,7 @@ export function CurrentPlan() {
 
               {currentPeriodEnd && (
                 <div className="flex items-center justify-between">
-                  <span className="text-white/50">
+                  <span className="text-muted-foreground">
                     {cancelAtPeriodEnd ? "Access until" : "Next billing date"}
                   </span>
                   <span className="font-medium">

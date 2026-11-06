@@ -2,6 +2,8 @@ import type { GenericQueryCtx } from "convex/server";
 import { components } from "../_generated/api";
 import type { DataModel, Id } from "../_generated/dataModel";
 import {
+  PAYMENT_ISSUE_SUBSCRIPTION_STATUSES,
+  PRO_SUBSCRIPTION_STATUSES,
   STRIPE_PRICE_LOOKUP_KEY,
   SUBSCRIPTION_INTERVAL,
   SUBSCRIPTION_PLAN,
@@ -21,10 +23,14 @@ export async function getSubscriptionStatusForUser(
     { userId }
   );
 
-  // Find active subscription
-  const activeSubscription = subscriptions.find(
-    (sub) => sub.status === "active" || sub.status === "trialing"
-  );
+  // A subscription with Pro access takes priority over one that needs a payment
+  const activeSubscription =
+    subscriptions.find((sub) =>
+      PRO_SUBSCRIPTION_STATUSES.includes(sub.status)
+    ) ??
+    subscriptions.find((sub) =>
+      PAYMENT_ISSUE_SUBSCRIPTION_STATUSES.includes(sub.status)
+    );
 
   if (!activeSubscription) {
     return {
@@ -60,7 +66,9 @@ export async function getSubscriptionStatusForUser(
     cancelAtPeriodEnd: activeSubscription.cancelAtPeriodEnd,
     currentPeriodEnd,
     interval,
-    plan: SUBSCRIPTION_PLAN.PRO,
+    plan: PRO_SUBSCRIPTION_STATUSES.includes(activeSubscription.status)
+      ? SUBSCRIPTION_PLAN.PRO
+      : SUBSCRIPTION_PLAN.FREE,
     status: activeSubscription.status,
   };
 }

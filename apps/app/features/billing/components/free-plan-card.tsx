@@ -2,13 +2,13 @@
 
 import {
   Badge,
-  Button,
   Card,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "@repo/ui/components";
+import { CustomerPortalButton } from "./customer-portal-button";
 
 interface FreePlanCardProps {
   isCurrentPlan: boolean;
@@ -31,9 +31,13 @@ export function FreePlanCard({ isCurrentPlan }: FreePlanCardProps) {
 
       <CardFooter>
         {!isCurrentPlan && (
-          <Button className="w-full" variant="outline">
+          <CustomerPortalButton
+            className="w-full"
+            size="default"
+            variant="outline"
+          >
             Downgrade
-          </Button>
+          </CustomerPortalButton>
         )}
       </CardFooter>
     </Card>

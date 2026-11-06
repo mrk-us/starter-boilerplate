@@ -9,12 +9,13 @@ import {
   FreePlanCard,
   ManageSubscription,
   ProPlanCard,
+  ResumeSubscription,
 } from "@/features/billing/components";
 import { useSubscription } from "@/features/billing/hooks";
 import { SectionSpinner } from "@/features/shared/components/section-spinner";
 
 export function BillingPage() {
-  const { plan, interval, isLoading } = useSubscription();
+  const { plan, interval, isLoading, status } = useSubscription();
 
   const [isYearly, setIsYearly] = useState(true);
 
@@ -23,8 +24,12 @@ export function BillingPage() {
     return <SectionSpinner />;
   }
 
+  // A subscription that needs a payment gives no Pro access, but it is still the
+  // user's plan, and a second checkout is refused.
+  const hasSubscription = status !== null;
+
   const billingInterval = () => {
-    if (plan === SUBSCRIPTION_PLAN.FREE || !interval) {
+    if (!(hasSubscription && interval)) {
       if (isYearly) {
         return "year";
       }
@@ -48,6 +53,7 @@ export function BillingPage() {
 
         <CurrentPlan />
         <CancelSubscription />
+        <ResumeSubscription />
       </section>
 
       {PAYGATE && (
@@ -61,7 +67,7 @@ export function BillingPage() {
         <div className="flex items-center justify-between">
           <h2 className="font-medium text-lg">Plans</h2>
 
-          {plan === SUBSCRIPTION_PLAN.FREE && (
+          {!hasSubscription && (
             <div className="flex items-center gap-2">
               <Label
                 className={`text-sm ${isYearly ? "text-muted-foreground" : "text-foreground"}`}
@@ -85,10 +91,10 @@ export function BillingPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <FreePlanCard isCurrentPlan={plan === SUBSCRIPTION_PLAN.FREE} />
+          <FreePlanCard isCurrentPlan={!hasSubscription} />
           <ProPlanCard
             billingInterval={billingInterval()}
-            isCurrentPlan={plan === SUBSCRIPTION_PLAN.PRO}
+            isCurrentPlan={hasSubscription}
           />
         </div>
       </section>

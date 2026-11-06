@@ -2,7 +2,21 @@
 
 import { updateUserNameSchema } from "@repo/backend/convex/users/validation";
 import { getErrorMessage, tryCatch } from "@repo/shared/utils";
-import { Button, Form, FormSubmit, useAppForm } from "@repo/ui/components";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+  Button,
+  Form,
+  FormSubmit,
+  useAppForm,
+} from "@repo/ui/components";
 import {
   Avatar,
   AvatarFallback,
@@ -59,7 +73,8 @@ export function AccountForm() {
   });
 
   const handleDeleteAccount = async () => {
-    await deleteAccount();
+    // The hook keeps the error, and this form shows it under the button
+    await tryCatch(deleteAccount());
   };
 
   return (
@@ -102,9 +117,29 @@ export function AccountForm() {
         </form.Subscribe>
       </Form>
 
-      <Button disabled={isDeletingUser} onClick={handleDeleteAccount}>
-        Delete Account
-      </Button>
+      <AlertDialog>
+        <AlertDialogTrigger render={<Button disabled={isDeletingUser} />}>
+          {isDeletingUser ? "Deleting..." : "Delete Account"}
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently deletes your account and cancels any
+              subscription. You can&apos;t undo this.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Account</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDeleteAccount}
+            >
+              Yes, Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {deleteUserError && (
         <div className="text-red-500 text-sm" role="alert">
           {deleteUserError}
