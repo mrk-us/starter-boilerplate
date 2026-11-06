@@ -18,13 +18,12 @@ const csrfMiddleware = createCsrfMiddleware({
 // AuthKit queues the session before onSuccess runs. Strip it from the final
 // failure redirect after AuthKit has added its pending headers.
 const discardFailedOAuthSession = createMiddleware().server(
-  async ({ next, request }) => {
+  async ({ next }) => {
     const result = await next();
     const { response } = result;
     if (
       response.status !== 302 ||
-      response.headers.get("Location") !==
-        new URL(OAUTH_ERROR_REDIRECT, request.url).href
+      response.headers.get("Location") !== OAUTH_ERROR_REDIRECT
     ) {
       return result;
     }
