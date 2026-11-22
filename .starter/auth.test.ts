@@ -13,7 +13,7 @@ import {
   getReturnPath as getNextReturnPath,
   getSignInDestination as getNextSignInDestination,
 } from "../apps/app/features/auth/return-path";
-import { api } from "../packages/backend/convex/_generated/api";
+import { api, internal } from "../packages/backend/convex/_generated/api";
 import schema from "../packages/backend/convex/schema";
 import {
   getReturnPath as getTanStackReturnPath,
@@ -24,6 +24,7 @@ const modules = {
   "./_generated/server.js": () =>
     import("../packages/backend/convex/_generated/server.js"),
   "./auth/actions.ts": () => import("../packages/backend/convex/auth/actions"),
+  "./auth/events.ts": () => import("../packages/backend/convex/auth/events"),
   "./http.ts": () => import("../packages/backend/convex/http"),
   "./users/mutations.ts": () =>
     import("../packages/backend/convex/users/mutations"),
@@ -135,6 +136,33 @@ describe("authenticated user sync", () => {
     expect(await t.run((ctx) => ctx.db.get(created.userId))).toMatchObject({
       email: "alice@example.com",
     });
+  });
+});
+
+describe("user deletion events", () => {
+  test("accepts deletion for a user who was never synced", async () => {
+    const t = convexTest(schema, modules);
+    await t.mutation(internal.auth.events.authKitEvent, {
+      event: "user.deleted",
+      data: { id: "user_never_synced" },
+    });
+    expect(await t.run((ctx) => ctx.db.query("users").collect())).toEqual([]);
+  });
+
+  test("deletes a local user and accepts a duplicate event", async () => {
+    const t = convexTest(schema, modules);
+    const id = await t.run((ctx) =>
+      ctx.db.insert("users", {
+        authId: "user_deleted",
+        email: "deleted@example.com",
+        name: "Deleted User",
+      })
+    );
+    const event = { event: "user.deleted", data: { id: "user_deleted" } };
+    await t.mutation(internal.auth.events.authKitEvent, event);
+    expect(await t.run((ctx) => ctx.db.get(id))).toBeNull();
+    await t.mutation(internal.auth.events.authKitEvent, event);
+    expect(await t.run((ctx) => ctx.db.get(id))).toBeNull();
   });
 });
 
