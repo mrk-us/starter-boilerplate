@@ -17,7 +17,11 @@
   "linter": {
     "rules": {
       // Keep existing syntax and class ordering during the toolchain migration.
-      "style": { "useNamedCaptureGroup": "off", "useUnicodeRegex": "off" },
+      "style": {
+        "useNamedCaptureGroup": "off",
+        "useUnicodeRegex": "off",
+        "useImportType": { "level": "error", "options": { "style": "auto" } }
+      },
       "nursery": { "useTailwindSortedClasses": "off" },
       "performance": {
         // Workspace and feature entry points intentionally expose public modules.
@@ -31,7 +35,25 @@
       }
     }
   },
+  // Preserve existing Markdown formatting when upgrading Ultracite.
+  "markdown": { "formatter": { "enabled": false } },
   "overrides": [
+    {
+      "includes": [
+        "**/features/auth/components/**",
+        "**/features/billing/components/**",
+        "packages/ui/src/components/form/**",
+        "packages/ui/src/components/field.tsx"
+      ],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            // Existing feature barrels and form contexts have import cycles.
+            "noImportCycles": "off"
+          }
+        }
+      }
+    },
     {
       "includes": [".starter/variants/**"],
       "linter": {

@@ -378,7 +378,7 @@ describe("materialization", () => {
         "utf8"
       )
     );
-    expect(packageJson.dependencies?.["@swc/helpers"]).toBe("0.5.23");
+    expect(packageJson.dependencies?.["@swc/helpers"]).toBe("0.5.24");
   });
 
   test.each(
