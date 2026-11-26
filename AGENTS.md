@@ -205,6 +205,14 @@ A file’s location is determined by its widest consumer. Shared code must remai
 
 Never extract Tailwind class strings into shared constants merely to reuse the strings; doing so breaks intellisense.
 
+### One owner per contract
+
+A *contract* is anything two places must agree on: a constant, type, schema, error code, protocol path, header or limit. Each contract has one owner, and every consumer imports it from there.
+
+- Before defining one, search the repository for its name and its value (`rg`), then import the owner you find.
+- When a consumer can't import the owner (another package, a Worker, the app), move the definition to the lowest package every consumer can import, such as `packages/shared`, and import it from there on both sides. A copy drifts.
+- The abstraction ladder decides when shared *implementation* is worth extracting. A contract is shared from its second consumer onward.
+
 ## Ultracite Code Standards
 
 This project uses **Ultracite**, a zero-config preset that enforces strict code quality standards through automated formatting and linting.
